@@ -165,13 +165,14 @@ if step == 1;
         nuc(:,:,i) = imresize(handles.Im{1,i}{nc},m); % 2
     end
     In = max(nuc,[],3); % perform max project
-    In = uint8(  255*(1-double(In)./2^16)); % convert to uint8
-    figure(1); clf; subplot(1,2,1); imshow(In);
-    In = imclose(In,strel('disk',NucBlur));
-    figure(1);subplot(1,2,2); imshow(In);
+    Nucs = uint8(  255*(1-double(In)./2^16)); % convert to uint8
+    figure(1); clf; subplot(1,2,1); imshow(Nucs);
+    Nucs = imclose(Nucs,strel('disk',NucBlur));
+    figure(1);subplot(1,2,2); imshow(Nucs);
     
     handles.Zs = Zs;
     handles.In = In; 
+    handles.Nucs = Nucs;
     
     guidata(hObject, handles);  % update GUI data with new handles
     toc
@@ -188,7 +189,7 @@ if step == 2;
     sigmaI = str2double(get(handles.in4,'String'));
     PercP = str2double(get(handles.in5,'String'));
     minN = str2double(get(handles.in6,'String'));   
-    I = handles.In; 
+    I = handles.Nucs; 
     
   % get threshold image 'bw' and nuclei centroids 'cent'  
     [handles.bw,handles.cent] = fxn_nuc_seg(I,FiltSize,FiltStr,sigmaE,sigmaI,PercP,minN);
@@ -207,15 +208,19 @@ if step == 3;
     [H1,Nuc_overlay,conn_map,cell_bords] = fxn_nuc_reg(handles.In,handles.bw,Mthink,Mthin,Imnn);  
 
     
-    figure(1); clf; imshow(In); hold on; plot(cell_bords);
+    figure(1); clf; imshow(handles.In); hold on;
+    plot(cell_bords);
     
+    % save([handles.fdata,'/','test']);
+    % load([handles.fdata,'/','test']);
     
-
     [h,w] = size(H1);
 
     Cell_bnd = false(h,w);
     Cell_bnd(cell_bords) = 1;
-    % figure(5); clf; imshow(Cell_bnd);   
+    Cell_bnd = bwareaopen( Cell_bnd,100);
+    
+     figure(1); clf; imshow(Cell_bnd);   
     Cell_bnd2 = imresize(Cell_bnd,2);  
     
     handles.H2 = imresize(H1,2,'nearest');
@@ -229,6 +234,7 @@ end
   % Step 4: Identify and count nascent transcripts 
  if step == 4   
 
+     disp('running step 4...'); tic
     alphaE =   str2double(get(handles.in1,'String')); % alphaE = .955; %
     sigmaE =str2double(get(handles.in2,'String')); %    sigmaE = 2; %
     alphaI =str2double(get(handles.in3,'String')); %   alphaI = .98; % 
@@ -241,12 +247,18 @@ end
     Ex = fspecial('gaussian',FiltSize,sigmaE); % excitatory gaussian
     Ix = fspecial('gaussian',FiltSize,sigmaI); % inhibitory gaussian
    
-    DotData = cell(1,Zs); 
-   for i=1:Zs
+    DotData = cell(1,handles.Zs); 
+    
+   for i=1:handles.Zs
+       I2 = handles.Im{1,i}{handles.mRNAchn1};
      DotData{i} = dotfinder(I2,alphaE,alphaI,Ex,Ix,min_int,min_size);
    end
+     save([handles.fdata,'/','test']);
+    % load([handles.fdata,'/','test']);
+   
    handles.DotData = DotData;
     guidata(hObject, handles);  % update GUI data with new handles  
+    toc;
     
  end
 
@@ -274,7 +286,7 @@ function VarButton_Callback(hObject, eventdata, handles)
 
 function setup(hObject,eventdata,handles)
  if handles.step == 0; 
-       load([handles.fdata, 'singlemolecule_pars0']); % pars = {'1','2','3','',' ',' '}; save([handles.fdata,'singlemolecule_pars0'], 'pars' );
+       load([handles.fdata, 'singlemolecule_pars0']); % pars = {' ',' ',' ',' ',' ',' '}; save([handles.fdata,'singlemolecule_pars0'], 'pars' );
         set(handles.in1label,'String',' ');
         set(handles.in1,'String', pars(1));
         set(handles.in2label,'String',' ');
@@ -296,17 +308,15 @@ function setup(hObject,eventdata,handles)
 %         set(handles.in6,'String',' ');
 %         set(handles.in6,'BackgroundColor',[.7 .7 .7]);        
         dir = {
-       'File should be a multichannel .tif image. Indicate which channel';
-             '(1-3) contains mRNA and which contains nuclei. ';
-             'Leave entry blank if no channel data.'; 
-             'Also choose a file name to export data to.'} ;
+       'Load lsm file and display all layers in stack in 3 color';
+       'red will be channel 1, green chn 2, blue chn 3'} ;
         set(handles.directions,'String',dir); 
  end
   if handles.step == 1; 
-       load singlemolecule_pars1; % pars = {'1','2','3','4',' ',' '}; save([handles.fdata,'singlemolecule_pars1'], 'pars' );
-        set(handles.in1label,'String','mRNA 2 channel');
+       load([handles.fdata,'/','singlemolecule_pars1']); % pars = {'1','2','3','4',' ',' '}; save([handles.fdata,'singlemolecule_pars1'], 'pars' );
+        set(handles.in1label,'String','mRNA 1 channel');
         set(handles.in1,'String', pars(1));
-        set(handles.in2label,'String','mRNA 1 channel');
+        set(handles.in2label,'String','mRNA 2 channel');
         set(handles.in2,'String', pars(2));
        set(handles.in3label,'String','Nuclei channel');
         set(handles.in3,'String', pars(3));
@@ -317,7 +327,7 @@ function setup(hObject,eventdata,handles)
         set(handles.in6label,'String',' ');
         set(handles.in6,'String', pars(6));
             set(handles.VarButtonName,'String',''); 
-        dir = {
+        dir = {'Step 1: Max project nuclear channel';
        'Use imclose to homoginize nuclei before',...
        ' applying difference of Gaussian filter'} ;
         set(handles.directions,'String',dir); 
@@ -326,7 +336,7 @@ function setup(hObject,eventdata,handles)
  
  
    if handles.step == 2; 
-       load singlemolecule_pars2; %pars = {'70','.999','40','37','99','10'};  save([handles.fdata,'singlemolecule_pars2'], 'pars' );
+       load([handles.fdata,'/','singlemolecule_pars2']); %pars = {'70','.999','40','37','99','10'};  save([handles.fdata,'singlemolecule_pars2'], 'pars' );
         set(handles.in1label,'String','min Nuc size'); % number of pixels in filter (linear dimension of a square)
         set(handles.in1,'String', pars{1});
         set(handles.in2label,'String','Filter Strength'); % width of Gaussian in pixels
@@ -340,14 +350,12 @@ function setup(hObject,eventdata,handles)
         set(handles.in6label,'String','Erode fused');
         set(handles.in6,'String', pars{6});  
        dir = {
-        'Step 1: Nuclear Threshold convert to binary image without losing or fusing nuclei';
-        'Nuclear threshold chose a number from 0 to 1.';  
-        'Optional filters, choose 1 to use the indicated filter or 0 to skip filter';
-        'Evening filter requires an region diameter to sue in background subtraction'}; 
+        'Step 2: Find nuclei.  Uses a difference of Gaussian filter with';
+        'a min nucleus size filter and a aspect ratio filter'}; 
         set(handles.directions,'String',dir);
   end      
   if handles.step == 3;  % nuclei segmentation
-     load singlemolecule_pars3; % pars = {'45','3','2','','','',''};  save([handles.fdata,'singlemolecule_pars3'], 'pars' );
+    load([handles.fdata,'/','singlemolecule_pars3.mat']); % pars = {'45','3','2','','','',''};  save([handles.fdata,'singlemolecule_pars3'], 'pars' );
         set(handles.in1label,'String','thicken nuclei'); 
         set(handles.in1,'String', pars{1});
         set(handles.in2label,'String','thin boundaries');
@@ -368,8 +376,10 @@ function setup(hObject,eventdata,handles)
   
   
   if handles.step == 4;
-     load singlemolecule_pars4; % pars = {'.955','2','.98','07','20','10'}; save([handles.fdata,'singlemolecule_pars4'], 'pars' );
-               set(handles.in1label,'String','\alpha_E'); 
+     load([handles.fdata,'/','singlemolecule_pars4.mat']); 
+     % pars = {'.955','2','.98','.07','20','10'}; save([handles.fdata,'singlemolecule_pars4'], 'pars' );
+     
+        set(handles.in1label,'String','\alpha_E'); 
         set(handles.in1,'String', pars{1});
         set(handles.in2label,'String','\sigma_E');
         set(handles.in2,'String', pars{2});
@@ -426,7 +436,7 @@ function savePars_Callback(hObject, eventdata, handles)
      stp_label = get(handles.stepnum,'String');     
      savelabel = ['nucdot_exon_pars',stp_label];  
      % labeled as nucdot_parsi.mat where "i" is the step number 
-     save(savelabel, 'pars');        % export values
+     save([handles.fdata, savelabel], 'pars');        % export values
 
 
 
