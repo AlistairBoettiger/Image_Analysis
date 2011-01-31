@@ -11,8 +11,9 @@
     % w -- width of raster map
     % h -- height of raster map
 
-%     x = D2(:,1); y = D2(:,2); 
-%     h = 2050; w=h; h*w
+%    % Sample data for troubleshooting 
+    % x = D2(:,1); y = D2(:,2); 
+    % h = 2048; w=h; h*w
     
     function [rasterMap, inds] = vect2rast(x,y,w,h,scale)
     
@@ -20,7 +21,7 @@
             y = y/scale; 
             h = round(h/scale);
             w = round(w/scale); 
-            inds = round(y)+round(x)*h;  % convert x-y indexing to linear indexing   
+            inds = floor(y)+floor(x)*h;  % convert x-y indexing to linear indexing   
             rasterMap = false(h,w); 
             rasterMap(inds) = 1; % raster map of RNA1 positions
             

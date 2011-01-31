@@ -2,52 +2,39 @@
 %%                  im_singlemolecule.m  Multi Channel
 % Alistair Boettiger                                  Date Begund: 01/21/11
 % Levine Lab, UC Berkeley                        Version Complete:  
-% Functionally complete                             Last Modified: 01/21/11
+% In Progress                            Last Modified: 01/30/11
 % 
 % 
+%% Attribution:
+% Feel free to use modify and distribute this code provided that you
+% attribute Alistair Boettiger for development and abide by the provisions
+% of the creative commons license.  
 %
 %%  Important Notes:
 % % This version written for Mac.  To impliment in PC just change directory
 % paths from using '/' to using '\'.  
-%
 % 
-% % Load these default parameters into your file directory the first time
-% you run so that system does not give data upload errors.  
-%
-% pars = {'','','','',' ',' '}; save singlemolecule_pars0 pars 
+% % Before running, go scroll down to function setup and save the default
+% parameters to your data folder
 % 
 %
 %
-
-
-
 %% Overview:
 %
 %  This code uses DNA staining to associate cytoplasmic domains with the
-%  nearest nucleus.  High reslolution 
+%  nearest nucleus.  High reslolution mRNA FISH localizes transcripts
 %
 %
 %% Required subroutines
 % fxn_nuc_seg.m  -- segmentation filter, identifies all nuclei
 % fxn_nuc_reg.m -- expands nuclei to assign all regions of embryo to one
 % nuclei or another.
-%
-%
+% dotfinder.m -- locates dots using difference of gaussians and watershed
+% DuplicateDots.m -- compares layers to ID duplicate dots
+% vect2rast.m -- simple vector to raster conversion, called by DuplicateDots
 % 
 %% Updates: 
-%   Each step now has independent defaults (better in practice) 
-%   03/05/10 Rewrite code to use diff of gaussians and absolute intensities
-%       to ID nascent transcripts.  
-%   Rewrite code to use nuclei cell mask and both nascent transcripts and
-%         cytoplasmic transcripts to determine regions.  03/02/10  
-%   First exon to nascent comparison version developed: 
-%         im_singlemolecule.m 12/02/09
-%   multichannel edition developed 08/10/09
-%   Fixed bug in step 2 to enable histequalization and background
-%   subtraction
-% 07/27/10 changed Gaussian filter to use difference of Gaussian filtered
-% images rather than a single mexican hat (6x speedup). 
-% 08/07/10 moved to GIT version management
+
 
 
 function varargout = im_singlemolecule(varargin)
@@ -153,17 +140,20 @@ if step == 1;
     handles.mRNAchn2 = str2double(get(handles.in2,'String'));
     handles.NUCchn =  str2double(get(handles.in3,'String'));
     NucBlur = str2double(get(handles.in4,'String')); 
+    imsize = str2double(get(handles.in5,'String'));
+    
     
     nc = handles.NUCchn;
     
     [h,w] = size(handles.Im{1,1}{1});
-    m = 1024/h;
+    m = imsize/h;
     
     Zs = length(handles.Im); 
-    nuc = uint16(zeros(1024,1024,nc)); 
+    nuc = uint16(zeros(imsize,imsize,nc)); 
     for i=1:Zs
         nuc(:,:,i) = imresize(handles.Im{1,i}{nc},m); % 2
     end
+    
     In = max(nuc,[],3); % perform max project
     Nucs = uint8(  255*(1-double(In)./2^16)); % convert to uint8
     figure(1); clf; subplot(1,2,1); imshow(Nucs);
@@ -180,6 +170,7 @@ end
 
 
 % Step 2: Nuclear Threshold
+% uses fxn: fxn_nuc_seg
 if step == 2;
 % load appropriate data
     disp('running step 2...'); tic
@@ -201,6 +192,7 @@ if step == 2;
 end
  
 % Step 3: Get Region for each Nuclei
+% uses fxn  fxn_nuc_reg
 if step == 3;   
     Mthink = str2double(get(handles.in1,'String'));  % 
     Mthin = str2double(get(handles.in2,'String'));
@@ -225,13 +217,16 @@ if step == 3;
     
     handles.H2 = imresize(H1,2,'nearest');
     handles.Cell_bnd2 = Cell_bnd2; 
+    handles.Cell_bnd = Cell_bnd; 
+    handles.H1 = H1; 
     guidata(hObject, handles);  % update GUI data with new handles  
 end
 
 
 
  
-  % Step 4: Identify and count nascent transcripts 
+  % Step 4: Identify and count nascent transcripts  
+  % uses fxn dotfinder
  if step == 4   
 
      disp('running step 4...'); tic
@@ -253,7 +248,7 @@ end
        I2 = handles.Im{1,i}{handles.mRNAchn1};
      DotData{i} = dotfinder(I2,alphaE,alphaI,Ex,Ix,min_int,min_size);
    end
-     save([handles.fdata,'/','test']);
+     % save([handles.fdata,'/','test']);
     % load([handles.fdata,'/','test']);
    
    handles.DotData = DotData;
@@ -263,6 +258,149 @@ end
  end
 
 
+ % Step 5: Identify overlapping dots. 
+ % uses fxn DuplicateDots.m, which calls fxn vect2rast.m
+ if step == 5 
+     
+     disp('running step 5...');
+     
+     tic
+     % This requires square images as written.  
+     
+        scale = str2double(get(handles.in1,'String')); % shrinking factor to increase speed 
+        bins = str2double(get(handles.in2,'String'));
+        showim = str2double(get(handles.in3,'String')); 
+        % This is also the minimum distance that we consider overlap in two
+        % z-adjacent images.  
+        
+        % Defining some variables we will need
+        Zs = handles.Zs;  % number of z-sections
+        DotData = handles.DotData; % Dot data for each section (from prev)
+        [h,w] = size(handles.Im{1,1}{1});  % original image dimensions 
+        NucLabeled = handles.H1; % our nuclei label matrix
+        [hn,wn] = size(NucLabeled);  % size
+        Nnucs = max(NucLabeled(:)); % total nuclei 
+        
+        
+        % rescale label matrix to match scale of overlapped dot data
+        % This also speeds up the code.  
+        NucLabeled = imresize(NucLabeled,h/hn/scale,'nearest');
+        NucLabeled(NucLabeled<0) = 0; % troubleshooting from rescaling.  shouldn't be necessary. 
+           
+        % Get list of all pixels associated with each nucleus               
+        imdata2 = regionprops(NucLabeled,'PixelIdxList','Area');
+        
+        
+ % % $$$$$$$$$ This loop also checks for vertically duplicated dots that have    $$$$$$$$$$ % % 
+        % centroids which overlap by 'scale' pixels or less.  
+        
+        % initialize a few things before looping through sections;  
+        mRNA_cnt = zeros(1,Nnucs);  
+        mRNA_den = zeros(1,Nnucs); 
+        inds_Z = cell(Zs,1);
+        HRinds = cell(Zs,1); 
+        for z = 1:Zs           
+            if z == 1
+                D1 = []; % there is no previous layer if z = 1; 
+            else
+                D1 = DotData{z-1}; % all dots in the previous layer
+            end
+                D2 = DotData{z}; % all dots in this layer
+                inds_Z{z} = DuplicateDots(D1,D2,scale,h,w)'; % custom fxn. 
+                
+               % for plotting only; 
+                rna_x1 = DotData{z}(:,1);%  = centRNA1(RNA_in1(:,1),1);       
+                rna_y1 = DotData{z}(:,2); % centRNA1(RNA_in1(:,1),2);
+                HRinds{z} =floor(rna_y1)+floor(rna_x1)*h;  % linear indices of all mRNA located
+        end    
+         inds = [inds_Z{:}];  % stich these together
+
+  % % $$$$$$$     % Loop through nuclei counting total dots in region   $$$$$$$$$ % %  
+        C=NucLabeled;
+        for i=1:Nnucs
+            mRNA_cnt(i) = length(intersect(imdata2(i).PixelIdxList,inds));
+            C(C==i) = mRNA_cnt(i);
+             mRNA_den(i) = mRNA_cnt(i)/length(imdata2(i).PixelIdxList)  ;  
+        end
+        % normalize density to the average cell area
+        mRNA_sadj = mRNA_den*mean([imdata2.Area]);
+        
+        % more stats  
+        m_cnt = mean(mRNA_cnt);
+        s_cnt = std(mRNA_cnt);
+        m_den = mean(mRNA_sadj);
+        s_den = std(mRNA_sadj);
+        
+        % Plotting 
+        colordef white; 
+        figure(5); clf; hist(mRNA_cnt,bins); set(gcf,'color','w');
+        title(['mRNA per cell. mean = ',num2str(m_cnt,4),' std=',num2str(s_cnt,4)]); 
+        figure(4); clf; hist(mRNA_sadj,bins);set(gcf,'color','w');
+        title(['Cell size adjusted mRNA per cell. mean = ',...
+              num2str(m_den,4),' std=',num2str(s_den,4)]); 
+     
+          
+          % 2048x2048 resolution depth labeled dots with cell boundaries
+       if showim ==1
+         % doesn't use overlap elimination 
+            % depth color coding of mRNA transcripts
+            [hn,wn] = size(handles.In);   
+            [h2,w2] = size(NucLabeled);   
+            In = imresize(handles.In,h/hn,'nearest'); % resize
+            In = uint8(double(In)/2^16*255); % convert to uint8
+            Cell_bnd = uint8(255*imresize(handles.Cell_bnd,h/hn,'nearest'));
+        
+             % save([handles.fdata,'/','test']);
+            
+            Ib = uint8(zeros(h,w,3));
+            Ib(:,:,1) = Cell_bnd; 
+            Ib(:,:,2) = Cell_bnd; 
+            Ib(:,:,3) = In + Cell_bnd;
+            Iv = Ib;
+            col = spring(Zs);
+           for z=1:Zs;
+               [ys,xs] = ind2sub([h2,w2],inds_Z{z});
+               xs = floor(xs*h/h2 + h/h2*(1-rand(1,length(xs))));
+               ys = floor(ys*h/h2 + h/h2*(1-rand(1,length(ys))));
+                % randomly reposition within the uncertainty created by
+                % downsampling.  
+               xs(xs>w) = w; % correct index overshoot. 
+               ys(ys>h) = h; 
+               hr_ind = sub2ind([h,w],ys,xs); % convert to linear index
+               I1 = false(h,w);
+               I1(hr_ind) = 1; % place all dots on array
+               % Paint different color for dots of each z-plane.  
+               Iv(:,:,1) = Iv(:,:,1) + uint8(col(z,1)*I1*255);  
+               Iv(:,:,2) =Iv(:,:,2) +  uint8(col(z,2)*I1*255);
+               Iv(:,:,3) = Iv(:,:,3) + uint8(col(z,3)*I1*255);
+           end
+            figure(7); clf; colormap(col); colordef black; set(gcf,'color','k'); 
+            imshow(Iv); colorbar; caxis([1,Zs]);
+       end
+       
+    %  save([handles.fdata,'/','test']);
+    % load([handles.fdata,'/','test']);
+        
+        handles.mRNA_cnt = mRNA_cnt; % mRNA count per cell
+        handles.mRNA_den = mRNA_den; % mRNA density per cell
+        handles.mRNA_sadj = mRNA_sadj; % size adjusted mRNA counts
+        handles.mRNA_ind = inds_Z;     % inidices of mRNA per layer
+        handles.NucLabeled = NucLabeled; % indices and scale that match mRNA counts
+        
+        toc     
+ end
+ 
+ 
+ % export data
+ if step == 6
+ tic
+ 
+ 
+ toc
+     
+ end
+ 
+ 
 %========================================================================%
  %  end of functional processing script
  % The rest of this code is GUI manipulations
@@ -308,14 +446,12 @@ function setup(hObject,eventdata,handles)
 %         set(handles.in6,'String',' ');
 %         set(handles.in6,'BackgroundColor',[.7 .7 .7]);        
         dir = {
-       'File should be a multichannel .tif image. Indicate which channel';
-             '(1-3) contains mRNA and which contains nuclei. ';
-             'Leave entry blank if no channel data.'; 
-             'Also choose a file name to export data to.'} ;
+       'Load lsm file and display all layers in stack in 3 color';
+       'red will be channel 1, green chn 2, blue chn 3'} ;
         set(handles.directions,'String',dir); 
  end
   if handles.step == 1; 
-       load([handles.fdata,'/','singlemolecule_pars1']); % pars = {'1','2','3','4',' ',' '}; save([handles.fdata,'singlemolecule_pars1'], 'pars' );
+       load([handles.fdata,'/','singlemolecule_pars1']); % pars = {'1','2','3','4','512',' '}; save([handles.fdata,'singlemolecule_pars1'], 'pars' );
         set(handles.in1label,'String','mRNA 1 channel');
         set(handles.in1,'String', pars(1));
         set(handles.in2label,'String','mRNA 2 channel');
@@ -324,14 +460,13 @@ function setup(hObject,eventdata,handles)
         set(handles.in3,'String', pars(3));
         set(handles.in4label,'String','Nuclear Blur');
         set(handles.in4,'String', pars(4));
-        set(handles.in5label,'String',' ');
+        set(handles.in5label,'String','Working Size');
         set(handles.in5,'String', pars(5));
         set(handles.in6label,'String',' ');
         set(handles.in6,'String', pars(6));
-            set(handles.VarButtonName,'String',''); 
-        dir = {
-       'Use imclose to homoginize nuclei before',...
-       ' applying difference of Gaussian filter'} ;
+        %    set(handles.VarButtonName,'String',''); 
+        dir = {'Step 1: Max project nuclear channel';
+       'Use imclose to homoginize nuclei before applying difference of Gaussian filter'} ;
         set(handles.directions,'String',dir); 
  end
  
@@ -352,7 +487,8 @@ function setup(hObject,eventdata,handles)
         set(handles.in6label,'String','Erode fused');
         set(handles.in6,'String', pars{6});  
        dir = {
-        'Step 2: Find nuclei.  Uses a difference of Gaussian filter }; 
+        'Step 2: Find nuclei.  Uses a difference of Gaussian filter with';
+        'a min nucleus size filter and a aspect ratio filter'}; 
         set(handles.directions,'String',dir);
   end      
   if handles.step == 3;  % nuclei segmentation
@@ -393,12 +529,32 @@ function setup(hObject,eventdata,handles)
         set(handles.in6label,'String','min dot size');
         set(handles.in6,'String', pars{6});
         set(handles.VarButtonName,'String','Manual Reg Select');
-   dir = {'Step 5: identify and count nascent transcripts of mRNA1.';
+   dir = {'Step 4: identify and count nascent transcripts of mRNA1.';
          'Uses Difference of Gaussian Filter \alpha_E*exp(-x^2/\sigma_E) - alpha_I*exp(-x^2/\sigma_I)'};
   set(handles.directions,'String',dir); 
   end
   
-  
+    if handles.step == 5;
+     load([handles.fdata,'/','singlemolecule_pars5.mat']); 
+     % pars = {'3','50','0',' ',' ',' '}; save([handles.fdata,'singlemolecule_pars5'], 'pars' );
+     
+        set(handles.in1label,'String','min overlap'); 
+        set(handles.in1,'String', pars{1});
+        set(handles.in2label,'String','bins');
+        set(handles.in2,'String', pars{2});
+        set(handles.in3label,'String','Show high res im?'); 
+        set(handles.in3,'String', pars{3}); 
+        set(handles.in4label,'String',' ');
+        set(handles.in4,'String', pars{4});
+        set(handles.in5label,'String',' ');
+        set(handles.in5,'String', pars{5});
+        set(handles.in6label,'String',' ');
+        set(handles.in6,'String', pars{6});
+        set(handles.VarButtonName,'String','Manual Reg Select');
+   dir = {'Step 5: Count total mRNA in each nucleus across layers';
+         'Compares centroids adjacent slices to remove duplicates.'};
+  set(handles.directions,'String',dir); 
+  end
 
 
   

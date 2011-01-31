@@ -10,15 +10,12 @@
 
 function inds_out = DuplicateDots(D1,D2,scale,h,w)
 
+        D1 = DotData{j-1}; % all dots in the previous layer
+        D2 = DotData{j}; % all dots in this layer
 
-        if isempty(D1)
-            [R2,inds2] = vect2rast(D2(:,1),D2(:,2),h,w,scale);
-            inds_out = inds2;
-        else
- 
-%         % Plotting for troubleshooting: circles    
-%         figure(1); clf; plot(D1(:,1),D1(:,2),'ro'); hold on;
-%         plot(D2(:,1),D2(:,2),'go');
+
+        figure(1); clf; plot(D1(:,1),D1(:,2),'ro'); hold on;
+        plot(D2(:,1),D2(:,2),'go');
 
 
        % h = 2048; w = 2048; % localize to single pixel (50 nm) resolution
@@ -41,5 +38,5 @@ function inds_out = DuplicateDots(D1,D2,scale,h,w)
         inddoubles = find(overlap==3);  % linear indices of doubles 
         inds_out = setdiff(inds2,inddoubles);
 
-        end
+
 
