@@ -40,14 +40,14 @@ function cent = dotfinder(I,alphaE,alphaI,Ex,Ix,min_int,min_size)
   outims = alphaE.*outE - alphaI*outI;
   
   bw2 = im2bw(outims,graythresh(outims)); %Automatic threshold calculated using Otsu's method.  
- % figure(1); clf; imshow(bw2);
+  %figure(1); clf; imshow(bw2(1:300,1:300));
   D = -bwdist(~bw2);
   L = watershed(D);
   BW = bw2; BW(L==0)=0; 
-  %figure(2); clf; imshow(BW);
+  % figure(2); clf; imshow(BW(1:300,1:300));
   
   bw3 = im2bw(I,min_int);   
-  bw2 = bw3 & BW; % Must be above threshold and shape selected by LALI filter
+  bw2 = bw3 & BW; % Must be above threshold and shape selected by LALI filter and watershedding
   bw2 = bwareaopen(bw2,min_size);% remove objects less than n pixels in size 
   % figure(1); clf; imshow(bw2);       
   % save([fdata,'/','test2']);

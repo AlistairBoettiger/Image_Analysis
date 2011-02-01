@@ -260,7 +260,8 @@ end
      
         scale = str2double(get(handles.in1,'String')); % shrinking factor to increase speed 
         bins = str2double(get(handles.in2,'String'));
-        showim = str2double(get(handles.in3,'String')); 
+        showim = str2double(get(handles.in3,'String')); % plot all mRNA locations with depth filter results
+        showraw = str2double(get(handles.in4,'String')); % polt raw image with labels.   
         % This is also the minimum distance that we consider overlap in two
         % z-adjacent images.  
         
@@ -343,6 +344,7 @@ end
         
              % save([handles.fdata,'/','test']);
             
+             Idot = cell(1,Zs); 
             Ib = uint8(zeros(h,w,3));
             Ib(:,:,1) = Cell_bnd; 
             Ib(:,:,2) = Cell_bnd; 
@@ -364,13 +366,32 @@ end
                Iv(:,:,1) = Iv(:,:,1) + uint8(col(z,1)*I1*255);  
                Iv(:,:,2) =Iv(:,:,2) +  uint8(col(z,2)*I1*255);
                Iv(:,:,3) = Iv(:,:,3) + uint8(col(z,3)*I1*255);
+               Idot{z} = I1; 
            end
             figure(7); clf; colormap(col); colordef black; set(gcf,'color','k'); 
             imshow(Iv); colorbar; caxis([1,Zs]);
        end
        
-    %  save([handles.fdata,'/','test']);
+    %        save([handles.fdata,'/','test']);
     % load([handles.fdata,'/','test']);
+       
+       
+       if isnan(showraw) == 0 && showim == 1;  
+           figure(6); clf;
+               I1 = zeros(h2,w2);
+               I1(inds_Z{showraw}) = 1; % place all dots on array 
+               I2 = zeros(h2,w2);
+               I2(inds_Z{showraw+1}) = 1; % place all dots on array 
+               I1 = imresize(I1,h/h2);
+               I2 = imresize(I2,h/h2); 
+           Iz = uint16(2^8*Ib); % up convert to uint16
+             Iz(:,:,1) = Iz(:,:,1) + handles.Im{1,showraw}{handles.mRNAchn1} + uint16(2^16*I1);
+           Iz(:,:,2) = Iz(:,:,2) + handles.Im{1,showraw+1}{handles.mRNAchn1}+ uint16(2^16*I2);
+%            Iz(:,:,1) = Iz(:,:,1) + handles.Im{1,showraw}{handles.mRNAchn1} + uint16(2^16*Idot{showraw});
+%            Iz(:,:,2) = Iz(:,:,2) + handles.Im{1,showraw+1}{handles.mRNAchn1}+ uint16(2^16*Idot{showraw+1});
+           imshow(Iz); 
+       end
+ 
         
         handles.mRNA_cnt = mRNA_cnt; % mRNA count per cell
         handles.mRNA_den = mRNA_den; % mRNA density per cell
@@ -551,7 +572,7 @@ function setup(hObject,eventdata,handles)
         set(handles.in2,'String', pars{2});
         set(handles.in3label,'String','Show high res im?'); 
         set(handles.in3,'String', pars{3}); 
-        set(handles.in4label,'String',' ');
+        set(handles.in4label,'String','Show chn x data');
         set(handles.in4,'String', pars{4});
         set(handles.in5label,'String',' ');
         set(handles.in5,'String', pars{5});

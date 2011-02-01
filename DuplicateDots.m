@@ -23,9 +23,9 @@ function inds_out = DuplicateDots(D1,D2,scale,h,w)
 
        % h = 2048; w = 2048; % localize to single pixel (50 nm) resolution
         % could do Gaussian fitting and localize to better than this).  
-
         [R1,inds1] = vect2rast(D1(:,1),D1(:,2),h,w,scale);
         [R2,inds2] = vect2rast(D2(:,1),D2(:,2),h,w,scale);
+
 
 %        % Labeling and plotting overlapped pixels:
 %        figure(2); clf; imagesc(R1+2*R2);

@@ -19,8 +19,8 @@
     
             x = x/scale; 
             y = y/scale; 
-            h = round(h/scale);
-            w = round(w/scale); 
+            h = ceil(h/scale);
+            w = ceil(w/scale); 
             inds = floor(y)+floor(x)*h;  % convert x-y indexing to linear indexing   
             rasterMap = false(h,w); 
             rasterMap(inds) = 1; % raster map of RNA1 positions

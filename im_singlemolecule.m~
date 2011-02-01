@@ -85,36 +85,22 @@ function im_singlemolecule_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to im_singlemolecule (see VARARGIN)
    handles.output = hObject; % Choose default command line output for im_nucdots_v5
-  
-   
-   
    
   % Some initial setup 
-      % Folder to save .mat data files in.  
-    handles.fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
-  
-  
-   handles.dotdata = zeros(1,1000);  % storage array for FACs measured
-   handles.step = 0;  % starting step is step 0 
+      % Folder to save .mat data files in for normal script function.  
+     handles.fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
+     handles.step = 0;  % starting step is step 0 
      set(handles.stepnum,'String',handles.step); % change step label in GUI
-    handles.output = hObject; % update handles object with new step number
-    guidata(hObject, handles);  % update GUI data with new handles
+     handles.output = hObject; % update handles object with new step number
+     guidata(hObject, handles);  % update GUI data with new handles
      setup(hObject, eventdata, handles); % set up labels and default values for new step
-    guidata(hObject, handles); % update GUI data with new labels
-
-    
-
-    
-    
+     guidata(hObject, handles); % update GUI data with new labels        
     
 % Update handles structure
 guidata(hObject, handles);
 
 % UIWAIT makes im_singlemolecule wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
-
-
-
 
 
 
@@ -157,7 +143,7 @@ if step == 1;
     end
     
     In = max(nuc,[],3); % perform max project
-    Nucs = uint8(  255*(1-double(In)./2^16)); % convert to uint8
+    Nucs = uint8(double(In)/2^16*255); % convert to uint8
     figure(1); clf; subplot(1,2,1); imshow(Nucs);
     Nucs = imclose(Nucs,strel('disk',NucBlur));
     figure(1);subplot(1,2,2); imshow(Nucs);
@@ -196,6 +182,8 @@ end
 % Step 3: Get Region for each Nuclei
 % uses fxn  fxn_nuc_reg
 if step == 3;   
+    tic
+    disp('running step 3...');
     Mthink = str2double(get(handles.in1,'String'));  % 
     Mthin = str2double(get(handles.in2,'String'));
     Imnn = str2double(get(handles.in3,'String'));
@@ -222,6 +210,7 @@ if step == 3;
     handles.Cell_bnd = Cell_bnd; 
     handles.H1 = H1; 
     guidata(hObject, handles);  % update GUI data with new handles  
+    toc
 end
 
 
@@ -271,7 +260,8 @@ end
      
         scale = str2double(get(handles.in1,'String')); % shrinking factor to increase speed 
         bins = str2double(get(handles.in2,'String'));
-        showim = str2double(get(handles.in3,'String')); 
+        showim = str2double(get(handles.in3,'String')); % plot all mRNA locations with depth filter results
+        showraw = str2double(get(handles.in4,'String')); % polt raw image with labels.   
         % This is also the minimum distance that we consider overlap in two
         % z-adjacent images.  
         
@@ -309,11 +299,7 @@ end
             end
                 D2 = DotData{z}; % all dots in this layer
                 inds_Z{z} = DuplicateDots(D1,D2,scale,h,w)'; % custom fxn. 
-                
-               % for plotting only; 
-                rna_x1 = DotData{z}(:,1);%  = centRNA1(RNA_in1(:,1),1);       
-                rna_y1 = DotData{z}(:,2); % centRNA1(RNA_in1(:,1),2);
-                HRinds{z} =floor(rna_y1)+floor(rna_x1)*h;  % linear indices of all mRNA located
+                % Returns indices in layer 2 that are not also in layer 1. 
         end    
          inds = [inds_Z{:}];  % stich these together
 
@@ -354,6 +340,7 @@ end
         
              % save([handles.fdata,'/','test']);
             
+             Idot = cell(1,Zs); 
             Ib = uint8(zeros(h,w,3));
             Ib(:,:,1) = Cell_bnd; 
             Ib(:,:,2) = Cell_bnd; 
@@ -375,13 +362,32 @@ end
                Iv(:,:,1) = Iv(:,:,1) + uint8(col(z,1)*I1*255);  
                Iv(:,:,2) =Iv(:,:,2) +  uint8(col(z,2)*I1*255);
                Iv(:,:,3) = Iv(:,:,3) + uint8(col(z,3)*I1*255);
+               Idot{z} = I1; 
            end
             figure(7); clf; colormap(col); colordef black; set(gcf,'color','k'); 
             imshow(Iv); colorbar; caxis([1,Zs]);
        end
        
-    %  save([handles.fdata,'/','test']);
+    %        save([handles.fdata,'/','test']);
     % load([handles.fdata,'/','test']);
+       
+       
+       if isnan(showraw) == 0 && showim == 1;  
+           figure(6); clf;
+               I1 = zeros(h2,w2);
+               I1(inds_Z{showraw}) = 1; % place all dots on array 
+               I2 = zeros(h2,w2);
+               I2(inds_Z{showraw+1}) = 1; % place all dots on array 
+               I1 = imresize(I1,h/h2);
+               I2 = imresize(I2,h/h2); 
+           Iz = uint16(2^8*Ib); % up convert to uint16
+             Iz(:,:,1) = Iz(:,:,1) + handles.Im{1,showraw}{handles.mRNAchn1} + uint16(2^16*I1);
+           Iz(:,:,2) = Iz(:,:,2) + handles.Im{1,showraw+1}{handles.mRNAchn1}+ uint16(2^16*I2);
+%            Iz(:,:,1) = Iz(:,:,1) + handles.Im{1,showraw}{handles.mRNAchn1} + uint16(2^16*Idot{showraw});
+%            Iz(:,:,2) = Iz(:,:,2) + handles.Im{1,showraw+1}{handles.mRNAchn1}+ uint16(2^16*Idot{showraw+1});
+           imshow(Iz); 
+       end
+ 
         
         handles.mRNA_cnt = mRNA_cnt; % mRNA count per cell
         handles.mRNA_den = mRNA_den; % mRNA density per cell
@@ -389,6 +395,7 @@ end
         handles.mRNA_ind = inds_Z;     % inidices of mRNA per layer
         handles.NucLabeled = NucLabeled; % indices and scale that match mRNA counts
         
+        guidata(hObject, handles);     
         toc     
  end
  
@@ -396,17 +403,20 @@ end
  % export data
  if step == 6
  tic
-    fout = get(handles.in1,'String');
-    fname = get(handles.in2,'String');
+    fout = get(handles.fout,'String');
+    fname = get(handles.in1,'String');
+    disp(['exporting data to ',fout,fname,'...']); 
     
     mRNA_cnt = handles.mRNA_cnt;
     mRNA_den = handles.mRNA_den;
     mRNA_ind = handles.mRNA_ind;
-    mRAN_sadj = handles.mRNA_sadj;
+    mRNA_sadj = handles.mRNA_sadj;
     DotData = handles.DotData;
     
-    save([fout,fname]
+    save([fout,fname],'mRNA_cnt','mRNA_den','mRNA_ind','mRNA_sadj','DotData'); 
+    disp('data saved'); 
     
+    guidata(hObject, handles); 
  toc
      
  end
@@ -477,7 +487,10 @@ function setup(hObject,eventdata,handles)
         set(handles.in6,'String', pars(6));
         %    set(handles.VarButtonName,'String',''); 
         dir = {'Step 1: Max project nuclear channel';
-       'Use imclose to homoginize nuclei before applying difference of Gaussian filter'} ;
+            'red will be channel 1, green chn 2, blue chn 3';
+       'Use imclose to homoginize nuclei before applying difference of Gaussian filter';
+       'Blur removes artificats from heterochromatin'; 
+       'Image will be scaled down to "working size" for faster execution'} ;
         set(handles.directions,'String',dir); 
  end
  
@@ -555,7 +568,7 @@ function setup(hObject,eventdata,handles)
         set(handles.in2,'String', pars{2});
         set(handles.in3label,'String','Show high res im?'); 
         set(handles.in3,'String', pars{3}); 
-        set(handles.in4label,'String',' ');
+        set(handles.in4label,'String','Show chn x data');
         set(handles.in4,'String', pars{4});
         set(handles.in5label,'String',' ');
         set(handles.in5,'String', pars{5});
@@ -571,15 +584,15 @@ function setup(hObject,eventdata,handles)
   
   if handles.step == 6;
      load([handles.fdata,'/','singlemolecule_pars6.mat']); 
-     % pars = {'/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/Enhancer_Modeling/Data/',' ',' ',' ',' ',' '}; save([handles.fdata,'singlemolecule_pars6'], 'pars' );
+     % pars = {' ',' ',' ',' ',' ',' '}; save([handles.fdata,'singlemolecule_pars6'], 'pars' );
      
-     fname = str2double(get(handles.froot,'String'));
+     fname = get(handles.froot,'String');
      
-        set(handles.in1label,'String','Save folder'); 
-        set(handles.in1,'String', pars{1});
-        set(handles.in2label,'String','Save Name');
-        set(handles.in2,'String', fname);
-        set(handles.in3label,'String','Show high res im?'); 
+        set(handles.in1label,'String','Save Name'); 
+        set(handles.in1,'String', fname);
+        set(handles.in2label,'String',' ');
+        set(handles.in2,'String', pars{2});
+        set(handles.in3label,'String',' '); 
         set(handles.in3,'String', pars{3}); 
         set(handles.in4label,'String',' ');
         set(handles.in4,'String', pars{4});
@@ -588,8 +601,7 @@ function setup(hObject,eventdata,handles)
         set(handles.in6label,'String',' ');
         set(handles.in6,'String', pars{6});
         set(handles.VarButtonName,'String','Manual Reg Select');
-   dir = {'Step 5: Count total mRNA in each nucleus across layers';
-         'Compares centroids adjacent slices to remove duplicates.'};
+   dir = {'Step 6: Save Data'};
   set(handles.directions,'String',dir); 
   end
   
