@@ -85,36 +85,22 @@ function im_singlemolecule_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to im_singlemolecule (see VARARGIN)
    handles.output = hObject; % Choose default command line output for im_nucdots_v5
-  
-   
-   
    
   % Some initial setup 
-      % Folder to save .mat data files in.  
-    handles.fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
-  
-  
-   handles.dotdata = zeros(1,1000);  % storage array for FACs measured
-   handles.step = 0;  % starting step is step 0 
+      % Folder to save .mat data files in for normal script function.  
+     handles.fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
+     handles.step = 0;  % starting step is step 0 
      set(handles.stepnum,'String',handles.step); % change step label in GUI
-    handles.output = hObject; % update handles object with new step number
-    guidata(hObject, handles);  % update GUI data with new handles
+     handles.output = hObject; % update handles object with new step number
+     guidata(hObject, handles);  % update GUI data with new handles
      setup(hObject, eventdata, handles); % set up labels and default values for new step
-    guidata(hObject, handles); % update GUI data with new labels
-
-    
-
-    
-    
+     guidata(hObject, handles); % update GUI data with new labels        
     
 % Update handles structure
 guidata(hObject, handles);
 
 % UIWAIT makes im_singlemolecule wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
-
-
-
 
 
 
@@ -157,7 +143,7 @@ if step == 1;
     end
     
     In = max(nuc,[],3); % perform max project
-    Nucs = uint8(  255*(1-double(In)./2^16)); % convert to uint8
+    Nucs = uint8(double(In)/2^16*255); % convert to uint8
     figure(1); clf; subplot(1,2,1); imshow(Nucs);
     Nucs = imclose(Nucs,strel('disk',NucBlur));
     figure(1);subplot(1,2,2); imshow(Nucs);
@@ -196,6 +182,8 @@ end
 % Step 3: Get Region for each Nuclei
 % uses fxn  fxn_nuc_reg
 if step == 3;   
+    tic
+    disp('running step 3...');
     Mthink = str2double(get(handles.in1,'String'));  % 
     Mthin = str2double(get(handles.in2,'String'));
     Imnn = str2double(get(handles.in3,'String'));
@@ -222,6 +210,7 @@ if step == 3;
     handles.Cell_bnd = Cell_bnd; 
     handles.H1 = H1; 
     guidata(hObject, handles);  % update GUI data with new handles  
+    toc
 end
 
 
@@ -389,6 +378,7 @@ end
         handles.mRNA_ind = inds_Z;     % inidices of mRNA per layer
         handles.NucLabeled = NucLabeled; % indices and scale that match mRNA counts
         
+        guidata(hObject, handles);     
         toc     
  end
  
@@ -396,8 +386,20 @@ end
  % export data
  if step == 6
  tic
- 
- 
+    fout = get(handles.fout,'String');
+    fname = get(handles.in1,'String');
+    disp(['exporting data to ',fout,fname,'...']); 
+    
+    mRNA_cnt = handles.mRNA_cnt;
+    mRNA_den = handles.mRNA_den;
+    mRNA_ind = handles.mRNA_ind;
+    mRNA_sadj = handles.mRNA_sadj;
+    DotData = handles.DotData;
+    
+    save([fout,fname],'mRNA_cnt','mRNA_den','mRNA_ind','mRNA_sadj','DotData'); 
+    disp('data saved'); 
+    
+    guidata(hObject, handles); 
  toc
      
  end
@@ -468,7 +470,10 @@ function setup(hObject,eventdata,handles)
         set(handles.in6,'String', pars(6));
         %    set(handles.VarButtonName,'String',''); 
         dir = {'Step 1: Max project nuclear channel';
-       'Use imclose to homoginize nuclei before applying difference of Gaussian filter'} ;
+            'red will be channel 1, green chn 2, blue chn 3';
+       'Use imclose to homoginize nuclei before applying difference of Gaussian filter';
+       'Blur removes artificats from heterochromatin'; 
+       'Image will be scaled down to "working size" for faster execution'} ;
         set(handles.directions,'String',dir); 
  end
  
@@ -536,7 +541,7 @@ function setup(hObject,eventdata,handles)
   set(handles.directions,'String',dir); 
   end
   
-    if handles.step == 5;
+  if handles.step == 5;
      load([handles.fdata,'/','singlemolecule_pars5.mat']); 
      % pars = {'3','50','0',' ',' ',' '}; save([handles.fdata,'singlemolecule_pars5'], 'pars' );
      
@@ -560,20 +565,28 @@ function setup(hObject,eventdata,handles)
 
 
   
-%   if handles.step == 9 
-%           expname = get(handles.froot,'String');
-%         set(handles.in1label,'String','Save name');
-%         set(handles.in1,'String',expname);
-%             set(handles.in2label,'String', 'Flip Horizontal?');
-%         set(handles.in2,'String', '0');
-%         set(handles.in3label,'String','Flip Vertical?');
-%         set(handles.in3,'String', '0');
-%         dir = {'Step 9: Data Export'; 'Choose an export filename and save data';
-%         'images and all data from step 8 are saved'};
-%     set(handles.directions,'String',dir);  
-%   end
-  
- 
+  if handles.step == 6;
+     load([handles.fdata,'/','singlemolecule_pars6.mat']); 
+     % pars = {' ',' ',' ',' ',' ',' '}; save([handles.fdata,'singlemolecule_pars6'], 'pars' );
+     
+     fname = get(handles.froot,'String');
+     
+        set(handles.in1label,'String','Save Name'); 
+        set(handles.in1,'String', fname);
+        set(handles.in2label,'String',' ');
+        set(handles.in2,'String', pars{2});
+        set(handles.in3label,'String',' '); 
+        set(handles.in3,'String', pars{3}); 
+        set(handles.in4label,'String',' ');
+        set(handles.in4,'String', pars{4});
+        set(handles.in5label,'String',' ');
+        set(handles.in5,'String', pars{5});
+        set(handles.in6label,'String',' ');
+        set(handles.in6,'String', pars{6});
+        set(handles.VarButtonName,'String','Manual Reg Select');
+   dir = {'Step 6: Save Data'};
+  set(handles.directions,'String',dir); 
+  end
   
 guidata(hObject, handles); % update GUI data with new labels
 
@@ -639,7 +652,7 @@ guidata(hObject, handles); % save for access by other functions
 function [handles] = imload(hObject, eventdata, handles)
 handles.fin = get(handles.source,'String'); % folder
 handles.fname = get(handles.froot,'String'); % embryo name
-handles.emb = get(handles.embin,'String'); % embryo number
+% handles.emb = get(handles.embin,'String'); % embryo number
 
 filename = [handles.fin,'/',handles.fname];
 % load images

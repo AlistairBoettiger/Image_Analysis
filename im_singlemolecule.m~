@@ -8,19 +8,21 @@
 %% Attribution:
 % Feel free to use modify and distribute this code provided that you
 % attribute Alistair Boettiger for development and abide by the provisions
-% of the creative commons license.  
+% of the  Creative Commons License 3.0, BY-NC-SA.
+% http://creativecommons.org/licenses/by-nc-sa/3.0/.
+%
+%
 %
 %%  Important Notes:
-% % This version written for Mac.  To impliment in PC just change directory
+%  This version written for Mac.  To impliment in PC just change directory
 % paths from using '/' to using '\'.  
 % 
-% % Before running, go scroll down to function setup and save the default
+%  Before running, go scroll down to function setup and save the default
 % parameters to your data folder
 % 
 %
 %
 %% Overview:
-%
 %  This code uses DNA staining to associate cytoplasmic domains with the
 %  nearest nucleus.  High reslolution mRNA FISH localizes transcripts
 %
@@ -34,7 +36,7 @@
 % vect2rast.m -- simple vector to raster conversion, called by DuplicateDots
 % 
 %% Updates: 
-
+% 
 
 
 function varargout = im_singlemolecule(varargin)
@@ -394,8 +396,17 @@ end
  % export data
  if step == 6
  tic
- 
- 
+    fout = get(handles.in1,'String');
+    fname = get(handles.in2,'String');
+    
+    mRNA_cnt = handles.mRNA_cnt;
+    mRNA_den = handles.mRNA_den;
+    mRNA_ind = handles.mRNA_ind;
+    mRAN_sadj = handles.mRNA_sadj;
+    DotData = handles.DotData;
+    
+    save([fout,fname]
+    
  toc
      
  end
@@ -534,7 +545,7 @@ function setup(hObject,eventdata,handles)
   set(handles.directions,'String',dir); 
   end
   
-    if handles.step == 5;
+  if handles.step == 5;
      load([handles.fdata,'/','singlemolecule_pars5.mat']); 
      % pars = {'3','50','0',' ',' ',' '}; save([handles.fdata,'singlemolecule_pars5'], 'pars' );
      
@@ -558,20 +569,29 @@ function setup(hObject,eventdata,handles)
 
 
   
-%   if handles.step == 9 
-%           expname = get(handles.froot,'String');
-%         set(handles.in1label,'String','Save name');
-%         set(handles.in1,'String',expname);
-%             set(handles.in2label,'String', 'Flip Horizontal?');
-%         set(handles.in2,'String', '0');
-%         set(handles.in3label,'String','Flip Vertical?');
-%         set(handles.in3,'String', '0');
-%         dir = {'Step 9: Data Export'; 'Choose an export filename and save data';
-%         'images and all data from step 8 are saved'};
-%     set(handles.directions,'String',dir);  
-%   end
-  
- 
+  if handles.step == 6;
+     load([handles.fdata,'/','singlemolecule_pars6.mat']); 
+     % pars = {'/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/Enhancer_Modeling/Data/',' ',' ',' ',' ',' '}; save([handles.fdata,'singlemolecule_pars6'], 'pars' );
+     
+     fname = str2double(get(handles.froot,'String'));
+     
+        set(handles.in1label,'String','Save folder'); 
+        set(handles.in1,'String', pars{1});
+        set(handles.in2label,'String','Save Name');
+        set(handles.in2,'String', fname);
+        set(handles.in3label,'String','Show high res im?'); 
+        set(handles.in3,'String', pars{3}); 
+        set(handles.in4label,'String',' ');
+        set(handles.in4,'String', pars{4});
+        set(handles.in5label,'String',' ');
+        set(handles.in5,'String', pars{5});
+        set(handles.in6label,'String',' ');
+        set(handles.in6,'String', pars{6});
+        set(handles.VarButtonName,'String','Manual Reg Select');
+   dir = {'Step 5: Count total mRNA in each nucleus across layers';
+         'Compares centroids adjacent slices to remove duplicates.'};
+  set(handles.directions,'String',dir); 
+  end
   
 guidata(hObject, handles); % update GUI data with new labels
 
@@ -637,7 +657,7 @@ guidata(hObject, handles); % save for access by other functions
 function [handles] = imload(hObject, eventdata, handles)
 handles.fin = get(handles.source,'String'); % folder
 handles.fname = get(handles.froot,'String'); % embryo name
-handles.emb = get(handles.embin,'String'); % embryo number
+% handles.emb = get(handles.embin,'String'); % embryo number
 
 filename = [handles.fin,'/',handles.fname];
 % load images
