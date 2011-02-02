@@ -276,10 +276,6 @@ end
         Nnucs = max(NucLabeled(:)); % total nuclei 
         
         
-        % rescale label matrix to match scale of overlapped dot data
-        % This also speeds up the code.  
-        NucLabeled = imresize(NucLabeled,h/hn/scale,'nearest');
-        NucLabeled(NucLabeled<0) = 0; % troubleshooting from rescaling.  shouldn't be necessary. 
            
         % Get list of all pixels associated with each nucleus               
         imdata2 = regionprops(NucLabeled,'PixelIdxList','Area');
@@ -337,16 +333,10 @@ end
           
           % 2048x2048 resolution depth labeled dots with cell boundaries
        if showim ==1                   
-%          % doesn't use overlap elimination 
 %             % depth color coding of mRNA transcripts
-%             [hn,wn] = size(handles.In);    % already defined
-%             [h2,w2] = size(NucLabeled);   
             In = imresize(handles.In,h/hn,'nearest'); % resize
             In = uint8(double(In)/2^16*255); % convert to uint8
-            Cell_bnd = uint8(255*imresize(handles.Cell_bnd,h/hn,'nearest'));
-%         
-%             
-%             
+            Cell_bnd = uint8(255*imresize(handles.Cell_bnd,h/hn,'nearest'));                           
             Idot = cell(1,Zs); 
             Ib = uint8(zeros(h,w,3));
             Ib(:,:,1) = Cell_bnd; 
@@ -355,14 +345,6 @@ end
             Iv = Ib;
             col = spring(Zs);
            for z=1:Zs;
-%                [ys,xs] = ind2sub([h2,w2],inds_Z{z});
-%                xs = floor(xs*h/h2 + h/h2*(1-rand(1,length(xs))));
-%                ys = floor(ys*h/h2 + h/h2*(1-rand(1,length(ys))));
-%                 % randomly reposition within the uncertainty created by
-%                 % downsampling.  
-%                xs(xs>w) = w; % correct index overshoot. 
-%                ys(ys>h) = h; 
-%                hr_ind = sub2ind([h,w],ys,xs); % convert to linear index
                I1 = false(h,w);
                I1(inds_Z{z}) = 1; % place all dots on array
                % Paint different color for dots of each z-plane.  
@@ -381,20 +363,22 @@ end
        
        
        if isnan(showraw) == 0 
-           z= showraw;  
-           
-             Cell_bnd = uint16(2^16*imresize(handles.Cell_bnd,h/hn,'nearest'));
-
-           
+          z= showraw;  
+     
+          Cell_bnd = uint16(2^16*imresize(handles.Cell_bnd,h/hn,'nearest'));
           Iz = uint16(zeros(h,w,3));
           Iz(:,:,1) = 5*handles.Im{1,z-1}{handles.mRNAchn1} + Cell_bnd;
-          Iz(:,:,2) = Cell_bnd;
+          Iz(:,:,2) = 5*handles.Im{1,z-2}{handles.mRNAchn1} + Cell_bnd;
           Iz(:,:,3) = 5*handles.Im{1,z}{handles.mRNAchn1} + Cell_bnd;
+          
            figure(5); clf;  
-             imshow(Iz(1:300,1:300,:));    hold on;    
-             plot(DotData{z-1}(:,1),DotData{z-1}(:,2),'y+');
-             plot(DotData{z}(:,1),DotData{z}(:,2),'co'); 
-             plot(D2u_Z{z}(:,1),D2u{z}(:,2),'c.','MarkerSize',10);
+           imshow(Iz);    hold on;   
+           plot(DotData{z-2}(:,1),DotData{z-2}(:,2),'y+');
+           plot(DotData{z-1}(:,1),DotData{z-1}(:,2),'ro');
+           plot(DotData{z}(:,1),DotData{z}(:,2),'co'); 
+           plot(D2u_Z{z-1}(:,1),D2u_Z{z-1}(:,2),'r.','MarkerSize',10);
+           plot(D2u_Z{z}(:,1),D2u_Z{z}(:,2),'c.','MarkerSize',10);
+          % legend(['in z=',num2str(z)],
        end
         
         handles.mRNA_cnt = mRNA_cnt; % mRNA count per cell
@@ -420,8 +404,10 @@ end
     mRNA_ind = handles.mRNA_ind;
     mRNA_sadj = handles.mRNA_sadj;
     DotData = handles.DotData;
+    NucLabeled = handles.NucLabeled;
+    nuc_cents = handles.cent; 
     
-    save([fout,fname],'mRNA_cnt','mRNA_den','mRNA_ind','mRNA_sadj','DotData'); 
+    save([fout,fname],'mRNA_cnt','mRNA_den','mRNA_ind','mRNA_sadj','DotData','NucLabeled','nuc_cents'); 
     disp('data saved'); 
     
     guidata(hObject, handles); 
