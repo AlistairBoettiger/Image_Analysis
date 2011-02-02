@@ -1,4 +1,9 @@
 
+% Alistair Boettiger                    Date Begun: 01/31/11
+% Levine Lab 
+
+%
+% 
 
  handles.fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
 load([handles.fdata,'/','test']);

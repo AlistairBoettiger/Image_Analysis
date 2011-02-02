@@ -227,7 +227,7 @@ end
     min_int  = str2double(get(handles.in4,'String')); %   min_int  = .07; % 
     FiltSize = str2double(get(handles.in5,'String')); %   FiltSize = 20;% 
     min_size = str2double(get(handles.in6,'String')); %  min_size = 15; % 
-    sigmaI = 1.25*sigmaE;
+    sigmaI = 3/2*sigmaE;
    
     % Build the Gaussian Filter   
     Ex = fspecial('gaussian',FiltSize,sigmaE); % excitatory gaussian
@@ -287,10 +287,10 @@ end
         % centroids which overlap by 'scale' pixels or less.  
         
         % initialize a few things before looping through sections;  
-        mRNA_cnt = zeros(1,Nnucs);  
-        mRNA_den = zeros(1,Nnucs); 
+     
         inds_Z = cell(Zs,1);
-        HRinds = cell(Zs,1); 
+        D2u = cell(Zs,1); % store 
+        plotdata = 0 ;% don't show 
         for z = 1:Zs           
             if z == 1
                 D1 = []; % there is no previous layer if z = 1; 
@@ -298,17 +298,18 @@ end
                 D1 = DotData{z-1}; % all dots in the previous layer
             end
                 D2 = DotData{z}; % all dots in this layer
-                inds_Z{z} = DuplicateDots(D1,D2,scale,h,w)'; % custom fxn. 
-                
-               % for plotting only; 
-                rna_x1 = DotData{z}(:,1);%  = centRNA1(RNA_in1(:,1),1);       
-                rna_y1 = DotData{z}(:,2); % centRNA1(RNA_in1(:,1),2);
-                HRinds{z} =floor(rna_y1)+floor(rna_x1)*h;  % linear indices of all mRNA located
-        end    
-         inds = [inds_Z{:}];  % stich these together
+                [inds_Z{z}, D2u{z}] = DuplicateDots(D1,D2,h,w,plotdata); % custom fxn. 
+                % Returns indices in layer 2 that are not also in layer 1. 
+        end
+        %  save([handles.fdata,'/','test']);
+        % load([handles.fdata,'/','test']);
+        
+         inds = vertcat(inds_Z{:});  % stich these together
 
   % % $$$$$$$     % Loop through nuclei counting total dots in region   $$$$$$$$$ % %  
         C=NucLabeled;
+        mRNA_cnt = zeros(1,Nnucs); % store counts of mRNA per cell  
+        mRNA_den = zeros(1,Nnucs);  % store densities of mRNA per cell
         for i=1:Nnucs
             mRNA_cnt(i) = length(intersect(imdata2(i).PixelIdxList,inds));
             C(C==i) = mRNA_cnt(i);
@@ -333,18 +334,18 @@ end
      
           
           % 2048x2048 resolution depth labeled dots with cell boundaries
-       if showim ==1
-         % doesn't use overlap elimination 
-            % depth color coding of mRNA transcripts
-            [hn,wn] = size(handles.In);   
-            [h2,w2] = size(NucLabeled);   
+       if showim ==1                   
+%          % doesn't use overlap elimination 
+%             % depth color coding of mRNA transcripts
+%             [hn,wn] = size(handles.In);    % already defined
+%             [h2,w2] = size(NucLabeled);   
             In = imresize(handles.In,h/hn,'nearest'); % resize
             In = uint8(double(In)/2^16*255); % convert to uint8
             Cell_bnd = uint8(255*imresize(handles.Cell_bnd,h/hn,'nearest'));
-        
-             % save([handles.fdata,'/','test']);
-            
-             Idot = cell(1,Zs); 
+%         
+%              % save([handles.fdata,'/','test']);
+%             
+            Idot = cell(1,Zs); 
             Ib = uint8(zeros(h,w,3));
             Ib(:,:,1) = Cell_bnd; 
             Ib(:,:,2) = Cell_bnd; 
@@ -352,24 +353,29 @@ end
             Iv = Ib;
             col = spring(Zs);
            for z=1:Zs;
-               [ys,xs] = ind2sub([h2,w2],inds_Z{z});
-               xs = floor(xs*h/h2 + h/h2*(1-rand(1,length(xs))));
-               ys = floor(ys*h/h2 + h/h2*(1-rand(1,length(ys))));
-                % randomly reposition within the uncertainty created by
-                % downsampling.  
-               xs(xs>w) = w; % correct index overshoot. 
-               ys(ys>h) = h; 
-               hr_ind = sub2ind([h,w],ys,xs); % convert to linear index
+%                [ys,xs] = ind2sub([h2,w2],inds_Z{z});
+%                xs = floor(xs*h/h2 + h/h2*(1-rand(1,length(xs))));
+%                ys = floor(ys*h/h2 + h/h2*(1-rand(1,length(ys))));
+%                 % randomly reposition within the uncertainty created by
+%                 % downsampling.  
+%                xs(xs>w) = w; % correct index overshoot. 
+%                ys(ys>h) = h; 
+%                hr_ind = sub2ind([h,w],ys,xs); % convert to linear index
                I1 = false(h,w);
-               I1(hr_ind) = 1; % place all dots on array
+              % inds1 = inds_Z{z};  inds1(inds1>h*w) = h*w; 
+               
+              % inds_out =  floor(D2u{z}(:,2))+floor(D2u{z}(:,1))*h;
+         
+               
+               I1(inds_Z{z}) = 1; % place all dots on array
                % Paint different color for dots of each z-plane.  
                Iv(:,:,1) = Iv(:,:,1) + uint8(col(z,1)*I1*255);  
                Iv(:,:,2) =Iv(:,:,2) +  uint8(col(z,2)*I1*255);
                Iv(:,:,3) = Iv(:,:,3) + uint8(col(z,3)*I1*255);
                Idot{z} = I1; 
-           end
-            figure(7); clf; colormap(col); colordef black; set(gcf,'color','k'); 
-            imshow(Iv); colorbar; caxis([1,Zs]);
+            end
+             figure(7); clf; colormap(col); colordef black; set(gcf,'color','k'); 
+             imshow(Iv(1:300,1:300,:)); colorbar; caxis([1,Zs]);
        end
        
     %        save([handles.fdata,'/','test']);
@@ -378,9 +384,9 @@ end
        
        if isnan(showraw) == 0 && showim == 1;  
            figure(6); clf;
-               I1 = zeros(h2,w2);
+               I1 = zeros(h,w);
                I1(inds_Z{showraw}) = 1; % place all dots on array 
-               I2 = zeros(h2,w2);
+               I2 = zeros(h,w);
                I2(inds_Z{showraw+1}) = 1; % place all dots on array 
                I1 = imresize(I1,h/h2);
                I2 = imresize(I2,h/h2); 
@@ -389,7 +395,7 @@ end
            Iz(:,:,2) = Iz(:,:,2) + handles.Im{1,showraw+1}{handles.mRNAchn1}+ uint16(2^16*I2);
 %            Iz(:,:,1) = Iz(:,:,1) + handles.Im{1,showraw}{handles.mRNAchn1} + uint16(2^16*Idot{showraw});
 %            Iz(:,:,2) = Iz(:,:,2) + handles.Im{1,showraw+1}{handles.mRNAchn1}+ uint16(2^16*Idot{showraw+1});
-           imshow(Iz); 
+           imshow(Iz(1:300,1:300,:)); 
        end
  
         
@@ -627,9 +633,11 @@ function savePars_Callback(hObject, eventdata, handles)
      pars = {p1, p2, p3, p4, p5, p6}; % cell array of strings
   % Export parameters 
      stp_label = get(handles.stepnum,'String');     
-     savelabel = ['nucdot_exon_pars',stp_label];  
+     savelabel = ['singlemolecule_pars',stp_label];  
      % labeled as nucdot_parsi.mat where "i" is the step number 
      save([handles.fdata, savelabel], 'pars');        % export values
+     disp([handles.fdata, savelabel]);
+     disp(pars) ;
 
 
 
