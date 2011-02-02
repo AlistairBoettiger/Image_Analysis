@@ -25,16 +25,7 @@ function [inds_out, D2u] = DuplicateDots(D1,D2,h,w,plotdata)
          inds_out = inds2;
      else
             
-         if plotdata == 1;    
-             Iz = uint16(zeros(h,w,3));
-             Iz(:,:,1) = 5*I1;
-             Iz(:,:,3) = 5*I2;
-        %  % plotting for troubleshooting     
-        %      figure(4); clf;  
-        %      imshow(Iz(1:300,1:300,:));    hold on;    
-        %      plot(D1(:,1),D1(:,2),'go');
-        %      plot(D2(:,1),D2(:,2),'y+'); 
-         end
+   
 
 
          % convert to indices. 
@@ -64,8 +55,18 @@ function [inds_out, D2u] = DuplicateDots(D1,D2,h,w,plotdata)
         %       plot(D1(:,1),D1(:,2),'m+');
         %       plot(D2u(:,1),D2u(:,2),'co');
 
-          % Plot zoom in on results  
+
+        %  % plotting for troubleshooting     
+        %      figure(4); clf;  
+        %      imshow(Iz(1:300,1:300,:));    hold on;    
+        %      plot(D1(:,1),D1(:,2),'go');
+        %      plot(D2(:,1),D2(:,2),'y+'); 
+    
+          
          if plotdata == 1 
+             Iz = uint16(zeros(h,w,3));
+             Iz(:,:,1) = 5*handles.Im{1,z-1}{handles.mRNAchn1};
+             Iz(:,:,3) = 5*handles.Im{1,z}{handles.mRNAchn1};
              figure(5); clf;  
              imshow(Iz(1:300,1:300,:));    hold on;    
              plot(D1(:,1),D1(:,2),'y+');

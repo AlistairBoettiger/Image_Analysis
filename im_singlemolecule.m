@@ -253,8 +253,10 @@ end
  % uses fxn DuplicateDots.m, which calls fxn vect2rast.m
  if step == 5 
      
-     disp('running step 5...');
+    %  save([handles.fdata,'/','test']);
      
+     disp('running step 5...');
+      
      tic
      % This requires square images as written.  
      
@@ -289,16 +291,16 @@ end
         % initialize a few things before looping through sections;  
      
         inds_Z = cell(Zs,1);
-        D2u = cell(Zs,1); % store 
+        D2u_Z = cell(Zs,1); % store 
         plotdata = 0 ;% don't show 
         for z = 1:Zs           
-            if z == 1
+            if z == 1 % z = 5;
                 D1 = []; % there is no previous layer if z = 1; 
             else
                 D1 = DotData{z-1}; % all dots in the previous layer
             end
                 D2 = DotData{z}; % all dots in this layer
-                [inds_Z{z}, D2u{z}] = DuplicateDots(D1,D2,h,w,plotdata); % custom fxn. 
+                [inds_Z{z}, D2u_Z{z}] = DuplicateDots(D1,D2,h,w,plotdata); % custom fxn. 
                 % Returns indices in layer 2 that are not also in layer 1. 
         end
         %  save([handles.fdata,'/','test']);
@@ -343,7 +345,7 @@ end
             In = uint8(double(In)/2^16*255); % convert to uint8
             Cell_bnd = uint8(255*imresize(handles.Cell_bnd,h/hn,'nearest'));
 %         
-%              % save([handles.fdata,'/','test']);
+%             
 %             
             Idot = cell(1,Zs); 
             Ib = uint8(zeros(h,w,3));
@@ -362,11 +364,6 @@ end
 %                ys(ys>h) = h; 
 %                hr_ind = sub2ind([h,w],ys,xs); % convert to linear index
                I1 = false(h,w);
-              % inds1 = inds_Z{z};  inds1(inds1>h*w) = h*w; 
-               
-              % inds_out =  floor(D2u{z}(:,2))+floor(D2u{z}(:,1))*h;
-         
-               
                I1(inds_Z{z}) = 1; % place all dots on array
                % Paint different color for dots of each z-plane.  
                Iv(:,:,1) = Iv(:,:,1) + uint8(col(z,1)*I1*255);  
@@ -382,22 +379,23 @@ end
     % load([handles.fdata,'/','test']);
        
        
-       if isnan(showraw) == 0 && showim == 1;  
-           figure(6); clf;
-               I1 = zeros(h,w);
-               I1(inds_Z{showraw}) = 1; % place all dots on array 
-               I2 = zeros(h,w);
-               I2(inds_Z{showraw+1}) = 1; % place all dots on array 
-               I1 = imresize(I1,h/h2);
-               I2 = imresize(I2,h/h2); 
-           Iz = uint16(2^8*Ib); % up convert to uint16
-             Iz(:,:,1) = Iz(:,:,1) + handles.Im{1,showraw}{handles.mRNAchn1} + uint16(2^16*I1);
-           Iz(:,:,2) = Iz(:,:,2) + handles.Im{1,showraw+1}{handles.mRNAchn1}+ uint16(2^16*I2);
-%            Iz(:,:,1) = Iz(:,:,1) + handles.Im{1,showraw}{handles.mRNAchn1} + uint16(2^16*Idot{showraw});
-%            Iz(:,:,2) = Iz(:,:,2) + handles.Im{1,showraw+1}{handles.mRNAchn1}+ uint16(2^16*Idot{showraw+1});
-           imshow(Iz(1:300,1:300,:)); 
+       
+       if isnan(showraw) == 0 
+           z= showraw;  
+           
+             Cell_bnd = uint16(2^16*imresize(handles.Cell_bnd,h/hn,'nearest'));
+
+           
+          Iz = uint16(zeros(h,w,3));
+          Iz(:,:,1) = 5*handles.Im{1,z-1}{handles.mRNAchn1} + Cell_bnd;
+          Iz(:,:,2) = Cell_bnd;
+          Iz(:,:,3) = 5*handles.Im{1,z}{handles.mRNAchn1} + Cell_bnd;
+           figure(5); clf;  
+             imshow(Iz(1:300,1:300,:));    hold on;    
+             plot(DotData{z-1}(:,1),DotData{z-1}(:,2),'y+');
+             plot(DotData{z}(:,1),DotData{z}(:,2),'co'); 
+             plot(D2u_Z{z}(:,1),D2u{z}(:,2),'c.','MarkerSize',10);
        end
- 
         
         handles.mRNA_cnt = mRNA_cnt; % mRNA count per cell
         handles.mRNA_den = mRNA_den; % mRNA density per cell
