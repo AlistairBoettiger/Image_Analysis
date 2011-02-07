@@ -129,14 +129,19 @@ if step == 1;
     handles.NUCchn =  str2double(get(handles.in3,'String'));
     NucBlur = str2double(get(handles.in4,'String')); 
     imsize = str2double(get(handles.in5,'String'));
-    
+    last_layer = str2double(get(handles.in6,'String'));
     
     nc = handles.NUCchn;
     
     [h,w] = size(handles.Im{1,1}{1});
     m = imsize/h;
     
-    Zs = length(handles.Im); 
+    
+    Zs = last_layer;
+    if last_layer == 0 
+        Zs = length(handles.Im); 
+    end
+    
     nuc = uint16(zeros(imsize,imsize,nc)); 
     for i=1:Zs
         nuc(:,:,i) = imresize(handles.Im{1,i}{nc},m); % 2
@@ -272,9 +277,10 @@ end
         DotData = handles.DotData; % Dot data for each section (from prev)
         [h,w] = size(handles.Im{1,1}{1});  % original image dimensions 
         NucLabeled = handles.H1; % our nuclei label matrix
+        
         [hn,wn] = size(NucLabeled);  % size
         Nnucs = max(NucLabeled(:)); % total nuclei 
-        
+        NucLabeled = imresize(NucLabeled,h/hn,'nearest');
         
            
         % Get list of all pixels associated with each nucleus               
@@ -308,10 +314,12 @@ end
         C=NucLabeled;
         mRNA_cnt = zeros(1,Nnucs); % store counts of mRNA per cell  
         mRNA_den = zeros(1,Nnucs);  % store densities of mRNA per cell
+        nuc_area = zeros(1,Nnucs); 
         for i=1:Nnucs
             mRNA_cnt(i) = length(intersect(imdata2(i).PixelIdxList,inds));
             C(C==i) = mRNA_cnt(i);
-             mRNA_den(i) = mRNA_cnt(i)/length(imdata2(i).PixelIdxList)  ;  
+            mRNA_den(i) = mRNA_cnt(i)/length(imdata2(i).PixelIdxList)  ; 
+            nuc_area(i) = length(imdata2(i).PixelIdxList);
         end
         % normalize density to the average cell area
         mRNA_sadj = mRNA_den*mean([imdata2.Area]);
@@ -354,7 +362,7 @@ end
                Idot{z} = I1; 
             end
              figure(7); clf; colormap(col); colordef black; set(gcf,'color','k'); 
-             imshow(Iv(1:300,1:300,:)); colorbar; caxis([1,Zs]);
+             imshow(Iv); colorbar; caxis([1,Zs]);
        end
        
     %        save([handles.fdata,'/','test']);
@@ -367,9 +375,9 @@ end
      
           Cell_bnd = uint16(2^16*imresize(handles.Cell_bnd,h/hn,'nearest'));
           Iz = uint16(zeros(h,w,3));
-          Iz(:,:,1) = 5*handles.Im{1,z-1}{handles.mRNAchn1} + Cell_bnd;
-          Iz(:,:,2) = 5*handles.Im{1,z-2}{handles.mRNAchn1} + Cell_bnd;
-          Iz(:,:,3) = 5*handles.Im{1,z}{handles.mRNAchn1} + Cell_bnd;
+          Iz(:,:,1) = 2*handles.Im{1,z-1}{handles.mRNAchn1} + Cell_bnd;
+          Iz(:,:,2) = 2*handles.Im{1,z-2}{handles.mRNAchn1} + Cell_bnd;
+          Iz(:,:,3) = 2*handles.Im{1,z}{handles.mRNAchn1} + Cell_bnd;
           
            figure(5); clf;  
            imshow(Iz);    hold on;   
@@ -381,6 +389,7 @@ end
           % legend(['in z=',num2str(z)],
        end
         
+        handles.nuc_area = nuc_area; 
         handles.mRNA_cnt = mRNA_cnt; % mRNA count per cell
         handles.mRNA_den = mRNA_den; % mRNA density per cell
         handles.mRNA_sadj = mRNA_sadj; % size adjusted mRNA counts
@@ -406,8 +415,11 @@ end
     DotData = handles.DotData;
     NucLabeled = handles.NucLabeled;
     nuc_cents = handles.cent; 
+    nuc_area = handles.nuc_area;
+    In = handles.In; 
     
-    save([fout,fname],'mRNA_cnt','mRNA_den','mRNA_ind','mRNA_sadj','DotData','NucLabeled','nuc_cents'); 
+    save([fout,fname],'mRNA_cnt','mRNA_den','mRNA_ind','mRNA_sadj',...
+        'DotData','NucLabeled','nuc_cents','nuc_area','In'); 
     disp('data saved'); 
     
     guidata(hObject, handles); 
@@ -466,7 +478,7 @@ function setup(hObject,eventdata,handles)
         set(handles.directions,'String',dir); 
  end
   if handles.step == 1; 
-       load([handles.fdata,'/','singlemolecule_pars1']); % pars = {'1','2','3','4','512',' '}; save([handles.fdata,'singlemolecule_pars1'], 'pars' );
+       load([handles.fdata,'/','singlemolecule_pars1']); % pars = {'1','2','3','4','512','0'}; save([handles.fdata,'singlemolecule_pars1'], 'pars' );
         set(handles.in1label,'String','mRNA 1 channel');
         set(handles.in1,'String', pars(1));
         set(handles.in2label,'String','mRNA 2 channel');
@@ -477,7 +489,7 @@ function setup(hObject,eventdata,handles)
         set(handles.in4,'String', pars(4));
         set(handles.in5label,'String','Working Size');
         set(handles.in5,'String', pars(5));
-        set(handles.in6label,'String',' ');
+        set(handles.in6label,'String','Last Layer');
         set(handles.in6,'String', pars(6));
         %    set(handles.VarButtonName,'String',''); 
         dir = {'Step 1: Max project nuclear channel';
@@ -530,7 +542,7 @@ function setup(hObject,eventdata,handles)
   
   
   
-  if handles.step == 4;
+  if handles.step == 4;  % Find dots in channel 1
      load([handles.fdata,'/','singlemolecule_pars4.mat']); 
      % pars = {'.955','2','.98','.07','20','10'}; save([handles.fdata,'singlemolecule_pars4'], 'pars' );
      
@@ -552,7 +564,7 @@ function setup(hObject,eventdata,handles)
   set(handles.directions,'String',dir); 
   end
   
-  if handles.step == 5;
+  if handles.step == 5; % Find duplicates in channel 1
      load([handles.fdata,'/','singlemolecule_pars5.mat']); 
      % pars = {'3','50','0',' ',' ',' '}; save([handles.fdata,'singlemolecule_pars5'], 'pars' );
      
@@ -574,13 +586,61 @@ function setup(hObject,eventdata,handles)
   set(handles.directions,'String',dir); 
   end
 
-
   
-  if handles.step == 6;
+    
+  
+  if handles.step == 6;  % Find dots in channel 2
+     load([handles.fdata,'/','singlemolecule_pars4.mat']); 
+     % pars = {'.955','2','.98','.07','20','10'}; save([handles.fdata,'singlemolecule_pars4'], 'pars' );
+     
+        set(handles.in1label,'String','\alpha_E'); 
+        set(handles.in1,'String', pars{1});
+        set(handles.in2label,'String','\sigma_E');
+        set(handles.in2,'String', pars{2});
+        set(handles.in3label,'String','\alpha_I'); 
+        set(handles.in3,'String', pars{3}); 
+        set(handles.in4label,'String','min intensity');
+        set(handles.in4,'String', pars{4});
+        set(handles.in5label,'String','Filter Size');
+        set(handles.in5,'String', pars{5});
+        set(handles.in6label,'String','min dot size');
+        set(handles.in6,'String', pars{6});
+        set(handles.VarButtonName,'String','Manual Reg Select');
+   dir = {'Step 4: identify and count nascent transcripts of mRNA1.';
+         'Uses Difference of Gaussian Filter \alpha_E*exp(-x^2/\sigma_E) - alpha_I*exp(-x^2/\sigma_I)'};
+  set(handles.directions,'String',dir); 
+  end
+  
+  if handles.step == 7; % Find duplicates in channel 2
+     load([handles.fdata,'/','singlemolecule_pars5.mat']); 
+     % pars = {'3','50','0',' ',' ',' '}; save([handles.fdata,'singlemolecule_pars5'], 'pars' );
+     
+        set(handles.in1label,'String','min overlap'); 
+        set(handles.in1,'String', pars{1});
+        set(handles.in2label,'String','bins');
+        set(handles.in2,'String', pars{2});
+        set(handles.in3label,'String','Show high res im?'); 
+        set(handles.in3,'String', pars{3}); 
+        set(handles.in4label,'String','Show chn x data');
+        set(handles.in4,'String', pars{4});
+        set(handles.in5label,'String',' ');
+        set(handles.in5,'String', pars{5});
+        set(handles.in6label,'String',' ');
+        set(handles.in6,'String', pars{6});
+        set(handles.VarButtonName,'String','Manual Reg Select');
+   dir = {'Step 5: Count total mRNA in each nucleus across layers';
+         'Compares centroids adjacent slices to remove duplicates.'};
+  set(handles.directions,'String',dir); 
+  end
+  
+  if handles.step == 8;
      load([handles.fdata,'/','singlemolecule_pars6.mat']); 
      % pars = {' ',' ',' ',' ',' ',' '}; save([handles.fdata,'singlemolecule_pars6'], 'pars' );
      
-     fname = get(handles.froot,'String');
+     froot = get(handles.froot,'String');
+     emb = get(handles.embin,'String');
+     fname = [froot,'_',emb];  
+     
      
         set(handles.in1label,'String','Save Name'); 
         set(handles.in1,'String', fname);
@@ -665,12 +725,12 @@ guidata(hObject, handles); % save for access by other functions
 function [handles] = imload(hObject, eventdata, handles)
 handles.fin = get(handles.source,'String'); % folder
 handles.fname = get(handles.froot,'String'); % embryo name
-% handles.emb = get(handles.embin,'String'); % embryo number
+handles.emb = str2double(get(handles.embin,'String')); % embryo number
 
 filename = [handles.fin,'/',handles.fname];
 % load images
     jacquestiffread([filename,'.lsm']);
-    handles.Im = loadlsm([filename,'.mat'],1);    
+    handles.Im = loadlsm([filename,'.mat'],handles.emb);    
     
     Zs = length(handles.Im);
     [h,w] = size(handles.Im{1,1}{1});
