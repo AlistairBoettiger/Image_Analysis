@@ -1,8 +1,8 @@
 
 %%                  im_singlemolecule.m  Multi Channel
 % Alistair Boettiger                                  Date Begund: 01/21/11
-% Levine Lab, UC Berkeley                        Version Complete:  
-% In Progress                            Last Modified: 01/30/11
+% Levine Lab, UC Berkeley                        Version Complete: 02/01/11 
+% Functionally complete                             Last Modified: 02/07/11
 % 
 % 
 %% Attribution:
@@ -36,7 +36,7 @@
 % vect2rast.m -- simple vector to raster conversion, called by DuplicateDots
 % 
 %% Updates: 
-% 
+%  02/07/11 moved plotting 
 
 
 function varargout = im_singlemolecule(varargin)
@@ -221,10 +221,9 @@ end
 
 
  
-  % Step 4: Identify and count nascent transcripts  
+  % Step 4: Identify and count single mRNA transcripts  
   % uses fxn dotfinder
  if step == 4   
-
      disp('running step 4...'); tic
     alphaE =   str2double(get(handles.in1,'String')); % alphaE = .955; %
     sigmaE =str2double(get(handles.in2,'String')); %    sigmaE = 2; %
@@ -246,7 +245,7 @@ end
      % save([handles.fdata,'/','test']);
     % load([handles.fdata,'/','test']);
    
-   handles.DotData = DotData;
+   handles.DotData1 = DotData;
     guidata(hObject, handles);  % update GUI data with new handles  
     toc;   
  end
@@ -255,8 +254,7 @@ end
  % Step 5: Identify overlapping dots. 
  % uses fxn DuplicateDots.m, which calls fxn vect2rast.m
  if step == 5 
-     disp('running step 5...');    
-     tic
+     disp('running step 5...');    tic
      % This requires square images as written.  
         bins = str2double(get(handles.in2,'String'));
         showim = str2double(get(handles.in3,'String')); % plot all mRNA locations with depth filter results
@@ -264,14 +262,14 @@ end
         
         % Defining some variables we will need
         Zs = handles.Zs;  % number of z-sections
-        DotData = handles.DotData; % Dot data for each section (from prev)
+        DotData = handles.DotData1; % Dot data for each section (from prev)
         [h,w] = size(handles.Im{1,1}{1});  % original image dimensions 
         NucLabeled = handles.H1; % our nuclei label matrix 
-      
          
- % % $$$$$$$$$ This loop also checks for vertically duplicated dots that have    $$$$$$$$$$ % % 
-        % centroids which overlap by 'scale' pixels or less.  
-        % initialize a few things before looping through sections;     
+ % % $$$$$$$$$ FIND DUPLICATE DOTS  $$$$$$$$$$ % %     
+    % This loop also checks for vertically duplicated dots that have  centroids 
+    % which overlap by 'scale' pixels or less.  
+      % initialize a few things before looping through sections;     
         inds_Z = cell(Zs,1);
         D2u_Z = cell(Zs,1); % store 
         plotdata = 0 ;% don't show 
@@ -288,11 +286,10 @@ end
         inds = vertcat(inds_Z{:});  % stich these together
         %  save([handles.fdata,'/','test']);
         % load([handles.fdata,'/','test']);
+              
         
-        
-        
-  % % $$$$$$$     % Loop through nuclei counting total dots in region   $$$$$$$$$ % %           
-        [hn,wn] = size(NucLabeled);  % size
+  % % $$$$$$$ % Loop through nuclei counting total dots in region   $$$$$$$$$ % %           
+        hn = size(NucLabeled,1);  % size
         Nnucs = max(NucLabeled(:)); % total nuclei 
         NucLabeled = imresize(NucLabeled,h/hn,'nearest');
                   
@@ -315,7 +312,10 @@ end
         m_cnt = mean(mRNA_cnt);
         s_cnt = std(mRNA_cnt);
         m_den = mean(mRNA_sadj);
-        s_den = std(mRNA_sadj);
+        s_den = std(mRNA_sadj);  
+            % save([handles.fdata,'/','test']);
+            % load([handles.fdata,'/','test']);    
+        
         
          %  % Plotting counts 
                 colordef white; 
@@ -326,52 +326,21 @@ end
                       num2str(m_den,4),' std=',num2str(s_den,4)]); 
 
         % % Optional Plotting
-            % 2048x2048 resolution depth labeled dots with cell boundaries
-            
-          
-            
-            
+            % 2048x2048 resolution depth labeled dots with cell boundaries    
                if showim ==1 
-                     % DepthDots(handles.In,handles.Cell_bnd,inds_Z);
-                   
-        %             % depth color coding of mRNA transcripts
-                    In = imresize(handles.In,h/hn,'nearest'); % resize
-                    In = uint8(double(In)/2^16*255); % convert to uint8
-                    Cell_bnd = uint8(255*imresize(handles.Cell_bnd,h/hn,'nearest'));                           
-                    Idot = cell(1,Zs); 
-                    Ib = uint8(zeros(h,w,3));
-                    Ib(:,:,1) = Cell_bnd; 
-                    Ib(:,:,2) = Cell_bnd; 
-                    Ib(:,:,3) = In + Cell_bnd;
-                    Iv = Ib;
-                    col = spring(Zs);
-                   for z=1:Zs;
-                       I1 = false(h,w);
-                       I1(inds_Z{z}) = 1; % place all dots on array
-                       % Paint different color for dots of each z-plane.  
-                       Iv(:,:,1) = Iv(:,:,1) + uint8(col(z,1)*I1*255);  
-                       Iv(:,:,2) =Iv(:,:,2) +  uint8(col(z,2)*I1*255);
-                       Iv(:,:,3) = Iv(:,:,3) + uint8(col(z,3)*I1*255);
-                       Idot{z} = I1; 
-                    end
-                     figure(7); clf; colormap(col); colordef black; set(gcf,'color','k'); 
-                     imshow(Iv); colorbar; caxis([1,Zs]);
+                      DepthDots(handles.In,handles.Cell_bnd,inds_Z,h,w);
                end
-            % save([handles.fdata,'/','test']);
-            % load([handles.fdata,'/','test']);    
-
+       
                if isnan(showraw) == 0 
-                  z= showraw; 
-                  checkZsep(showraw,handles.Cell_bnd,handles.Im,DotData,D2u_Z); 
-
-    
+                  checkZsep(showraw,handles.Cell_bnd,handles.Im,handles.mRNAchn1,DotData,D2u_Z); 
                end
-        
+    
+     % Export data
         handles.nuc_area = nuc_area; 
-        handles.mRNA_cnt = mRNA_cnt; % mRNA count per cell
-        handles.mRNA_den = mRNA_den; % mRNA density per cell
-        handles.mRNA_sadj = mRNA_sadj; % size adjusted mRNA counts
-        handles.mRNA_ind = inds_Z;     % inidices of mRNA per layer
+        handles.mRNA_cnt1 = mRNA_cnt; % mRNA 1 count per cell
+        handles.mRNA_den1 = mRNA_den; % mRNA 1 density per cell 
+        handles.mRNA_sadj1 = mRNA_sadj; % size adjusted mRNA 1 counts
+        handles.mRNA_ind1 = inds_Z;     % inidices of mRNA 1 per layer
         handles.NucLabeled = NucLabeled; % indices and scale that match mRNA counts
         
         guidata(hObject, handles);     
@@ -379,24 +348,175 @@ end
  end
  
  
+ 
+ 
+ 
+ 
+   % Step 6: Identify and count single mRNA transcripts in mRNA chn 2  
+  % uses fxn dotfinder
+ if step == 6   
+     disp('running step 6...'); tic
+    alphaE =   str2double(get(handles.in1,'String')); % alphaE = .955; %
+    sigmaE =str2double(get(handles.in2,'String')); %    sigmaE = 2; %
+    alphaI =str2double(get(handles.in3,'String')); %   alphaI = .98; % 
+    min_int  = str2double(get(handles.in4,'String')); %   min_int  = .07; % 
+    FiltSize = str2double(get(handles.in5,'String')); %   FiltSize = 20;% 
+    min_size = str2double(get(handles.in6,'String')); %  min_size = 15; % 
+    sigmaI = 3/2*sigmaE;
+   
+    % Build the Gaussian Filter   
+    Ex = fspecial('gaussian',FiltSize,sigmaE); % excitatory gaussian
+    Ix = fspecial('gaussian',FiltSize,sigmaI); % inhibitory gaussian
+  
+    DotData = cell(1,handles.Zs); 
+   for i=1:handles.Zs
+       I2 = handles.Im{1,i}{handles.mRNAchn2};
+     DotData{i} = dotfinder(I2,alphaE,alphaI,Ex,Ix,min_int,min_size);
+   end
+     % save([handles.fdata,'/','test']);
+    % load([handles.fdata,'/','test']);
+   
+   handles.DotData2 = DotData;
+    guidata(hObject, handles);  % update GUI data with new handles  
+    toc;   
+ end
+
+
+ % Step 7: Identify overlapping dots in mRNA channel 3
+ % uses fxn DuplicateDots.m,
+ if step == 7 
+     disp('running step 7...');    tic
+     % This requires square images as written.  
+        bins = str2double(get(handles.in2,'String'));
+        showim = str2double(get(handles.in3,'String')); % plot all mRNA locations with depth filter results
+        showraw = str2double(get(handles.in4,'String')); % polt raw image with labels.   
+        
+        % Defining some variables we will need
+        Zs = handles.Zs;  % number of z-sections
+        DotData = handles.DotData2; % Dot data for each section (from prev)
+        [h,w] = size(handles.Im{1,1}{1});  % original image dimensions 
+        NucLabeled = handles.H1; % our nuclei label matrix 
+         
+ % % $$$$$$$$$ FIND DUPLICATE DOTS  $$$$$$$$$$ % %     
+    % This loop also checks for vertically duplicated dots that have  centroids 
+    % which overlap by 'scale' pixels or less.  
+      % initialize a few things before looping through sections;     
+        inds_Z = cell(Zs,1);
+        D2u_Z = cell(Zs,1); % store 
+        plotdata = 0 ;% don't show 
+        for z = 1:Zs           
+            if z == 1 % z = 5;
+                D1 = []; % there is no previous layer if z = 1; 
+            else
+                D1 = DotData{z-1}; % all dots in the previous layer
+            end
+                D2 = DotData{z}; % all dots in this layer
+                [inds_Z{z}, D2u_Z{z}] = DuplicateDots(D1,D2,h,w,plotdata); % custom fxn. 
+                % Returns indices in layer 2 that are not also in layer 1. 
+        end
+        inds = vertcat(inds_Z{:});  % stich these together
+        %  save([handles.fdata,'/','test']);
+        % load([handles.fdata,'/','test']);
+              
+        
+  % % $$$$$$$ % Loop through nuclei counting total dots in region   $$$$$$$$$ % %           
+        hn = size(NucLabeled,1);  % size
+        Nnucs = max(NucLabeled(:)); % total nuclei 
+        NucLabeled = imresize(NucLabeled,h/hn,'nearest');
+                  
+        % Get list of all pixels associated with each nucleus               
+        imdata2 = regionprops(NucLabeled,'PixelIdxList','Area'); 
+        C=NucLabeled;
+        mRNA_cnt = zeros(1,Nnucs); % store counts of mRNA per cell  
+        mRNA_den = zeros(1,Nnucs);  % store densities of mRNA per cell
+        nuc_area = zeros(1,Nnucs); 
+        for i=1:Nnucs
+            mRNA_cnt(i) = length(intersect(imdata2(i).PixelIdxList,inds));
+            C(C==i) = mRNA_cnt(i);
+            mRNA_den(i) = mRNA_cnt(i)/length(imdata2(i).PixelIdxList)  ; 
+            nuc_area(i) = length(imdata2(i).PixelIdxList);
+        end
+        % normalize density to the average cell area
+        mRNA_sadj = mRNA_den*mean([imdata2.Area]);
+        
+        % more stats  
+        m_cnt = mean(mRNA_cnt);
+        s_cnt = std(mRNA_cnt);
+        m_den = mean(mRNA_sadj);
+        s_den = std(mRNA_sadj);  
+            % save([handles.fdata,'/','test']);
+            % load([handles.fdata,'/','test']);    
+        
+        
+         %  % Plotting counts 
+                colordef white; 
+                figure(5); clf; hist(mRNA_cnt,bins); set(gcf,'color','w');
+                title(['mRNA per cell. mean = ',num2str(m_cnt,4),' std=',num2str(s_cnt,4)]); 
+                figure(4); clf; hist(mRNA_sadj,bins);set(gcf,'color','w');
+                title(['Cell size adjusted mRNA per cell. mean = ',...
+                      num2str(m_den,4),' std=',num2str(s_den,4)]); 
+
+        % % Optional Plotting
+            % 2048x2048 resolution depth labeled dots with cell boundaries    
+               if showim ==1 
+                      DepthDots(handles.In,handles.Cell_bnd,inds_Z,h,w);
+               end
+       
+               if isnan(showraw) == 0 
+                  checkZsep(showraw,handles.Cell_bnd,handles.Im,handles.mRNAchn2,DotData,D2u_Z); 
+               end
+    
+     % Export data
+        handles.nuc_area = nuc_area; 
+        handles.mRNA_cnt2 = mRNA_cnt; % mRNA 2 count per cell
+        handles.mRNA_den2 = mRNA_den; % mRNA 2 density per cell 
+        handles.mRNA_sadj2 = mRNA_sadj; % size adjusted mRNA 2 counts
+        handles.mRNA_ind2 = inds_Z;     % inidices of mRNA 2 per layer
+        handles.NucLabeled = NucLabeled; % indices and scale that match mRNA counts
+        
+        guidata(hObject, handles);     
+        toc     
+ end
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
  % export data
- if step == 6
+ if step == 8
  tic
     fout = get(handles.fout,'String');
     fname = get(handles.in1,'String');
     disp(['exporting data to ',fout,fname,'...']); 
     
-    mRNA_cnt = handles.mRNA_cnt;
-    mRNA_den = handles.mRNA_den;
-    mRNA_ind = handles.mRNA_ind;
-    mRNA_sadj = handles.mRNA_sadj;
-    DotData = handles.DotData;
+    mRNA_cnt1 = handles.mRNA_cnt1;
+    mRNA_den1 = handles.mRNA_den1;
+    mRNA_ind1 = handles.mRNA_ind1;
+    mRNA_sadj1 = handles.mRNA_sadj1;
+    DotData1 = handles.DotData1;
+    
+    mRNA_cnt2 = handles.mRNA_cnt2;
+    mRNA_den2 = handles.mRNA_den2;
+    mRNA_ind2 = handles.mRNA_ind2;
+    mRNA_sadj2 = handles.mRNA_sadj2;
+    DotData2 = handles.DotData2;
+    
     NucLabeled = handles.NucLabeled;
     nuc_cents = handles.cent; 
     nuc_area = handles.nuc_area;
     In = handles.In; 
     
-    save([fout,fname],'mRNA_cnt','mRNA_den','mRNA_ind','mRNA_sadj',...
+    save([fout,fname],'mRNA_cnt1','mRNA_den1','mRNA_ind1','mRNA_sadj1',...
         'DotData','NucLabeled','nuc_cents','nuc_area','In'); 
     disp('data saved'); 
     
@@ -612,8 +732,8 @@ function setup(hObject,eventdata,handles)
   end
   
   if handles.step == 8;
-     load([handles.fdata,'/','singlemolecule_pars6.mat']); 
-     % pars = {' ',' ',' ',' ',' ',' '}; save([handles.fdata,'singlemolecule_pars6'], 'pars' );
+     load([handles.fdata,'/','singlemolecule_pars8.mat']); 
+     % pars = {' ',' ',' ',' ',' ',' '}; save([handles.fdata,'singlemolecule_pars8'], 'pars' );
      
      froot = get(handles.froot,'String');
      emb = get(handles.embin,'String');
