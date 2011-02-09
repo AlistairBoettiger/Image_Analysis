@@ -118,6 +118,16 @@ if step == 0;
     handles.output = hObject; % update handles object with new step number
     guidata(hObject, handles);  % update GUI data with new handles
     [handles] = imload(hObject, eventdata, handles); % load new embryo
+    
+    Zs = length(handles.Im); 
+    
+    figure(1); clf; subplot(2,1,1); imshow(handles.Im{1,1}{1}); title('First slice, chn 1');
+    subplot(2,1,2); imshow(Im{1,Zs}{1});  title('Last slice, chn 1');
+    
+      figure(2); clf; subplot(2,1,1); imshow(Im{1,1}{2}); title('First slice, chn 21');
+    subplot(2,1,2); imshow(Im{1,Zs}{2}); title('Last slice, chn 2');
+    
+    
     toc
 end
 
@@ -256,6 +266,7 @@ end
  if step == 5 
      disp('running step 5...');    tic
      % This requires square images as written.  
+        ovlap = str2double(get(handles.in1,'String'));
         bins = str2double(get(handles.in2,'String'));
         showim = str2double(get(handles.in3,'String')); % plot all mRNA locations with depth filter results
         showraw = str2double(get(handles.in4,'String')); % polt raw image with labels.   
@@ -267,8 +278,8 @@ end
         NucLabeled = handles.H1; % our nuclei label matrix 
          
  % % $$$$$$$$$ FIND DUPLICATE DOTS  $$$$$$$$$$ % %     
-    % This loop also checks for vertically duplicated dots that have  centroids 
-    % which overlap by 'scale' pixels or less.  
+    % This loop also checks for vertically duplicated dots that have
+    % centroids which overlap by 'scale' pixels or less.  
       % initialize a few things before looping through sections;     
         inds_Z = cell(Zs,1);
         D2u_Z = cell(Zs,1); % store 
@@ -280,7 +291,7 @@ end
                 D1 = DotData{z-1}; % all dots in the previous layer
             end
                 D2 = DotData{z}; % all dots in this layer
-                [inds_Z{z}, D2u_Z{z}] = DuplicateDots(D1,D2,h,w,plotdata); % custom fxn. 
+                [inds_Z{z}, D2u_Z{z}] = DuplicateDots(ovlap,D1,D2,h,w,plotdata); % custom fxn. 
                 % Returns indices in layer 2 that are not also in layer 1. 
         end
         inds = vertcat(inds_Z{:});  % stich these together
@@ -387,6 +398,7 @@ end
  if step == 7 
      disp('running step 7...');    tic
      % This requires square images as written.  
+        ovlap = str2double(get(handles.in1,'String'));
         bins = str2double(get(handles.in2,'String'));
         showim = str2double(get(handles.in3,'String')); % plot all mRNA locations with depth filter results
         showraw = str2double(get(handles.in4,'String')); % polt raw image with labels.   
@@ -411,7 +423,7 @@ end
                 D1 = DotData{z-1}; % all dots in the previous layer
             end
                 D2 = DotData{z}; % all dots in this layer
-                [inds_Z{z}, D2u_Z{z}] = DuplicateDots(D1,D2,h,w,plotdata); % custom fxn. 
+                [inds_Z{z}, D2u_Z{z}] = DuplicateDots(ovlap,D1,D2,h,w,plotdata); % custom fxn. 
                 % Returns indices in layer 2 that are not also in layer 1. 
         end
         inds = vertcat(inds_Z{:});  % stich these together
@@ -516,8 +528,10 @@ end
     nuc_area = handles.nuc_area;
     In = handles.In; 
     
-    save([fout,fname],'mRNA_cnt1','mRNA_den1','mRNA_ind1','mRNA_sadj1',...
-        'DotData','NucLabeled','nuc_cents','nuc_area','In'); 
+    save([fout,fname],...
+        'mRNA_cnt1','mRNA_den1','mRNA_ind1','mRNA_sadj1','DotData1',...
+        'mRNA_cnt2','mRNA_den2','mRNA_ind2','mRNA_sadj2','DotData2',...
+        'NucLabeled','nuc_cents','nuc_area','In'); 
     disp('data saved'); 
     
     guidata(hObject, handles); 
@@ -642,7 +656,7 @@ function setup(hObject,eventdata,handles)
   
   if handles.step == 4;  % Find dots in channel 1
      load([handles.fdata,'/','singlemolecule_pars4.mat']); 
-     % pars = {'.955','2','.98','.07','20','10'}; save([handles.fdata,'singlemolecule_pars4'], 'pars' );
+     % pars = {'1','2','1.05','.1','25','10'}; save([handles.fdata,'singlemolecule_pars4'], 'pars' );
      
         set(handles.in1label,'String','\alpha_E'); 
         set(handles.in1,'String', pars{1});
@@ -664,7 +678,7 @@ function setup(hObject,eventdata,handles)
   
   if handles.step == 5; % Find duplicates in channel 1
      load([handles.fdata,'/','singlemolecule_pars5.mat']); 
-     % pars = {'3','50','0',' ',' ',' '}; save([handles.fdata,'singlemolecule_pars5'], 'pars' );
+     % pars = {'2','50','1','5',' ',' '};  save([handles.fdata,'singlemolecule_pars5'], 'pars' );
      
         set(handles.in1label,'String','min overlap'); 
         set(handles.in1,'String', pars{1});
@@ -688,8 +702,8 @@ function setup(hObject,eventdata,handles)
     
   
   if handles.step == 6;  % Find dots in channel 2
-     load([handles.fdata,'/','singlemolecule_pars4.mat']); 
-     % pars = {'.955','2','.98','.07','20','10'}; save([handles.fdata,'singlemolecule_pars4'], 'pars' );
+     load([handles.fdata,'/','singlemolecule_pars6.mat']); 
+     % pars = {'1','2','1.05','.1','25','10'}; save([handles.fdata,'singlemolecule_pars6'], 'pars' );
      
         set(handles.in1label,'String','\alpha_E'); 
         set(handles.in1,'String', pars{1});
@@ -704,14 +718,14 @@ function setup(hObject,eventdata,handles)
         set(handles.in6label,'String','min dot size');
         set(handles.in6,'String', pars{6});
         set(handles.VarButtonName,'String','Manual Reg Select');
-   dir = {'Step 4: identify and count nascent transcripts of mRNA1.';
+   dir = {'Step 6: identify and count nascent transcripts of mRNA2.';
          'Uses Difference of Gaussian Filter \alpha_E*exp(-x^2/\sigma_E) - alpha_I*exp(-x^2/\sigma_I)'};
   set(handles.directions,'String',dir); 
   end
   
   if handles.step == 7; % Find duplicates in channel 2
-     load([handles.fdata,'/','singlemolecule_pars5.mat']); 
-     % pars = {'3','50','0',' ',' ',' '}; save([handles.fdata,'singlemolecule_pars5'], 'pars' );
+     load([handles.fdata,'/','singlemolecule_pars7.mat']); 
+     % pars = {'2','50','1','5',' ',' '}; save([handles.fdata,'singlemolecule_pars7'], 'pars' );
      
         set(handles.in1label,'String','min overlap'); 
         set(handles.in1,'String', pars{1});
@@ -726,7 +740,7 @@ function setup(hObject,eventdata,handles)
         set(handles.in6label,'String',' ');
         set(handles.in6,'String', pars{6});
         set(handles.VarButtonName,'String','Manual Reg Select');
-   dir = {'Step 5: Count total mRNA in each nucleus across layers';
+   dir = {'Step 7: Count total mRNA 2s in each nucleus across layers';
          'Compares centroids adjacent slices to remove duplicates.'};
   set(handles.directions,'String',dir); 
   end

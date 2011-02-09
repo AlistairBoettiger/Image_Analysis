@@ -1,0 +1,151 @@
+%%                                  fxn_nuc_seg.m                        %%
+% Alistair Boettiger & Jacques Bothma           Version Completed: 01/28/10          
+% Levine Lab                                        Last Modified: 07/27/10
+
+%% Overview
+%  I -- image
+%  FiltSize -- size of region used in image blurring filter.  (30-50)
+% FiltStr -- strength of activation filter (.95 - 1.05)
+%  sigmaE -- width of Gaussian excitation filter ~ nuc radius (15)
+% simgaI -- width of Gaussina inhibition filter ~nuc diameter (25)
+% PercP -- percintile of nuclei considered fused (75 - 100%) 
+% minN -- minimum nucleus size allowed in pixel area (20 - 100) 
+
+%% Update Log
+% updated 07/27/10 to use separate Gaussian filters and difference images
+% rather than imorph operations
+% Fixed bug 02/03/11: cents were not being computed from the final bw
+% segmentation.  
+% 
+
+
+function  [bw,cents] = fxn_nuc_seg(I,minN,FiltStr,sigmaE,sigmaI,PercP,dilp)
+
+
+% % %  % Trouble shooting defaults.  
+% clear all; load test;  
+% FiltSize = 30; % str2double(get(handles.in1,'String'));  %  
+% sigmaE = 12; 
+% sigmaI = 15;
+% a = .96; 
+%      
+
+%%  DoG Filter to ID nuclei
+
+% this section needs FiltSize, FiltStd, and nucT
+
+%Three step prep for segmentation. Step 1: enhance contrast. Step 2: Apply
+%lorentzian of gaussian filter to emphasize gaussian looking objects. Step
+%3: Automatic threshold calculated using Otsu's method.
+
+% figure(3); clf; imshow(I);
+
+tic
+% for save data; 
+fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
+
+
+FiltSize = round(1.3*sigmaI); 
+nucT = 0; % automatic threshold is manditory
+% dilp = 3; % dilation/erosion parameter is not modifiable
+
+   I =  adapthisteq(I); %Step 1: enhances the contrast of the grayscale image   
+ %   H = - fspecial('log',FiltSize,FiltStd); % Step 2 : Filter Kernel
+  
+% Advanced Guassian filtering    
+   a = FiltStr; 
+   Ex = fspecial('gaussian',FiltSize,sigmaE);
+   Ix = fspecial('gaussian',FiltSize,sigmaI);
+% H = a.*Ex-Ix;  
+%  outims = imfilter(double(I),H,0); %Apply Filter       
+%    figure(2); clf; surf(H); shading flat; camlight left; lighting gouraud;
+   
+  % Faster method to apply filter -- use straight Gaussians.  
+  outE = imfilter(single(I),Ex,'replicate'); 
+  outI = imfilter(single(I),Ix,'replicate'); 
+  outims = a.*outE - outI;
+   
+  %    figure(3); clf; imshow(outims); 
+   
+   % Set negative values to zero and scale to span 16 bit color depth
+   outims(outims<0) = 0; 
+   % outims=uint16(outims/max(outims(:))*(2^16-1));
+
+    if nucT == 0 %loop that allows user to select own threhsold or apply automatic one.
+         bw = im2bw(outims,graythresh(outims)); %Step 3 : Automatic threshold calculated using Otsu's method.
+    else
+        bw = im2bw(outims,nucT); %Apply user chosen threshold
+    end
+    
+% % Plotting stuff    
+    % handles.bw = bw;  % Output binary image to next step
+  %  L = bwlabeln(bw,8); % Label the unique regions in the thresholded image
+    % CM=label2rgb(L, 'jet', [1,1,1],'shuffle');
+    % DI = uint16(bsxfun(@times,double(CM)/255,double(I)));
+%   figure(1), imshow(DI,'Border','tight','InitialMagnification',100); % maxwindow
+toc
+%% Count Nuclei
+%  this section needs PercP, dilp, and minN
+tic
+nuc_bw = bw;
+
+%  clean up large and fused nuclei
+L = bwlabeln(nuc_bw,8); % label
+S = regionprops(L,'Perimeter','Area','Centroid','MajorAxisLength','MinorAxisLength'); % measure areas
+
+
+% figure(2); clf; scatter(cents(1,:),cents(2,:));
+
+% maxN=prctile([S.Perimeter],PercP); %Set the maximum size as a percentile cut off
+% bwjn = ismember(L,find([S.Perimeter] <= maxN)); % map of all unjoined nuclei
+% bwj = ismember(L,find([S.Perimeter] > maxN)); % map of all joined nuclei
+
+
+bwjn = ismember(L,find([S.MajorAxisLength] < 2.5*[S.MinorAxisLength] )); % map of all unjoined nuclei
+bwj =  ismember(L,find([S.MajorAxisLength] > 2.5*[S.MinorAxisLength] ));% map of all joined nuclei
+
+toc
+
+
+bwj = imerode(bwj,strel('disk',dilp)); %errode joined nuclei
+bwj = imdilate(bwj,strel('disk',dilp-1));
+
+
+% bws = ismember(L,find([S.Area] <= minN));
+
+% plotting
+% BWJ1 = ind2rgb(bwjn,[0,0,0;0,0,1]);
+% BWJ2 = ind2rgb(bwj,[0,0,0;1,0,0]);
+% BWJ3 = ind2rgb(bwj,[0,0,0;0,1,0]);
+% BWJ4 = ind2rgb(bws,[0,0,0;0,1,1]);
+% figure, imshow(BWJ1+BWJ2+BWJ3+BWJ4,'Border','tight','InitialMagnification',100); % maxwindow
+
+% save([fdata,'/','test2']); % figure(1); clf; imshow(bw);
+
+bw = logical(bwj + bwjn); 
+bw = bwareaopen(bw,minN); 
+
+% figure(3); clf; imshow(bw); 
+
+% 
+% % % I don't think this does anything...? 
+% bw=bw>0;  
+% bws=bws>0;  
+% bw=bw-bws;
+tic 
+[labeled, nucs] = bwlabel(bw,8);  % count and label nuclei (8-> diagnols count as touch)
+
+S = regionprops(labeled,'Centroid');
+cents = reshape([S.Centroid],2,length(S));
+
+
+CM=label2rgb(labeled, 'jet', [1,1,1],'shuffle');
+
+
+ DI = uint8(bsxfun(@times,double(CM)/255,double(I)));
+figure(22); imshow(DI,'Border','tight','InitialMagnification',100); %maxwindow
+title(['nuclei count: ', num2str(nucs)]);
+
+toc 
+% save test2;
+

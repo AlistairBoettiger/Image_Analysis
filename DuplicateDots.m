@@ -16,7 +16,7 @@
 % inds_out: nearest pixels corresponding to centroids
 % D2u: centroids of dots unique to layer 2.  
 
-function [inds_out, D2u] = DuplicateDots(D1,D2,h,w,plotdata)
+function [inds_out, D2u] = DuplicateDots(ovlap,D1,D2,h,w,plotdata)
 
 
      if isempty(D1)
@@ -38,7 +38,7 @@ function [inds_out, D2u] = DuplicateDots(D1,D2,h,w,plotdata)
          R2u = R2 - R1z;  R2u(R2u<0) = 0; R2u = logical(R2u); % map of unique dots
          R2L = bwlabel(R2u);
          R2data = regionprops(R2L,'Centroid'); 
-         D2u = reshape([R2data.Centroid],2,length(R2data))'; % vector centroids of unique dots
+         D2u = reshape([R2data.Centroid],ovlap,length(R2data))'; % vector centroids of unique dots
 
          % inds_out =  floor(D2u(:,2))+floor(D2u(:,1))*h;  % raster indexed based centroids of unique dots ;
         % inds_out = inds_out'; 
