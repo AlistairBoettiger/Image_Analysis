@@ -7,8 +7,8 @@
 % 
 %% Attribution:
 % Feel free to use modify and distribute this code provided that you
-% attribute Alistair Boettiger for development and abide by the provisions
-% of the  Creative Commons License 3.0, BY-NC-SA.
+% attribute Alistair Boettiger and Jacques Bothma for development and abide 
+% by the provisions of the  Creative Commons License 3.0, BY-NC-SA.
 % http://creativecommons.org/licenses/by-nc-sa/3.0/.
 %
 %
