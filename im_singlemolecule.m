@@ -239,7 +239,7 @@ if step == 3;
     handles.H2 = imresize(H1,scale,'nearest');
     handles.Cell_bnd2 = Cell_bnd2; 
     
-    figure(22); close; 
+    figure(21); close; 
     
     handles.H1 = H1; 
     handles.Cell_bnd = Cell_bnd; 
@@ -881,9 +881,13 @@ handles.emb = str2double(get(handles.embin,'String')); % embryo number
 
 filename = [handles.fin,'/',handles.fname];
 % load images
+
+if handles.emb == 1 % only need to do this once.  
     jacquestiffread([filename,'.lsm']);
-   %  handles.Im = loadlsm([filename,'.mat'],handles.emb);    
-    
+end
+   %  handles.Im = loadlsm([filename,'.mat'],handles.emb);  % old version
+   
+   
     handles.Im = lsm_read_mod([filename,'.mat'],handles.emb); 
     
     Zs = length(handles.Im);
