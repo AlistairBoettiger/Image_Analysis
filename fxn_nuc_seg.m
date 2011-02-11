@@ -40,7 +40,7 @@ function  [bw,cents] = fxn_nuc_seg(I,minN,FiltStr,sigmaE,sigmaI,PercP,dilp)
 
 % figure(3); clf; imshow(I);
 
-tic
+% tic
 % for save data; 
 fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
 
@@ -83,10 +83,10 @@ nucT = 0; % automatic threshold is manditory
     % CM=label2rgb(L, 'jet', [1,1,1],'shuffle');
     % DI = uint16(bsxfun(@times,double(CM)/255,double(I)));
 %   figure(1), imshow(DI,'Border','tight','InitialMagnification',100); % maxwindow
-toc
+% toc
 %% Count Nuclei
 %  this section needs PercP, dilp, and minN
-tic
+% tic
 nuc_bw = bw;
 
 %  clean up large and fused nuclei
@@ -104,7 +104,7 @@ S = regionprops(L,'Perimeter','Area','Centroid','MajorAxisLength','MinorAxisLeng
 bwjn = ismember(L,find([S.MajorAxisLength] < 2.5*[S.MinorAxisLength] )); % map of all unjoined nuclei
 bwj =  ismember(L,find([S.MajorAxisLength] > 2.5*[S.MinorAxisLength] ));% map of all joined nuclei
 
-toc
+% toc
 
 
 bwj = imerode(bwj,strel('disk',dilp)); %errode joined nuclei
@@ -132,7 +132,7 @@ bw = bwareaopen(bw,minN);
 % bw=bw>0;  
 % bws=bws>0;  
 % bw=bw-bws;
-tic 
+% tic 
 [labeled, nucs] = bwlabel(bw,8);  % count and label nuclei (8-> diagnols count as touch)
 
 S = regionprops(labeled,'Centroid');
@@ -146,6 +146,6 @@ CM=label2rgb(labeled, 'jet', [1,1,1],'shuffle');
 figure(22); imshow(DI,'Border','tight','InitialMagnification',100); %maxwindow
 title(['nuclei count: ', num2str(nucs)]);
 
-toc 
+% toc 
 % save test2;
 

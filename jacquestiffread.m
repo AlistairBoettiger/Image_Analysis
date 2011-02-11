@@ -225,8 +225,11 @@ end
 
 Datas.LSM_info=LSM_info;
 Datas.filename=filename;
+Datas.TEMPDat = TIF.TEMPDat;
+
 
 save(filenameout,'Datas');
+disp('data saved'); 
 
 fclose(TIF.file)
 
@@ -338,6 +341,11 @@ else
            TEMPDat.pastposi=entryvaltemp(i);
            
            end
+           
+           TEMPDat.entryval = entry.val;   % Added export for troubleshooting
+           TIF.TEMPDat=TEMPDat;
+         
+           
         
   else
 
