@@ -101,8 +101,8 @@ S = regionprops(L,'Perimeter','Area','Centroid','MajorAxisLength','MinorAxisLeng
 % bwj = ismember(L,find([S.Perimeter] > maxN)); % map of all joined nuclei
 
 
-bwjn = ismember(L,find([S.MajorAxisLength] < 2.5*[S.MinorAxisLength] )); % map of all unjoined nuclei
-bwj =  ismember(L,find([S.MajorAxisLength] > 2.5*[S.MinorAxisLength] ));% map of all joined nuclei
+bwjn = ismember(L,find([S.MajorAxisLength] < PercP*[S.MinorAxisLength] )); % map of all unjoined nuclei
+bwj =  ismember(L,find([S.MajorAxisLength] > PercP*[S.MinorAxisLength] ));% map of all joined nuclei
 
 % toc
 

@@ -151,7 +151,11 @@ if step == 1;
     handles.NUCchn =  str2double(get(handles.in3,'String'));
     NucBlur = str2double(get(handles.in4,'String')); 
     imsize = str2double(get(handles.in5,'String'));
-    last_layer = str2double(get(handles.in6,'String'));
+    in6 = get(handles.in6,'String');
+    layers = eval(in6{:});
+    
+    first_layer = layers(1);
+    last_layer = layers(2); 
     
     nc = handles.NUCchn;
     
@@ -165,7 +169,7 @@ if step == 1;
     end
     
     nuc = uint16(zeros(imsize,imsize,nc)); 
-    for i=1:Zs
+    for i=first_layer:Zs
         nuc(:,:,i) = imresize(handles.Im{1,i}{nc},m); % 2
     end
     
@@ -612,7 +616,7 @@ function setup(hObject,eventdata,handles)
  end
   if handles.step == 1; 
        load([handles.fdata,'/','singlemolecule_pars1']); 
-       % pars = {'1','2','3','4','512','0'}; save([handles.fdata,'singlemolecule_pars1'], 'pars' );
+       % pars = {'1','2','3','4','512','[1,0]'}; save([handles.fdata,'singlemolecule_pars1'], 'pars' );
         set(handles.in1label,'String','mRNA 1 channel');
         set(handles.in1,'String', pars(1));
         set(handles.in2label,'String','mRNA 2 channel');
@@ -623,7 +627,7 @@ function setup(hObject,eventdata,handles)
         set(handles.in4,'String', pars(4));
         set(handles.in5label,'String','Working Size');
         set(handles.in5,'String', pars(5));
-        set(handles.in6label,'String','Last Layer');
+        set(handles.in6label,'String','First,Last Layer');
         set(handles.in6,'String', pars(6));
         %    set(handles.VarButtonName,'String',''); 
         dir = {'Step 1: Max project nuclear channel';
@@ -646,7 +650,7 @@ function setup(hObject,eventdata,handles)
         set(handles.in3,'String',pars{3}); 
         set(handles.in4label,'String','Inhibition Width');
         set(handles.in4,'String', pars{4});
-        set(handles.in5label,'String','Percent fused');
+        set(handles.in5label,'String','Max aspect ratio');
         set(handles.in5,'String', pars{5});
         set(handles.in6label,'String','Erode fused');
         set(handles.in6,'String', pars{6});  
