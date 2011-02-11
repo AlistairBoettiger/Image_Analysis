@@ -53,10 +53,9 @@ for i=1:Zs  % i = 21
                        else
                           IMG.data{c} = uint8(zeros(h,w));
                        end
-                   end
-                  disp(['Fix failed for in chn ', num2str(c), ' layer ',num2str(i),...
-                       '  skipping this image...'] );
-                   
+                         disp(['Fix failed for in chn ', num2str(c),...
+                             ' layer ',num2str(i),'  skipping this image...'] );
+                   end 
               end
            end           
             stack{1,i} = IMG.data; 

@@ -17,7 +17,7 @@
 % D2u: centroids of dots unique to layer 2.  
 
 function [inds_out, D2u] = DuplicateDots(ovlap,D1,D2,h,w,plotdata)
-
+fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
 
      if isempty(D1)
          inds2 = floor(D2(:,2))+floor(D2(:,1))*h; 
@@ -31,10 +31,17 @@ function [inds_out, D2u] = DuplicateDots(ovlap,D1,D2,h,w,plotdata)
          % convert to indices. 
          inds1 = floor(D1(:,2))+floor(D1(:,1))*h; 
          inds2 = floor(D2(:,2))+floor(D2(:,1))*h; 
+         
+         inds1(inds1>w*h) = w*h; 
+         inds2(inds2>w*h) = w*h; 
+         
          R1 = false(h,w); R1(inds1) = 1;
          R2 = false(h,w); R2(inds2) = 1;
          R1z = imdilate(R1,strel('disk',2)); % This is going to slow us down alot  
 
+         %  save([fdata,'/','test2']);
+         % load([fdata,'/','test2']);
+         
          R2u = R2 - R1z;  R2u(R2u<0) = 0; R2u = logical(R2u); % map of unique dots
          R2L = bwlabel(R2u);
          R2data = regionprops(R2L,'Centroid'); 
