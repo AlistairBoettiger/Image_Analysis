@@ -1,81 +1,12 @@
+function plane = read_planeT(offset, width, height, plane_nb,TIF)
 
-%%                                  loadlsm.m
-% Jacques Bothma                                Date shared: 01/13/11
-% now Alistair Boettiger
-% Levine Lab                                    Last Modified: 01/13/11
+% global TIF;
 
-
-function stack = loadlsm(name,N)
- 
-
-load(name)
-
-global TIF;
+%   handles.fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
+% load([handles.fdata,'/','test']);
+% % offset = 0, width = IMG.width, height = IMG.height, 
 
 
-
-stack=[];
-
-filetemp= fopen(Datas.filename,'r','l');
-
- for i=1:Datas.LSM_info.DimensionZ
-%%    
-% ~~~% Troubleshooting 
-clear all;
-name = '/Volumes/Data/Lab Data/Raw_Data/02-08-11/MP10_22C_sna_y.mat';
-         N =5; i = 11; 
-        load(name);
-       global TIF;
-        stack=[];
-        filetemp= fopen(Datas.filename,'r','l');
-%~~~~~~~~~~~~~
-
-TIF = Datas.([ 'Stack' num2str(N)]).(['Image' num2str(i)]).TIF;
-IMG = Datas.([ 'Stack' num2str(N)]).(['Image' num2str(i)]).IMG;
-TIF.file=filetemp;
-
-TIF.StripCnt = 3; % channel;  
-
-      
-            % troubleshooting;
-            test = read_plane(111, IMG.width, IMG.height, TIF.StripCnt, TIF);
-             figure(1); clf; imshow( test);
-             
-            test(1:10 
-             
-            
-%%
-
-% name = '/Volumes/Data/Lab Data/Raw_Data/02-08-11/MP10_22C_sna_y.mat';
-     
-            %read the image channels
-            for c = 1:TIF.SamplesPerPixel
-                IMG.data{c} = read_plane(0, IMG.width, IMG.height, c);
-              
-            end
-
-      
-            
-                stack{1,i} = IMG.data;  % = orderfields(IMG);
-%                img_read = img_read + 1;
-            
-% offset = 0, width = IMG.width, height = IMG.height, plan_nb = 3; 
-
-    % load([handles.fdata,'/','test']);
-
-end
-
-fclose(TIF.file)
-
-end
-
-
-
-%% ===========================================================================
-
-function plane = read_plane(offset, width, height, plane_nb)
-
-global TIF;
 
 
 %return an empty array if the sample format has zero bits
@@ -84,7 +15,8 @@ if ( TIF.BitsPerSample(plane_nb) == 0 )
     return;
 end
 
-%fprintf('reading plane %i size %i %i\n', plane_nb, width, height);
+fprintf('reading plane %i size %i %i\n', plane_nb, width, height);
+
 
 %determine the type needed to store the pixel values:
 switch( TIF.SampleFormat )
@@ -145,10 +77,15 @@ function strip = read_strip(offset, width, plane_nb, stripCnt, classname)
 
 global TIF;
 
-%fprintf('reading strip at position %i\n',TIF.StripOffsets(stripCnt) + offset);
+
+
+% fprintf('reading strip at position %i\n',TIF.StripOffsets(stripCnt) + offset);
 StripLength = TIF.StripByteCounts(stripCnt) ./ TIF.BytesPerSample(plane_nb);
 
-%fprintf( 'reading strip %i\n', stripCnt);
+% fprintf( 'reading strip %i\n', stripCnt);
+
+
+
 status = fseek(TIF.file, TIF.StripOffsets(stripCnt) + offset, 'bof');
 if status == -1
     error('invalid file offset (error on fseek)');

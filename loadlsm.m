@@ -5,9 +5,9 @@
 % Levine Lab                                    Last Modified: 01/13/11
 
 
-function stack = loadlsm(name,N);
+function stack = loadlsm(name,N)
  
-
+name
 load(name)
 
 global TIF;
@@ -18,26 +18,75 @@ stack=[];
 
 filetemp= fopen(Datas.filename,'r','l');
 
-for i=1:Datas.LSM_info.DimensionZ
-    
 
-TIF = Datas.([ 'Stack' num2str(N)]).(['Image' num2str(i)]).TIF;
-IMG = Datas.([ 'Stack' num2str(N)]).(['Image' num2str(i)]).IMG;
-TIF.file=filetemp;
+ for i=1:Datas.LSM_info.DimensionZ
+     TIF = Datas.([ 'Stack' num2str(N)]).(['Image' num2str(i)]).TIF;
+     IMG = Datas.([ 'Stack' num2str(N)]).(['Image' num2str(i)]).IMG;
+     TIF.file=filetemp;
+     TIF.StripCnt = 1;
 
-TIF.StripCnt = 1;
+% TIF.StripCnt = 3; % channel;  
+     
+%%    
+% % ~~~% Troubleshooting 
+% clear all;
+% name = '/Volumes/Data/Lab Data/Raw_Data/02-08-11/MP10_22C_sna_y.mat';
+%          N =5; i = 11; 
+%         load(name);
+%        global TIF;
+%         stack=[];
+%         filetemp= fopen(Datas.filename,'r','l');
+% %~~~~~~~~~~~~~
+% 
+% TIF = Datas.([ 'Stack' num2str(N)]).(['Image' num2str(i)]).TIF;
+% IMG = Datas.([ 'Stack' num2str(N)]).(['Image' num2str(i)]).IMG;
+% TIF.file=filetemp;
+% 
+% TIF.StripCnt = 3; % channel;  
+% offset = 0; 
+%       
+%             % troubleshooting;
+%             test = read_plane(offset, IMG.width, IMG.height, TIF.StripCnt, TIF);
+%              figure(1); clf; imshow( test);
+%              
+%            sdata =  test(1:100,1:100); 
+%            isnoise = std(double(sdata(:)))
+%            if isnoise> 1E4 
+%                offset = 1;
+%                  test = read_plane(offset, IMG.width, IMG.height, TIF.StripCnt, TIF);
+%              figure(2); clf; imshow( test);
+%                
+%            end
+            
+%%
+
+% name = '/Volumes/Data/Lab Data/Raw_Data/02-08-11/MP10_22C_sna_y.mat';
+     
+offset = 0; 
 
             %read the image channels
             for c = 1:TIF.SamplesPerPixel
-                IMG.data{c} = read_plane(0, IMG.width, IMG.height, c);
+                IMG.data{c} = read_plane(offset, IMG.width, IMG.height, c); 
             end
 
+      % check for screwed up offset
+        sdata =  IMG.data{c}(1:100,1:100); 
+           isnoise = std(double(sdata(:)));
+           if isnoise> 1E4 
+               offset = 1;
+               for c = 1:TIF.SamplesPerPixel
+                     IMG.data{c} = read_plane(offset, IMG.width, IMG.height, c); 
+               end
+           end
+            
+            
             
                 stack{1,i} = IMG.data;  % = orderfields(IMG);
 %                img_read = img_read + 1;
             
+% offset = 0, width = IMG.width, height = IMG.height, plan_nb = 3; 
 
-
+    % load([handles.fdata,'/','test']);
 
 end
 
