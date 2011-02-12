@@ -118,24 +118,12 @@ if step == 0;
     handles.output = hObject; % update handles object with new step number
     guidata(hObject, handles);  % update GUI data with new handles
     [handles] = imload(hObject, eventdata, handles); % load new embryo
-    dispfl = str2double(get(handles.in1,'String'));
+   % dispfl = str2double(get(handles.in1,'String'));
     
     Zs = length(handles.Im); 
     
-    if dispfl == 1 
-        figure(1); clf; set(gcf,'color','k'); colordef black;
-        subplot(1,2,1); imshow(handles.Im{1,1}{1}); title('First slice, chn 1');
-        subplot(1,2,2); imshow(handles.Im{1,Zs}{1});  title('Last slice, chn 1');
 
-        figure(2); clf; set(gcf,'color','k'); colordef black;
-        subplot(1,2,1); imshow(handles.Im{1,1}{2}); title('First slice, chn 2');
-        subplot(1,2,2); imshow(handles.Im{1,Zs}{2}); title('Last slice, chn 2');
-
-        figure(3); clf; set(gcf,'color','k'); colordef black;
-        subplot(1,2,1); imshow(handles.Im{1,1}{3}); title('First slice, chn 3');
-        subplot(1,2,2); imshow(handles.Im{1,Zs}{3}); title('Last slice, chn 3');  
-    end
-    
+      
     
      %    save([handles.fdata,'/','test']);
     % load([handles.fdata,'/','test']);
@@ -219,7 +207,7 @@ if step == 3;
     Mthink = str2double(get(handles.in1,'String'));  % 
     Mthin = str2double(get(handles.in2,'String'));
     Imnn = str2double(get(handles.in3,'String'));
-    [H1,Nuc_overlay,conn_map,cell_bords] = fxn_nuc_reg(handles.In,handles.bw,Mthink,Mthin,Imnn);  
+    [NucLabeled,Nuc_overlay,conn_map,cell_bords] = fxn_nuc_reg(handles.In,handles.bw,Mthink,Mthin,Imnn);  
 
     
     figure(1); clf; imshow(handles.In); hold on;
@@ -228,9 +216,8 @@ if step == 3;
     % save([handles.fdata,'/','test']);
     % load([handles.fdata,'/','test']);
     
-    [h,w] = size(H1);
-    scale = h/handles.hn; % 
-
+    [h,w] = size(NucLabeled);
+    
     Cell_bnd = false(h,w);
     Cell_bnd(cell_bords) = 1;
     Cell_bnd = bwareaopen( Cell_bnd,100);
@@ -238,14 +225,10 @@ if step == 3;
      figure(1); clf; imshow(Cell_bnd);   
     
      
-     % do we use these? 
-     Cell_bnd2 = imresize(Cell_bnd,scale,'nearest');  
-    handles.H2 = imresize(H1,scale,'nearest');
-    handles.Cell_bnd2 = Cell_bnd2; 
     
     figure(21); close; 
     
-    handles.H1 = H1; 
+    handles.NucLabeled = NucLabeled; 
     handles.Cell_bnd = Cell_bnd; 
     handles.conn_map = conn_map; 
     guidata(hObject, handles);  % update GUI data with new handles  
@@ -299,7 +282,7 @@ end
         Zs = handles.Zs;  % number of z-sections
         DotData = handles.DotData1; % Dot data for each section (from prev)
         [h,w] = size(handles.Im{1,1}{1});  % original image dimensions 
-        NucLabeled = handles.H1; % our nuclei label matrix 
+        NucLabeled = handles.NucLabeled; % our nuclei label matrix 
          
  % % $$$$$$$$$ FIND DUPLICATE DOTS  $$$$$$$$$$ % %     
     % This loop also checks for vertically duplicated dots that have
@@ -551,11 +534,13 @@ end
     nuc_cents = handles.cent; 
     nuc_area = handles.nuc_area;
     In = handles.In; 
+    conn_map = handles.conn_map; 
+    Cell_bnd = handles.Cell_bnd;
     
     save([fout,fname],...
         'mRNA_cnt1','mRNA_den1','mRNA_ind1','mRNA_sadj1','DotData1',...
         'mRNA_cnt2','mRNA_den2','mRNA_ind2','mRNA_sadj2','DotData2',...
-        'NucLabeled','nuc_cents','nuc_area','In'); 
+        'NucLabeled','nuc_cents','nuc_area','In','conn_map','Cell_bnd'); 
     disp('data saved'); 
     
     guidata(hObject, handles); 
@@ -905,8 +890,25 @@ end
             I(:,:,1) = imresize(handles.Im{1,j}{1},m);
             I(:,:,2) = imresize(handles.Im{1,j}{2},m);
             I(:,:,3) = imresize(handles.Im{1,j}{3},m);
-            figure(1); clf; imshow(I); pause(.001); 
+            figure(10); clf; imshow(I); pause(.001); 
     end
+    
+    % display first and last in stack
+      figure(1); clf; set(gcf,'color','k'); colordef black;
+        subplot(1,2,1); imshow(handles.Im{1,1}{1}); title('First slice, chn 1');
+        subplot(1,2,2); imshow(handles.Im{1,Zs}{1});  title('Last slice, chn 1');
+
+        figure(2); clf; set(gcf,'color','k'); colordef black;
+        subplot(1,2,1); imshow(handles.Im{1,1}{2}); title('First slice, chn 2');
+        subplot(1,2,2); imshow(handles.Im{1,Zs}{2}); title('Last slice, chn 2');
+
+        figure(3); clf; set(gcf,'color','k'); colordef black;
+        subplot(1,2,1); imshow(handles.Im{1,1}{3}); title('First slice, chn 3');
+        subplot(1,2,2); imshow(handles.Im{1,Zs}{3}); title('Last slice, chn 3');  
+  
+    
+    
+    
     
     handles.output = hObject; 
     guidata(hObject,handles);% pause(.1);
