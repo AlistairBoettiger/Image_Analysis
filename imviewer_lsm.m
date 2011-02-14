@@ -85,6 +85,7 @@ function imviewer_lsm_OpeningFcn(hObject, eventdata, handles, varargin)
      
      handles.first = [1,1,1,1];
      handles.last = [0,0,0,0];
+     handles.nmax = 1.5E4; 
      handles.step = 0;  % starting step is step 0 
      set(handles.stepnum,'String',handles.step); % change step label in GUI
      handles.output = hObject; % update handles object with new step number
@@ -112,6 +113,7 @@ step = handles.step;
 if step == 0;
     disp('running...'); tic
     dispfl = str2double(get(handles.in1,'String')); 
+    handles.nmax = str2double(get(handles.in2,'String'));
     handles.output = hObject; % update handles object with new step number
     guidata(hObject, handles);  % update GUI data with new handles
     [handles] = imload(hObject, eventdata, handles,dispfl); % load new embryo
@@ -230,35 +232,38 @@ function AutoCycle_Callback(hObject, eventdata, handles)
      tic 
      
      err = 0; 
-     
+    try  
      while err == 0;
-     
-     handles.emb = emb; % needed for imload to get the right embyro 
-     
-     if emb < 10
-         embin = ['0',num2str(emb)];
-     else
-        embin = num2str(emb);
+         handles.emb = emb; % needed for imload to get the right embyro 
+
+         if emb < 10
+             embin = ['0',num2str(emb)];
+         else
+            embin = num2str(emb);
+         end
+            handles.fname = [froot,'_',embin];  % needed for savename. 
+            set(handles.embin,'String',embin); 
+
+        disp(['running embryo ',embin,'...']); tic
+        handles.output = hObject; % update handles object with new step number
+        guidata(hObject, handles);  % update GUI data with new handles
+        [handles] = imload(hObject, eventdata, handles,0); % load new embryo
+        guidata(hObject, handles);  
+
+        handles.output = hObject; % update handles object with new step number
+        guidata(hObject, handles);  % update GUI data with new handles
+        [handles] = projectNsave(hObject, eventdata, handles); % load new embryo
+        guidata(hObject, handles); 
+
+        emb = emb + 1;    
+        toc
      end
-        handles.fname = [froot,'_',embin];  % needed for savename. 
-        set(handles.embin,'String',embin); 
-        
-    disp(['running embryo ',embin,'...']); tic
-    handles.output = hObject; % update handles object with new step number
-    guidata(hObject, handles);  % update GUI data with new handles
-    [handles] = imload(hObject, eventdata, handles,0); % load new embryo
-    guidata(hObject, handles);  
-    
-    handles.output = hObject; % update handles object with new step number
-    guidata(hObject, handles);  % update GUI data with new handles
-    [handles] = projectNsave(hObject, eventdata, handles); % load new embryo
-    guidata(hObject, handles); 
-    
-    emb = emb + 1;
-    toc
-    end
+         
+    catch error
+       disp(error.message); 
+       disp('Export finished.' ); toc; 
+   end
      
-    disp('total time taken: ' ); toc; 
     
 
 % ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ %
@@ -270,10 +275,10 @@ function AutoCycle_Callback(hObject, eventdata, handles)
 function setup(hObject,eventdata,handles)
  if handles.step == 0; 
        load([handles.fdata, 'imviewer_lsm_pars0']); 
-       % pars = {'1',' ',' ',' ',' ',' '}; save([handles.fdata,'imviewer_lsm_pars0'], 'pars' );
+       % pars = {'1','1.5E4',' ',' ',' ',' '}; save([handles.fdata,'imviewer_lsm_pars0'], 'pars' );
         set(handles.in1label,'String','Display first/last');
         set(handles.in1,'String', pars(1));
-        set(handles.in2label,'String',' ');
+        set(handles.in2label,'String','noise max');
         set(handles.in2,'String', pars(2));
        set(handles.in3label,'String',' ');
         set(handles.in3,'String', pars(3));
@@ -410,7 +415,7 @@ end
    %  handles.Im = loadlsm([filename,'.mat'],handles.emb);  % old version
    
    
-    handles.Im = lsm_read_mod([filename,'.mat'],handles.emb); 
+    handles.Im = lsm_read_mod([filename,'.mat'],handles.emb,handles.nmax); 
     
     Zs = length(handles.Im);
     [h,w] = size(handles.Im{1,1}{1});

@@ -4,12 +4,13 @@
 % UC Berkeley 
 
 
-function stack = lsm_read_mod(name,N)
+function stack = lsm_read_mod(name,N,nmax)
 
 %% 
 %  clear all;
 %  name = '/Volumes/Data/Lab Data/Raw_Data/02-08-11/MP10_22C_sna_y.mat';
 %  N =9; 
+% nmax = 1.4E4;
 
 global TIF;
 load(name)
@@ -39,7 +40,7 @@ for i=1:Zs  % i = 21
                 % signal
                 sdata =  IMG.data{c}( floor(h/2*.9):floor(h/2*1.1), floor(w/2*.9):floor(w/2*1.1)  ); 
                 isnoise = std(double(sdata(:)));
-               if isnoise> 1.4E4 
+               if isnoise> nmax
                    offset = 1;
                    IMG.data{c} = read_planeT(offset, IMG.width, IMG.height,c,TIF); 
                    sdata =  IMG.data{c}( floor(h/2*.9):floor(h/2*1.1), floor(w/2*.9):floor(w/2*1.1)  ); 
@@ -47,7 +48,7 @@ for i=1:Zs  % i = 21
                    disp(['offset error found in chn ', num2str(c), ' layer ',num2str(i),...
                        '  std=',num2str(isnoise,5), '  now=',num2str(fixed,5)] );
                    
-                   if fixed > 1.4E4
+                   if fixed > nmax
                        if TIF.BitsPerSample(1) == 16
                           IMG.data{c} = uint16(zeros(h,w));
                        else
