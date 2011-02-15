@@ -19,7 +19,7 @@
 % 
 
 
-function  [bw,cents] = fxn_nuc_seg(I,minN,FiltStr,sigmaE,sigmaI,PercP,dilp)
+function  [bw,cents] = fxn_nuc_seg(I,minN,FiltStr,sigmaE,sigmaI,AspectRatio,dilp)
 
 
 % % %  % Trouble shooting defaults.  
@@ -44,7 +44,6 @@ function  [bw,cents] = fxn_nuc_seg(I,minN,FiltStr,sigmaE,sigmaI,PercP,dilp)
 % for save data; 
 fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
 
-
 FiltSize = round(1.3*sigmaI); 
 nucT = 0; % automatic threshold is manditory
 % dilp = 3; % dilation/erosion parameter is not modifiable
@@ -63,8 +62,7 @@ nucT = 0; % automatic threshold is manditory
   % Faster method to apply filter -- use straight Gaussians.  
   outE = imfilter(single(I),Ex,'replicate'); 
   outI = imfilter(single(I),Ix,'replicate'); 
-  outims = a.*outE - outI;
-   
+  outims = a.*outE - outI;  
   %    figure(3); clf; imshow(outims); 
    
    % Set negative values to zero and scale to span 16 bit color depth
@@ -82,57 +80,28 @@ nucT = 0; % automatic threshold is manditory
   %  L = bwlabeln(bw,8); % Label the unique regions in the thresholded image
     % CM=label2rgb(L, 'jet', [1,1,1],'shuffle');
     % DI = uint16(bsxfun(@times,double(CM)/255,double(I)));
-%   figure(1), imshow(DI,'Border','tight','InitialMagnification',100); % maxwindow
+%   figure(3), imshow(DI,'Border','tight','InitialMagnification',100); % maxwindow
 % toc
 %% Count Nuclei
 %  this section needs PercP, dilp, and minN
-% tic
+
 nuc_bw = bw;
 
 %  clean up large and fused nuclei
 L = bwlabeln(nuc_bw,8); % label
 S = regionprops(L,'Perimeter','Area','Centroid','MajorAxisLength','MinorAxisLength'); % measure areas
-
-
-% figure(2); clf; scatter(cents(1,:),cents(2,:));
-
-% maxN=prctile([S.Perimeter],PercP); %Set the maximum size as a percentile cut off
-% bwjn = ismember(L,find([S.Perimeter] <= maxN)); % map of all unjoined nuclei
-% bwj = ismember(L,find([S.Perimeter] > maxN)); % map of all joined nuclei
-
-
-bwjn = ismember(L,find([S.MajorAxisLength] < PercP*[S.MinorAxisLength] )); % map of all unjoined nuclei
-bwj =  ismember(L,find([S.MajorAxisLength] > PercP*[S.MinorAxisLength] ));% map of all joined nuclei
-
-% toc
-
-
+bwjn = ismember(L,find([S.MajorAxisLength] < AspectRatio*[S.MinorAxisLength] )); % map of all unjoined nuclei
+bwj =  ismember(L,find([S.MajorAxisLength] > AspectRatio*[S.MinorAxisLength] ));% map of all joined nuclei
 bwj = imerode(bwj,strel('disk',dilp)); %errode joined nuclei
 bwj = imdilate(bwj,strel('disk',dilp-1));
 
 
-% bws = ismember(L,find([S.Area] <= minN));
-
-% plotting
-% BWJ1 = ind2rgb(bwjn,[0,0,0;0,0,1]);
-% BWJ2 = ind2rgb(bwj,[0,0,0;1,0,0]);
-% BWJ3 = ind2rgb(bwj,[0,0,0;0,1,0]);
-% BWJ4 = ind2rgb(bws,[0,0,0;0,1,1]);
-% figure, imshow(BWJ1+BWJ2+BWJ3+BWJ4,'Border','tight','InitialMagnification',100); % maxwindow
-
-% save([fdata,'/','test2']); % figure(1); clf; imshow(bw);
+% save([fdata,'/','test2']); % figure(3); clf; imshow(bw);
 
 bw = logical(bwj + bwjn); 
 bw = bwareaopen(bw,minN); 
-
 % figure(3); clf; imshow(bw); 
 
-% 
-% % % I don't think this does anything...? 
-% bw=bw>0;  
-% bws=bws>0;  
-% bw=bw-bws;
-% tic 
 [labeled, nucs] = bwlabel(bw,8);  % count and label nuclei (8-> diagnols count as touch)
 
 S = regionprops(labeled,'Centroid');
