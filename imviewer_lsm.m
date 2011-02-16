@@ -188,9 +188,9 @@ function [handles] = projectNsave(hObject, eventdata, handles);
     end
        
     
-   Imax = eval([inttype,'(zeros(h,w,channels))']);
+   Imax = eval([inttype,'(zeros(h,w,channels));']);
     for i=1:Zs
-        Im_layer = eval([inttype,'(zeros(h,w,channels))']);
+        Im_layer = eval([inttype,'(zeros(h,w,channels));']);
         for c=1:channels
             Im_layer(:,:,c) = handles.Im{1,i}{c};
             
@@ -200,7 +200,10 @@ function [handles] = projectNsave(hObject, eventdata, handles);
                 Imax(:,:,c) = max( cat(3,Imax(:,:,c),Im_layer(:,:,c)),[],3); 
             end
             if channels == 2
-                Im_layer(:,:,3) = eval([inttype,'(zeros(h,w,channels))']); 
+                
+ %     save([handles.fdata,'/','test']);
+%      load([handles.fdata,'/','test']);
+                Im_layer(:,:,3) = eval([inttype,'(zeros(h,w,1));']); 
             end
         end
         imwrite(Im_layer,[fout,'/',fname,'_z', num2str(i),'.tif'],'tif');
@@ -209,7 +212,7 @@ function [handles] = projectNsave(hObject, eventdata, handles);
 
 % Can't write a 2 channel tif, need to convert to a 3 channel version.  
             if channels == 2
-                Imax(:,:,3) = eval([inttype,'(zeros(h,w,channels))']); 
+                Imax(:,:,3) = eval([inttype,'(zeros(h,w,1))']); 
             end
     imwrite(Imax,[fout,'/',fname,'_max','.tif'],'tif');
     guidata(hObject, handles);  % update GUI data with new handles
@@ -344,7 +347,7 @@ function savePars_Callback(hObject, eventdata, handles)
      end 
   % Export parameters 
      stp_label = get(handles.stepnum,'String');     
-     savelabel = ['singlemolecule_pars',stp_label];  
+     savelabel = ['imviewer_lsm_pars',stp_label];  
      % labeled as nucdot_parsi.mat where "i" is the step number 
      save([handles.fdata, savelabel], 'pars');        % export values
      disp([handles.fdata, savelabel]);
@@ -420,30 +423,43 @@ end
     Zs = length(handles.Im);
     [h,w] = size(handles.Im{1,1}{1});
     
+
     if dispfl == 1; 
-    % display image stack at 512x512 resolution
-    m = 512/h; 
-    for j=1:Zs
-            I = uint16(zeros(512,512,3));
-            I(:,:,1) = imresize(handles.Im{1,j}{1},m);
-            I(:,:,2) = imresize(handles.Im{1,j}{2},m);
-            I(:,:,3) = imresize(handles.Im{1,j}{3},m);
-            figure(10); clf; imshow(I); pause(.001); 
-    end
+        try
+        % display image stack at 512x512 resolution
+            m = 512/h; 
+            for j=1:Zs
+                    I = uint16(zeros(512,512,3));
+                    I(:,:,1) = imresize(handles.Im{1,j}{1},m);
+                    I(:,:,2) = imresize(handles.Im{1,j}{2},m);
+                    I(:,:,3) = imresize(handles.Im{1,j}{3},m);
+                    figure(10); clf; imshow(I); pause(.001); 
+            end
+        catch error
+            disp(error.message);
+            disp('Only 2 data channels found'); 
+        end          
     
-    % display first and last in stack
-      figure(1); clf; set(gcf,'color','k'); colordef black;
-        subplot(1,2,1); imshow(handles.Im{1,1}{1}); title('First slice, chn 1');
-        subplot(1,2,2); imshow(handles.Im{1,Zs}{1});  title('Last slice, chn 1');
+  %      display first and last in stack
+          figure(1); clf; set(gcf,'color','k'); colordef black;
+            subplot(1,2,1); imshow(handles.Im{1,1}{1}); title('First slice, chn 1');
+            subplot(1,2,2); imshow(handles.Im{1,Zs}{1});  title('Last slice, chn 1');
 
-        figure(2); clf; set(gcf,'color','k'); colordef black;
-        subplot(1,2,1); imshow(handles.Im{1,1}{2}); title('First slice, chn 2');
-        subplot(1,2,2); imshow(handles.Im{1,Zs}{2}); title('Last slice, chn 2');
+            figure(2); clf; set(gcf,'color','k'); colordef black;
+            subplot(1,2,1); imshow(handles.Im{1,1}{2}); title('First slice, chn 2');
+            subplot(1,2,2); imshow(handles.Im{1,Zs}{2}); title('Last slice, chn 2');
 
-        figure(3); clf; set(gcf,'color','k'); colordef black;
-        subplot(1,2,1); imshow(handles.Im{1,1}{3}); title('First slice, chn 3');
-        subplot(1,2,2); imshow(handles.Im{1,Zs}{3}); title('Last slice, chn 3');  
+        try
+            figure(3); clf; set(gcf,'color','k'); colordef black;
+            subplot(1,2,1); imshow(handles.Im{1,1}{3}); title('First slice, chn 3');
+            subplot(1,2,2); imshow(handles.Im{1,Zs}{3}); title('Last slice, chn 3');  
+            
+        catch error
+            disp(error.message);
+            disp('Only 2 data channels found'); 
+        end          
     end
+ 
     
     
     
