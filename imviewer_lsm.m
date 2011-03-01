@@ -181,7 +181,7 @@ function [handles] = projectNsave(hObject, eventdata, handles);
     
     % interpret last slice of zero as all slices in stack.  
     Zs = length(handles.Im);
-    for c=1:3
+    for c=1:channels
         if last(c) == 0 
             last(c) = Zs; 
         end
@@ -197,7 +197,7 @@ function [handles] = projectNsave(hObject, eventdata, handles);
             % not enough memory to do one shot max project, need to do this
             % progressively.  Fortunately max doesn't care (unlike ave). 
             if i>first(c) && i<last(c)+1
-                Imax(:,:,c) = max( cat(3,Imax(:,:,c),Im_layer(:,:,c)),[],3); 
+                Imax(:,:,c) = max( cat(3,Imax(:,:,c),Im_layer(:,:,c)),[],3);       
             end
             if channels == 2
                 

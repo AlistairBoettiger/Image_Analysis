@@ -784,7 +784,7 @@ function setup(hObject,eventdata,handles)
         set(handles.in6label,'String',' ');
         set(handles.in6,'String', pars{6});
         set(handles.VarButtonName,'String','Manual Reg Select');
-   dir = {'Step 6: Save Data'};
+   dir = {'Step 8: Save Data'};
   set(handles.directions,'String',dir); 
   end
   
