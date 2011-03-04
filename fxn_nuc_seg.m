@@ -95,6 +95,11 @@ bwj =  ismember(L,find([S.MajorAxisLength] > AspectRatio*[S.MinorAxisLength] ));
 bwj = imerode(bwj,strel('disk',dilp)); %errode joined nuclei
 bwj = imdilate(bwj,strel('disk',dilp-1));
 
+%   D = -bwdist(~bwj);
+%   L = watershed(D);
+%   BW = bwj; BW(L==0)=0; 
+%   bwj = BW;
+
 
 % save([fdata,'/','test2']); % figure(3); clf; imshow(bw);
 

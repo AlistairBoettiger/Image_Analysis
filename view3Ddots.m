@@ -4,11 +4,16 @@
 
 clear all;
 
-folder = '/Volumes/Data/Lab Data/Raw_Data/02-06-11/';
-fname = 'MP10_22C_sna_y_c';
+% folder = '/Volumes/Data/Lab Data/Raw_Data/02-06-11/';
+% fname = 'MP10_22C_sna_y_c'; emb = '01';
+
+folder = '/Volumes/Data/Lab Data/Raw_Data/02-17-11/';
+%fname = 'MP05_22C_sna_y'; emb = '02';
+fname = 'MP09_22C_hb_y_d'; emb = '01';
+
 filename = [folder,'/',fname];
 
-Im = lsm_read_mod([filename,'.mat'],1,1.5E4); 
+Im = lsm_read_mod([filename,'.mat'],str2double(emb),1.5E4); 
 
 %%
 
@@ -26,7 +31,7 @@ alphaE = 1; %
 
 [h,w] = size(Im{1,1}{1});
 
-z = 20; m = .85;
+z = 20; m = .8; % .85;
 
 Il0 = Im{1,z-1}{1}( floor(h/2*m):floor(h/2*(2-m)), floor(w/2*m):floor(w/2*(2-m)) );
 Il1 = Im{1,z}{1}( floor(h/2*m):floor(h/2*(2-m)), floor(w/2*m):floor(w/2*(2-m)) );
@@ -41,8 +46,11 @@ Zs = length(Im);
 %Isect = uint16(zeros(hs,ws,Zs));
 
 Isect = zeros(hs,ws,Zs);
+Inuc = zeros(hs,ws,Zs);
+
 for z = 1:Zs % z = 20
     I =  Im{1,z}{1}( floor(h/2*m):floor(h/2*(2-m)), floor(w/2*m):floor(w/2*(2-m)) );
+    In = Im{1,z}{3}( floor(h/2*m):floor(h/2*(2-m)), floor(w/2*m):floor(w/2*(2-m)) );
     
     
       % Faster method to apply filter -- use straight Gaussians.  
@@ -75,9 +83,24 @@ for z = 1:Zs % z = 20
           mask(mask==1) = 0; 
           
           % figure(2); clf; imagesc(mask);
-          
-    Isect(:,:,z) = double(I).*mask;
+        
+%           
+%           outE = imfilter(single(I),Ex,'replicate'); 
+%           outI = imfilter(single(I),Ix,'replicate'); 
+%           nucfilt = alphaE.*outE - alphaI*outI;
+%           
+    Isect(:,:,z) = 255*double(I)/2^16.*mask;
+    
+    nucnoise = double(im2bw(In,.15)); 
+    nucnoise(nucnoise==0) = NaN; 
+    
+  
+    
+    Inuc(:,:,z) = 255*double(In)/2^16.*nucnoise;
     % figure(2); clf; imagesc(  Isect(:,:,z));
+    % 
+    figure(2); clf; imagesc(Inuc(:,:,z));
+    
     
 end
 
@@ -87,24 +110,51 @@ end
 Istack = zeros(hs,ws,Zs);
 
 first = 1; last = Zs;
+%%
 
 
-figure(1); clf;
+nmax = round(max(Inuc(:)));
+cmax = round(max(Isect(:)));
+
+
+
+figure(1);  clf;
+colordef black; set(gca,'color','k'); set(gcf,'color','k');
+
 for z=first:last
-%     I1 = double(Isect(:,:,z)); I1(I1<7000) = NaN;
-%     Istack(:,:,z) = I1; 
-    
+    In = Inuc(:,:,z)+cmax; 
+    Z = (Zs - z*ones(hs,ws))*340;
+    surf(X,Y,Z,In); hold on;
+end
+shading interp;
+zlim([0,Zs*340]);
+
+
+alpha(.45);  
+
+
+
+
+
+figure(1);  hold on;
+for z=first:last
     I1 = Isect(:,:,z); 
-        Z = (Zs - z*ones(hs,ws))*340;
+   Z = (Zs - z*ones(hs,ws))*340;
     surf(X,Y,Z,I1); hold on;
 end
 shading interp;
 zlim([0,Zs*340]);
 
-cmax = max(Isect(:));
-C = hot(cmax);
-colormap(C); colorbar; caxis([0,cmax]); set(gcf,'color','k');
-view(-170,20); 
+
+% C2  = cool(nmax+cmax);
+% colormap(C2); colorbar; caxis([0,cmax+nmax]);
+%  nmin = min(Inuc(:));
+
+C2 = cool(cmax+nmax);
+C1 = hot(cmax);
+
+colormap([C1;C2]); colorbar; caxis([0,cmax+nmax]); 
+view(-159,19); 
 set(gca,'FontSize',12);
 xlabel('nanometers');  ylabel('nanometers'); zlabel('nanometers');
 
