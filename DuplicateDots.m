@@ -43,8 +43,8 @@ fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
          % load([fdata,'/','test2']);
          
          R2u = R2 - R1z;  R2u(R2u<0) = 0; R2u = logical(R2u); % map of unique dots
-         %R2L = bwlabel(R2u);
-         R2L = logical(R2u);
+         R2L = bwlabel(R2u);
+      %   R2L = logical(R2u);  % DOESN'T WORK. Foolish matlab autosuggest. 
          R2data = regionprops(R2L,'Centroid'); 
          D2u = reshape([R2data.Centroid],2,length(R2data))'; % vector centroids of unique dots
 
