@@ -43,6 +43,10 @@ fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
          % load([fdata,'/','test2']);
          
          R2u = R2 - R1z;  R2u(R2u<0) = 0; R2u = logical(R2u); % map of unique dots
+        %  R2d = R2 + R1z; R2d(R2d<2) = 0; R2d = logical(R2d); 
+        % figure(3); clf; imagesc( R2 + R1z); 
+         
+         
          R2L = bwlabel(R2u);
       %   R2L = logical(R2u);  % DOESN'T WORK. Foolish matlab autosuggest. 
          R2data = regionprops(R2L,'Centroid'); 
