@@ -37,15 +37,16 @@ fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
          
          R1 = false(h,w); R1(inds1) = 1;
          R2 = false(h,w); R2(inds2) = 1;
-         R1z = imdilate(R1,strel('disk',2)); % This is going to slow us down alot  
+         R1z = imdilate(R1,strel('disk',ovlap)); % This is going to slow us down alot  
 
          %  save([fdata,'/','test2']);
          % load([fdata,'/','test2']);
          
          R2u = R2 - R1z;  R2u(R2u<0) = 0; R2u = logical(R2u); % map of unique dots
-         R2L = bwlabel(R2u);
+         %R2L = bwlabel(R2u);
+         R2L = logical(R2u);
          R2data = regionprops(R2L,'Centroid'); 
-         D2u = reshape([R2data.Centroid],ovlap,length(R2data))'; % vector centroids of unique dots
+         D2u = reshape([R2data.Centroid],2,length(R2data))'; % vector centroids of unique dots
 
          % inds_out =  floor(D2u(:,2))+floor(D2u(:,1))*h;  % raster indexed based centroids of unique dots ;
         % inds_out = inds_out'; 

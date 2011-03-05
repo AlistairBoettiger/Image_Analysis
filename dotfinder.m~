@@ -8,7 +8,7 @@
 %% 
 % Adapted from count_all_dots (which is adapted from im_nucdots_exon.
 
-function [cent,bw2] = dotfinder(I,alphaE,alphaI,Ex,Ix,min_int,min_size)
+function [cent, = dotfinder(I,alphaE,alphaI,Ex,Ix,min_int,min_size)
 
 
 %  % Optional display       
@@ -40,7 +40,7 @@ function [cent,bw2] = dotfinder(I,alphaE,alphaI,Ex,Ix,min_int,min_size)
   outims = alphaE.*outE - alphaI*outI;
   
   bw2 = im2bw(outims,graythresh(outims)); %Automatic threshold calculated using Otsu's method.  
-  % figure(2); clf; imshow(bw2);
+  %figure(1); clf; imshow(bw2(1:300,1:300));
   D = -bwdist(~bw2);
   L = watershed(D);
   BW = bw2; BW(L==0)=0; 
