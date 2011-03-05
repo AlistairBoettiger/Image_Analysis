@@ -3,6 +3,8 @@
 % Levine  Lab                                       Last Modified: 02/07/11
 % 
 % Written for im_singlemolecule.fig
+% Optional plotting command: shows adjacent z-section and flags dots ID'd as
+% unique to that section. 
 
 %% Inputs:
 %  z          layer to look at

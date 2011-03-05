@@ -54,8 +54,9 @@ function [cent,bw2] = dotfinder(I,alphaE,alphaI,Ex,Ix,min_int,min_size)
   % figure(1); clf; imshow(uint8(1-Cell_bnd)); 
   
 % mRNA transcript locating counting
-       labeled = bwlabel(bw2,8); % count and label RNAs (8-> diagnols count as touch)         
-       R1 = regionprops(labeled,'Centroid'); % compute mRNA centroids
+       %labeled = bwlabel(bw2,8); % count and label RNAs (8-> diagnols count as touch)    
+       labeled = logical(bw2,8); % count and label RNAs (8-> diagnols count as touch)   % logical is faster than bw label.  
+        R1 = regionprops(labeled,'Centroid'); % compute mRNA centroids
        cent = reshape([R1.Centroid],2,length(R1))';
 % % % plotting results       
 %        figure(3); clf; imshow(I);  
