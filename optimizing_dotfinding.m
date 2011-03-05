@@ -16,19 +16,30 @@ fname = 'MP05_22C_sna_y'; emb = '02';
 %fname = 'MP09_22C_hb_y_d'; emb = '01';
 
 filename = [folder,'/',fname];
-Im = lsm_read_mod([filename,'.mat'],str2double(emb),1.5E4); 
+% Im_data = lsm_read_mod([filename,'.mat'],str2double(emb),1.5E4); 
 
 %%
 handles.mRNAchn1 = 1;
-handles.Im = Im;
+handles.Im = Im_data;
+Im = Im_data;
 
 
-    alphaE = 1;%  str2double(get(handles.in1,'String')); % alphaE = .955; %
-    sigmaE = 3;% str2double(get(handles.in2,'String')); %    sigmaE = 2; %
-    alphaI = 1.0;%str2double(get(handles.in3,'String')); %   alphaI = .98; % 
-    min_int  = 0.01;% str2double(get(handles.in4,'String')); %   min_int  = .07; % 
-    FiltSize = 25;% str2double(get(handles.in5,'String')); %   FiltSize = 20;% 
-    min_size = 10;% str2double(get(handles.in6,'String')); %  min_size = 15; % 
+
+% zoom in on specific region
+ m = .9; % .85;
+Zs = length(Im_data);
+[h,w] = size(Im_data{1,1}{1}); 
+
+xp1= floor(h/2*m); xp2 = floor(h/2*(2-m));
+yp1 = floor(w/2*m); yp2 = floor(w/2*(2-m));
+
+
+    alphaE = 1;% 
+    sigmaE = 3;% 
+    alphaI = 1.0;%
+    min_int  = 0.01;% .05
+    FiltSize = 25;% 
+    min_size = 10;% 
     sigmaI = 3.2;
    
     % Build the Gaussian Filter   
@@ -42,30 +53,23 @@ figure(1); clf; imagesc(Filt); colorbar;
   disp('running step 4...'); tic
 z = 15;
 
-     I1 = handles.Im{1,z}{handles.mRNAchn1}(500:1000,500:1000);
+     I1 = handles.Im{1,z}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
      D1 = dotfinder(I1,alphaE,alphaI,Ex,Ix,min_int,min_size);
 
-     I2 = handles.Im{1,z+1}{handles.mRNAchn1}(500:1000,500:1000);
+     I2 = handles.Im{1,z+1}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
      D2 = dotfinder(I2,alphaE,alphaI,Ex,Ix,min_int,min_size);
      
-     I3 = handles.Im{1,z+2}{handles.mRNAchn1}(500:1000,500:1000);
+     I3 = handles.Im{1,z+2}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
      D3 = dotfinder(I3,alphaE,alphaI,Ex,Ix,min_int,min_size);
      
-       I4 = handles.Im{1,z+3}{handles.mRNAchn1}(500:1000,500:1000);
+       I4 = handles.Im{1,z+3}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
      D4 = dotfinder(I4,alphaE,alphaI,Ex,Ix,min_int,min_size);
     
      
      [h,w] = size(I2);
      
-     Iz = uint16(zeros(h,w,3));
-     Iz(:,:,1) = 5*I1 + 2*I4+    I3;
-     Iz(:,:,2) =        3*I4 + 2*I3;
-     Iz(:,:,3) = 5*I2+  2*I4+    I3;
+ 
      
-     figure(4); clf;  
-     imshow(Iz);    hold on;    
-     plot(D1(:,1),D1(:,2),'go');
-     plot(D2(:,1),D2(:,2),'y+'); 
      
      
      
@@ -86,8 +90,11 @@ z = 15;
      D2u = reshape([R2data.Centroid],2,length(R2data))'; % vector centroids of unique dots
      inds2u =  floor(D2u(:,2))+floor(D2u(:,1))*h;  % raster indexed based centroids of unique dots ;
  
-%      
-      
+%  plotting    
+     Iz = uint16(zeros(h,w,3));
+     Iz(:,:,1) = 5*I1 + 2*I4+    I3;
+     Iz(:,:,2) =        3*I4 + 2*I3;
+     Iz(:,:,3) = 5*I2+  2*I4+    I3;
   figure(5); clf;  
      imshow(Iz);    hold on;    
      plot(D1(:,1),D1(:,2),'y+');
@@ -107,18 +114,18 @@ disp('running step 4b...');
 
 [h,w] = size(Im{1,1}{1});
 
-z = 20; m = .95; % .85;
-Zs = length(Im);
 
 
-Il0 = Im{1,z-1}{1}( floor(h/2*m):floor(h/2*(2-m)), floor(w/2*m):floor(w/2*(2-m)) );
-Il1 = Im{1,z}{1}( floor(h/2*m):floor(h/2*(2-m)), floor(w/2*m):floor(w/2*(2-m)) );
-Il2 = Im{1,z+1}{1}( floor(h/2*m):floor(h/2*(2-m)), floor(w/2*m):floor(w/2*(2-m)) );
-figure(1); clf; imshow(Il0);
+% % Quick sample view:
+% z = 20;
+% Il0 = Im{1,z-1}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
+% Il1 = Im{1,z}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
+% Il2 = Im{1,z+1}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
+% figure(1); clf; imshow(Il0);
 
 
 
-[hs,ws] = size(Il1); 
+[hs,ws] = size(Iz(:,:,1)); 
 %Isect = uint16(zeros(hs,ws,Zs));
 
 Isect1 = zeros(hs,ws,Zs);
@@ -138,7 +145,7 @@ Cents = cell(1,Zs);
         
 for z = 1:Zs % z = 20        
       % Dot finding for channel 1
-          I1 =  Im{1,z}{2}( floor(h/2*m):floor(h/2*(2-m)), floor(w/2*m):floor(w/2*(2-m)) );
+          I1 =  Im{1,z}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
           [cent1,bw1] = dotfinder(I1,alphaE,alphaI,Ex,Ix,min_int,min_size);
           bnd1 = imdilate(bw1,strel('disk',2)) -bw1;         
          % figure(2); clf; imshow(bnd2);
@@ -149,27 +156,26 @@ for z = 1:Zs % z = 20
           Isect1(:,:,z) = 255*double(I1)/2^16.*mask;
           % figure(2); clf; imagesc(  Isect1(:,:,z));
           
-          Cents{z} = cent1; 
+          DotData{z} = cent1; 
 
          
             if z == 1 % z = 5;
                 D1 = []; % there is no previous layer if z = 1; 
             else
-                D1 = Cents{z-1}; % all dots in the previous layer
+                D1 = DotData{z-1}; % all dots in the previous layer
             end
-                D2 = Cents{z}; % all dots in this layer
+                D2 = DotData{z}; % all dots in this layer
                 [inds_Z{z}, D2u_Z{z}] = DuplicateDots(ovlap,D1,D2,h,w,plotdata); % custom fxn. 
                 % Returns indices in layer 2 that are not also in layer 1. 
- 
-          
-          
+         
+         % For projecting all dots into single plane 
              Alldots(:,:,z) = I1; % 2 
           
           
           
           
 %           % Dot finding for channel 2
-%           I2 = Im{1,z}{2}( floor(h/2*m):floor(h/2*(2-m)), floor(w/2*m):floor(w/2*(2-m)) );
+%           I2 = Im{1,z}{2}( xp1:xp2,yp1:yp2 );
 %           [cent2,bw2] = dotfinder(I2,alphaE,alphaI,Ex,Ix,min_int,min_size);
 %           bnd2 = imdilate(bw2,strel('disk',2)) -bw2;         
 %          % figure(2); clf; imshow(bnd2);
@@ -180,7 +186,7 @@ for z = 1:Zs % z = 20
 %           Isect2(:,:,z) = 255*double(I2)/2^16.*mask;
 %           
 %     % Nuclear finding            
-%     In = Im{1,z}{3}( floor(h/2*m):floor(h/2*(2-m)), floor(w/2*m):floor(w/2*(2-m)) ); 
+%     In = Im{1,z}{3}( xp1:xp2,yp1:yp2 ); 
 %     nucnoise = double(im2bw(In,.15)); 
 %     nucnoise(nucnoise==0) = NaN; 
 %     Inuc(:,:,z) = 255*double(In)/2^16.*nucnoise;
@@ -197,10 +203,10 @@ depth_code = jet(last-first+1);
 Alldots_proj = max(Alldots(:,:,first:last),[],3); % perform max project
 
 
-figure(2); clf; imagesc(Alldots_proj); hold on;
+figure(2); clf; colormap hot; imagesc(Alldots_proj); hold on;
 for z=first:last
         
-        plot(  Cents{z}(:,1),Cents{z}(:,2),'.','MarkerSize',10,'Color',depth_code(z,:)); hold on;
+        plot(  DotData{z}(:,1),DotData{z}(:,2),'.','MarkerSize',10,'Color',depth_code(z,:)); hold on;
         try
          plot(  D2u_Z{z}(:,1),D2u_Z{z}(:,2),'o','MarkerSize',20,'Color',depth_code(z,:)); hold on;
         catch me
@@ -238,16 +244,9 @@ for z=first:last
    Z = (Zs - z*ones(hs,ws))*340;
     surf(X,Y,Z,I1); hold on;
    % if z>2 && z<10
-        plot3(  Cents{z}(:,1)*50,Cents{z}(:,2)*50,((Zs-z)*340)*ones(1,length(Cents{z})),'.','MarkerSize',10,'Color',depth_code(z,:)   );
+        plot3(  DotData{z}(:,1)*50,DotData{z}(:,2)*50,((Zs-z)*340)*ones(1,length(DotData{z})),'.','MarkerSize',10,'Color',depth_code(z,:)   );
   %  end
-try
-   plot3(D2u_Z{z}(:,1)*50,D2u_Z{z}(:,2)*50,((Zs-z)*340)*ones(1,length(D2u_Z{z})),'.','MarkerSize',10,'Color',nuclabel(z,:)   ); hold on;
-catch me
-    disp(me.message);
-end
-  
-%     figure(11);  hold on;
-%      scatter3(  cent1(:,1)*50,cent1(:,2)*50,(Zs-z*340)*ones(1,length(cent1)),'r.','SizeData',100   );
+   plot3(D2u_Z{z}(:,1)*50,D2u_Z{z}(:,2)*50,((Zs-z)*340)*ones(1,length(D2u_Z{z})),'o','MarkerSize',10,'Color',depth_code(z,:)   ); hold on;
 end
 shading interp;
 
