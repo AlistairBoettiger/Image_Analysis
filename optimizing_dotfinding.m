@@ -47,11 +47,15 @@ yp1 = floor(w/2*m); yp2 = floor(w/2*(2-m));
     Ix = fspecial('gaussian',FiltSize,sigmaI); % inhibitory gaussian
    
 Filt = alphaE*Ex - alphaI*Ix;
-figure(1); clf; imagesc(Filt); colorbar;   
+%figure(1); clf; imagesc(Filt); colorbar;   
 
 %%
   disp('running step 4...'); tic
-z = 15;
+z = 20;
+
+     I0 = handles.Im{1,z-1}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
+     D0 = dotfinder(I0,alphaE,alphaI,Ex,Ix,min_int,min_size);
+
 
      I1 = handles.Im{1,z}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
      D1 = dotfinder(I1,alphaE,alphaI,Ex,Ix,min_int,min_size);
@@ -109,8 +113,7 @@ z = 15;
      
      
 
-disp('running step 4b...');
-  tic
+
 
 [h,w] = size(Im{1,1}{1});
 
@@ -138,38 +141,71 @@ Cents = cell(1,Zs);
         plotdata = 0 ;% don't show 
 
         
-        ovlap = 3; 
+        ovlap = 5; 
         
-        
+ DotData = cell(1,Zs);    
+  DotMasks = cell(1,Zs); 
  Alldots = uint16(zeros(hs,ws,1)); 
-        
+
+ tic; disp('finding dots...'); 
 for z = 1:Zs % z = 20        
       % Dot finding for channel 1
           I1 =  Im{1,z}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
-          [cent1,bw1] = dotfinder(I1,alphaE,alphaI,Ex,Ix,min_int,min_size);
+          [cent1,bw1,dL] = dotfinder(I1,alphaE,alphaI,Ex,Ix,min_int,min_size);
+         
+          % figure(2); clf; imagesc(  Isect1(:,:,z));
+          
+          DotData{z} = cent1;
+          DotMasks{z} = dL; 
+           Alldots(:,:,z) = I1; % 2 
+
+ % % Old method: DuplicateDots        
+%             if z == 1 % z = 5;
+%                 D1 = []; % there is no previous layer if z = 1; 
+%             else
+%                 D1 = DotData{z-1}; % all dots in the previous layer
+%             end
+%                 D2 = DotData{z}; % all dots in this layer
+%                 [inds_Z{z}, D2u_Z{z}] = DuplicateDots(ovlap,D1,D2,hs,ws,plotdata); % custom fxn. 
+  %               % should have updated to hs ws earlier ? ! 
+end
+toc;
+%%
+    tic; disp('checking dots...'); 
+for z=1:Zs
+
+         % New Method: Check layer above and below for same dot;        
+            if z == 1 % z = 5;
+                D0 = NaN*ones(1,2); % there is no previous layer if z = 1; 
+            else
+                D0 = DotData{z-1};  % all dots in the previous layer
+            end
+            
+            D1 =DotData{z};  % all dots in this layer
+            
+            if z==Zs
+                D2 = NaN*ones(1,2);
+            else
+                D2 = DotData{z+1}; 
+            end
+            [inds_Z{z}, D2u_Z{z},R3d] = CheckDotUpDown(ovlap,D0,D1,D2,hs,ws,plotdata);
+          
+          
+          bw1 =  imdilate(R3d,strel('disk',5));  
           bnd1 = imdilate(bw1,strel('disk',2)) -bw1;         
          % figure(2); clf; imshow(bnd2);
           mask = double(2*bw1)+bnd1;   
           mask(mask==0)=NaN; 
           mask(mask==1) = 0;       
-          % figure(2); clf; imagesc(mask);          
+          % figure(2); clf; imagesc(mask);    
+          I1 =  Im{1,z}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
           Isect1(:,:,z) = 255*double(I1)/2^16.*mask;
-          % figure(2); clf; imagesc(  Isect1(:,:,z));
-          
-          DotData{z} = cent1; 
-
-         
-            if z == 1 % z = 5;
-                D1 = []; % there is no previous layer if z = 1; 
-            else
-                D1 = DotData{z-1}; % all dots in the previous layer
-            end
-                D2 = DotData{z}; % all dots in this layer
-                [inds_Z{z}, D2u_Z{z}] = DuplicateDots(ovlap,D1,D2,h,w,plotdata); % custom fxn. 
+            
+            
                 % Returns indices in layer 2 that are not also in layer 1. 
          
          % For projecting all dots into single plane 
-             Alldots(:,:,z) = I1; % 2 
+            
           
           
           
@@ -206,9 +242,9 @@ Alldots_proj = max(Alldots(:,:,first:last),[],3); % perform max project
 figure(2); clf; colormap hot; imagesc(Alldots_proj); hold on;
 for z=first:last
         
-        plot(  DotData{z}(:,1),DotData{z}(:,2),'.','MarkerSize',10,'Color',depth_code(z,:)); hold on;
+     %   plot(  DotData{z}(:,1),DotData{z}(:,2),'.','MarkerSize',10,'Color',depth_code(z,:)); hold on;
         try
-         plot(  D2u_Z{z}(:,1),D2u_Z{z}(:,2),'o','MarkerSize',20,'Color',depth_code(z,:)); hold on;
+         plot(  D2u_Z{z}(:,1),D2u_Z{z}(:,2),'o','MarkerSize',5,'Color',depth_code(z,:)); hold on;
         catch me
             disp(me.message);
         end
@@ -244,7 +280,7 @@ for z=first:last
    Z = (Zs - z*ones(hs,ws))*340;
     surf(X,Y,Z,I1); hold on;
    % if z>2 && z<10
-        plot3(  DotData{z}(:,1)*50,DotData{z}(:,2)*50,((Zs-z)*340)*ones(1,length(DotData{z})),'.','MarkerSize',10,'Color',depth_code(z,:)   );
+       % plot3(  DotData{z}(:,1)*50,DotData{z}(:,2)*50,((Zs-z)*340)*ones(1,length(DotData{z})),'.','MarkerSize',10,'Color',depth_code(z,:)   );
   %  end
    plot3(D2u_Z{z}(:,1)*50,D2u_Z{z}(:,2)*50,((Zs-z)*340)*ones(1,length(D2u_Z{z})),'o','MarkerSize',10,'Color',depth_code(z,:)   ); hold on;
 end

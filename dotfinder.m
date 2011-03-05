@@ -8,7 +8,7 @@
 %% 
 % Adapted from count_all_dots (which is adapted from im_nucdots_exon.
 
-function [cent,bw2] = dotfinder(I,alphaE,alphaI,Ex,Ix,min_int,min_size)
+function [cent,bw2,labeled] = dotfinder(I,alphaE,alphaI,Ex,Ix,min_int,min_size)
 
 
 %  % Optional display       
