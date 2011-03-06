@@ -1,128 +1,96 @@
-%%                              DuplicateDots
+%%                              CheckDotUpDown
 % Alistair Boettiger                                   Date Begun: 01/30/11
 % Levine Lab                                        Last Modified: 02/01/11
 
 
 %% Description
-% Find replicate dots that are present in the above layer.
+% Use layer adjacency to avoid double counting and improve dot segmentation
+% accuracy.  
 
-
-
-%% Updates
-% rewritten from scratch 02/01/11 to use direct neighbor finding at full
-% resolution.  Reduced resolution to create overlap (original method) is
-% not precise enough for my purposes.  
-
-% inds_out: nearest pixels corresponding to centroids
-% D2u: centroids of dots unique to layer 2.  
 
 function [inds_out, D1r,R3d] = CheckDotUpDown(ovlap,D0,D1,D2,h,w,plotdata)
-fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
+%% Updates
+% 
 
-     if isnan(sum(D2(:))) || isnan(sum(D0(:)))
-         D1r = NaN*ones(1,2);
-         inds_out = [];
-         R3d = false(h,w); 
-     else
-            
-   % h = hs; w = ws; 
+%% Approach 3: 
+% use 'ovlap'-size pixel masks instead of min distance for speed
+% use linear indexing of all dots
+ 
+h = hs; w = ws;
+
+% create list of 3d corrdinates of all dots.  Also assigns all dots a
+% unique linear index.
+dotsinlayer = zeros(1,Zs);
+dotC = [];
+for z = 1:Zs
+    dotsinlayer(z) = length(DotData{z});
+    dotC = [dotC; DotData{z}, z*ones(dotsinlayer(z),1)];
+end
+        % Rather memory inefficient, I have the same centroid data stored
+        % in 2 different data structures.  Could build this guy to start
+        % with.  
 
 
-         % convert to indices. 
-         inds0 = floor(D0(:,2))+floor(D0(:,1))*h; 
-         inds1 = floor(D1(:,2))+floor(D1(:,1))*h; 
-         inds2 = floor(D2(:,2))+floor(D2(:,1))*h; 
-         
-         inds0(inds0>w*h) = w*h; 
+NDots = length(dotC); % total number of dots;
+DotConn = zeros(NDots,Zs); % empty connectivity matrix for all dots;
+ConnInt = zeros(NDots,Zs); 
+
+
+
+for Z = 1:Zs % The primary layer
+         % convert to pixel linear-index
+         inds1 = floor(DotData{Z}(:,2))+floor(DotData{Z}(:,1))*h;  % indices in this layer  
          inds1(inds1>w*h) = w*h; 
-         inds2(inds2>w*h) = w*h; 
+         R1 = false(h,w); R1(inds1) = 1; % convert indices to raster map         
          
-         % Convert to raster
-         R0 = false(h,w); R0(inds0) = 1;
-         R1 = false(h,w); R1(inds1) = 1;
-         R2 = false(h,w); R2(inds2) = 1;
-         R0z = imdilate(R0,strel('disk',ovlap)); % must be within overlap number of pixels     
-         R2z = imdilate(R2,strel('disk',ovlap)); % must be within overlap number of pixels 
-        
+    for z=1:Zs % compare primary layer to all other layers
+         maxdots = 300; 
+         Loz = maxdots*R1 + DotMasks{z};  % detect overlap with indices   
+        % figure(3); clf; imagesc(Loz); 
+        % figure(3); clf; imagesc(DotMasks{z}); 
+         Loz(Loz<maxdots+1) = 0; % remove non-overlapping dots;
+         Loz = Loz - maxdots; Loz(Loz<0) = 0;
+              % figure(3); clf; imagesc(Loz);   
+         
+      % Need to get linear index to stick correctly in array of all dots.  
+         st1_dot_num = sum(dotsinlayer(1:Z-1)); % starting dot number for the layer under study
+         stz_dot_num = sum(dotsinlayer(1:z-1));  % starting dot number for the comparison layer   
+         
+         inds_zin1 = Loz(inds1); % indices of layer z overlapping layer 1.
+         indsT = inds_zin1 + stz_dot_num;
+         indsT(indsT == stz_dot_num) = 0; 
+         DotConn(st1_dot_num+1:st1_dot_num + dotsinlayer(Z),z) =  indsT;
+         
+         % The single pixel version
+         Iw = Im{1,z}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
+         Ivals = Iw(inds1);
+         
+         ConnInt(st1_dot_num+1:st1_dot_num + dotsinlayer(Z),z) = Ivals; 
+         
+         % figure(3); clf; imagesc(DotConn); shading flat;
+    end
+end
 
-         %  save([fdata,'/','test2']);
-         % load([fdata,'/','test2']);
+figure(3); clf; imagesc(DotConn); colormap hot; shading flat;
+figure(3); clf; imagesc(ConnInt); colormap hot; shading flat;  
+ ConnInt_T = ConnInt.*(DotConn>0);
+ 
+figure(4); clf; 
+colordef black; set(gcf,'color','k'); 
+imagesc( ConnInt_T ); colormap hot; shading flat;  colorbar;
+ylabel('mRNA index'); xlabel('z-depth'); 
+
+%%
+mask = zeros(NDots,Zs);
+for i=1:NDots
+    mask(i,:)= bwareaopen(DotConn(i,:)>0,2);
+end
+figure(3); clf; imagesc(mask);
+
+   %%  Approach 2
+        % New approach. Take each dot.  Try to string together all the way
+     % down, using min distance.  Then find local maximia.  
    
-          R3d = R0z+ R1+ R2z; 
-          
-            % R1 must be in the shared region of the overlap, does not get
-         % dilated.
-          
-         
-    %     figure(3); clf; imagesc(R3d); 
-         R3d(R3d<3)=0;  R3d = logical(R3d);
-         
-   
-         
-%   % Is          
-%         R1z = imdilate(R3d,strel('disk',ovlap)); % must be within overlap number of pixels    
-%              mid_max10 = (double(I1).*double(R1z) - double(I0).*double(R0z).*double(R1z) );
-%              mid_max12 = (double(I1).*double(R1z) - double(I2).*double(R2z).*double(R1z) );
-%        
-%               
-%              figure(2); clf; subplot(1,2,1); imagesc(mid_max10); colormap jet; colorbar;
-%              subplot(1,2,2); imagesc(mid_max12); colormap jet; colorbar;
-%              
-%               darker = R3d; 
-%               darker(mid_max10<0) = 0; darker(mid_max12<0) = 0; 
-%               figure(3); clf;  imagesc(R3d + darker); colormap hot; 
-%               
-%               figure(4); clf;  subplot(1,3,1);  imagesc(double(I1).*double(R1z));
-%               subplot(1,3,2);  imagesc(double(I0).*double(R0z).*double(R1z)); 
-%               subplot(1,3,3);  imagesc(double(I2).*double(R2z).*double(R1z) ); 
-              
-              
-         
-         RL = bwlabel(R3d);  
-         % figure(3); clf; imagesc(RL); colormap(jet);
-         
-         Rdata = regionprops(RL,'Centroid'); 
-         D1r = reshape([Rdata.Centroid],2,length(Rdata))'; % vector centroids of 'real' dots
-
-         % inds_out =  floor(D2u(:,2))+floor(D2u(:,1))*h;  % raster indexed based centroids of unique dots ;
-        % inds_out = inds_out'; 
-
-              xx = D1r(:,1);  yy = D1r(:,2);
-             inds_out = sub2ind([h,w],xx,yy);
-        
-        
-        %      % Plotting for troubleshooting  
-        %         It = uint8(zeros(h,w,3));
-        %         It(:,:,1) = uint8(55*R1z);
-        %         It(:,:,2) = uint8(155*R2);
-        %       figure(1); clf; imshow(It(1:300,1:300,:)); hold on;
-        %       plot(D1(:,1),D1(:,2),'m+');
-        %       plot(D2u(:,1),D2u(:,2),'co');
-
-
-        %  % plotting for troubleshooting     
-        %      figure(4); clf;  
-        %      imshow(Iz(1:300,1:300,:));    hold on;    
-        %      plot(D1(:,1),D1(:,2),'go');
-        %      plot(D2(:,1),D2(:,2),'y+'); 
-    
-          
-         if plotdata == 1 
-             It = uint16(zeros(h,w,3));
-             It(:,:,1) = 4*I0 +2^15*uint16(R3d);
-             It(:,:,2) = 4*I1+2^15*uint16(R3d);
-             It(:,:,3) = 4*I2+2^16*uint16(R3d);
-             figure(5); clf;  imshow(It); hold on;
-             plot(D1r(:,1),D1r(:,2),'c.','MarkerSize',10);
-         end
-     end
-
-
-    
-     
-     % New approach. Take each dot.  Try to string together all the way
-     % down.  Then find local maximia.  
-   %%  
      Z= 12;
      ovlap = 3;
      h = hs; w = ws;
@@ -184,8 +152,8 @@ fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
        sum(dep>1) / length(dep)
        length(dep)
        
-       % min_int = 0.00, Z = 12; count=  185, 70% multilayer
-       % min_int = 0.05, Z = 12; count=  159, 79% multilayer
+       % min_int = 0.00, Z = 12; count=  185, 70% multilayer  ~129 dots
+       % min_int = 0.05, Z = 12; count=  159, 79% multilayer  ~126 dots
        % min_int = .1  Z=12 count 91, 78% multilayer.  
       % Multilayer correction to 0 intensity is within 2.5% of the .05 threshold count.   
      
@@ -195,3 +163,117 @@ fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
      
      
      
+     
+     %% Approach 1:
+     % check channel above and below
+     % 
+     % Problems: 
+     % Doesn't avoid duplicated dots (anything in n channels becomes n-2
+     % dots.  Some real dots are probably in 4+ channels.
+     
+     
+     
+%      
+%      function [inds_out, D1r,R3d] = CheckDotUpDown(ovlap,D0,D1,D2,h,w,plotdata)
+%      fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
+% 
+%      if isnan(sum(D2(:))) || isnan(sum(D0(:)))
+%          D1r = NaN*ones(1,2);
+%          inds_out = [];
+%          R3d = false(h,w); 
+%      else
+%             
+%    % h = hs; w = ws; 
+% 
+% 
+%          % convert to indices. 
+%          inds0 = floor(D0(:,2))+floor(D0(:,1))*h; 
+%          inds1 = floor(D1(:,2))+floor(D1(:,1))*h; 
+%          inds2 = floor(D2(:,2))+floor(D2(:,1))*h; 
+%          
+%          inds0(inds0>w*h) = w*h; 
+%          inds1(inds1>w*h) = w*h; 
+%          inds2(inds2>w*h) = w*h; 
+%          
+%          % Convert to raster
+%          R0 = false(h,w); R0(inds0) = 1;
+%          R1 = false(h,w); R1(inds1) = 1;
+%          R2 = false(h,w); R2(inds2) = 1;
+%          R0z = imdilate(R0,strel('disk',ovlap)); % must be within overlap number of pixels     
+%          R2z = imdilate(R2,strel('disk',ovlap)); % must be within overlap number of pixels 
+%         
+% 
+%          %  save([fdata,'/','test2']);
+%          % load([fdata,'/','test2']);
+%    
+%           R3d = R0z+ R1+ R2z; 
+%           
+%             % R1 must be in the shared region of the overlap, does not get
+%          % dilated.
+%           
+%          
+%     %     figure(3); clf; imagesc(R3d); 
+%          R3d(R3d<3)=0;  R3d = logical(R3d);
+%          
+%    
+%          
+% %   % Is          
+% %         R1z = imdilate(R3d,strel('disk',ovlap)); % must be within overlap number of pixels    
+% %              mid_max10 = (double(I1).*double(R1z) - double(I0).*double(R0z).*double(R1z) );
+% %              mid_max12 = (double(I1).*double(R1z) - double(I2).*double(R2z).*double(R1z) );
+% %        
+% %               
+% %              figure(2); clf; subplot(1,2,1); imagesc(mid_max10); colormap jet; colorbar;
+% %              subplot(1,2,2); imagesc(mid_max12); colormap jet; colorbar;
+% %              
+% %               darker = R3d; 
+% %               darker(mid_max10<0) = 0; darker(mid_max12<0) = 0; 
+% %               figure(3); clf;  imagesc(R3d + darker); colormap hot; 
+% %               
+% %               figure(4); clf;  subplot(1,3,1);  imagesc(double(I1).*double(R1z));
+% %               subplot(1,3,2);  imagesc(double(I0).*double(R0z).*double(R1z)); 
+% %               subplot(1,3,3);  imagesc(double(I2).*double(R2z).*double(R1z) ); 
+%               
+%               
+%          
+%          RL = bwlabel(R3d);  
+%          % figure(3); clf; imagesc(RL); colormap(jet);
+%          
+%          Rdata = regionprops(RL,'Centroid'); 
+%          D1r = reshape([Rdata.Centroid],2,length(Rdata))'; % vector centroids of 'real' dots
+% 
+%          % inds_out =  floor(D2u(:,2))+floor(D2u(:,1))*h;  % raster indexed based centroids of unique dots ;
+%         % inds_out = inds_out'; 
+% 
+%               xx = D1r(:,1);  yy = D1r(:,2);
+%              inds_out = sub2ind([h,w],xx,yy);
+%         
+%         
+%         %      % Plotting for troubleshooting  
+%         %         It = uint8(zeros(h,w,3));
+%         %         It(:,:,1) = uint8(55*R1z);
+%         %         It(:,:,2) = uint8(155*R2);
+%         %       figure(1); clf; imshow(It(1:300,1:300,:)); hold on;
+%         %       plot(D1(:,1),D1(:,2),'m+');
+%         %       plot(D2u(:,1),D2u(:,2),'co');
+% 
+% 
+%         %  % plotting for troubleshooting     
+%         %      figure(4); clf;  
+%         %      imshow(Iz(1:300,1:300,:));    hold on;    
+%         %      plot(D1(:,1),D1(:,2),'go');
+%         %      plot(D2(:,1),D2(:,2),'y+'); 
+%     
+%           
+%          if plotdata == 1 
+%              It = uint16(zeros(h,w,3));
+%              It(:,:,1) = 4*I0 +2^15*uint16(R3d);
+%              It(:,:,2) = 4*I1+2^15*uint16(R3d);
+%              It(:,:,3) = 4*I2+2^16*uint16(R3d);
+%              figure(5); clf;  imshow(It); hold on;
+%              plot(D1r(:,1),D1r(:,2),'c.','MarkerSize',10);
+%          end
+%      end
+% 
+% 
+%      
