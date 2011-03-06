@@ -16,7 +16,7 @@ fname = 'MP05_22C_sna_y'; emb = '02';
 %fname = 'MP09_22C_hb_y_d'; emb = '01';
 
 filename = [folder,'/',fname];
-% Im_data = lsm_read_mod([filename,'.mat'],str2double(emb),1.5E4); 
+ Im_data = lsm_read_mod([filename,'.mat'],str2double(emb),1.5E4); 
 
 %%
 handles.mRNAchn1 = 1;
@@ -34,20 +34,20 @@ xp1= floor(h/2*m); xp2 = floor(h/2*(2-m));
 yp1 = floor(w/2*m); yp2 = floor(w/2*(2-m));
 
 
-    alphaE = 1;% 
-    sigmaE = 3;% 
-    alphaI = 1.0;%
-    min_int  = 0.03;% .05
+    alphaE = 1;%   % Not Necessary input, need fixed at 1
+    sigmaE = 3;%  IMPORTANT
+    alphaI = 1.0;%  % Not Necessary input, need fixed at 1 
+    min_int  = 0.01;% .05 % not necessary Fix at Zero
     FiltSize = 25;% 
     min_size = 10;% 
-    sigmaI = 3.2;
+    sigmaI = 3.2; % IMPORTANT
    
     % Build the Gaussian Filter   
     Ex = fspecial('gaussian',FiltSize,sigmaE); % excitatory gaussian
     Ix = fspecial('gaussian',FiltSize,sigmaI); % inhibitory gaussian
    
 Filt = alphaE*Ex - alphaI*Ix;
-figure(1); clf; imagesc(Filt); colorbar;   
+%figure(1); clf; imagesc(Filt); colorbar;   
 
 %%
   disp('running step 4...'); tic
@@ -141,20 +141,22 @@ Cents = cell(1,Zs);
         plotdata = 0 ;% don't show 
 
         
-        ovlap = 3; 
+        ovlap = 5; 
         
- DotData = cell(1,Zs);        
+ DotData = cell(1,Zs);    
+  DotMasks = cell(1,Zs); 
  Alldots = uint16(zeros(hs,ws,1)); 
 
  tic; disp('finding dots...'); 
 for z = 1:Zs % z = 20        
       % Dot finding for channel 1
           I1 =  Im{1,z}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
-          [cent1,bw1] = dotfinder(I1,alphaE,alphaI,Ex,Ix,min_int,min_size);
+          [cent1,bw1,dL] = dotfinder(I1,alphaE,alphaI,Ex,Ix,min_int,min_size);
          
           % figure(2); clf; imagesc(  Isect1(:,:,z));
           
-          DotData{z} = cent1; 
+          DotData{z} = cent1;
+          DotMasks{z} = dL; 
            Alldots(:,:,z) = I1; % 2 
 
  % % Old method: DuplicateDots        
@@ -168,7 +170,7 @@ for z = 1:Zs % z = 20
   %               % should have updated to hs ws earlier ? ! 
 end
 toc;
-
+%%
     tic; disp('checking dots...'); 
 for z=1:Zs
 
@@ -187,13 +189,16 @@ for z=1:Zs
                 D2 = DotData{z+1}; 
             end
             [inds_Z{z}, D2u_Z{z},R3d] = CheckDotUpDown(ovlap,D0,D1,D2,hs,ws,plotdata);
-              
+          
+          
+          bw1 =  imdilate(R3d,strel('disk',5));  
           bnd1 = imdilate(bw1,strel('disk',2)) -bw1;         
          % figure(2); clf; imshow(bnd2);
           mask = double(2*bw1)+bnd1;   
           mask(mask==0)=NaN; 
           mask(mask==1) = 0;       
-          % figure(2); clf; imagesc(mask);          
+          % figure(2); clf; imagesc(mask);    
+          I1 =  Im{1,z}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
           Isect1(:,:,z) = 255*double(I1)/2^16.*mask;
             
             

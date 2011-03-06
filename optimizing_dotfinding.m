@@ -16,7 +16,7 @@ fname = 'MP05_22C_sna_y'; emb = '02';
 %fname = 'MP09_22C_hb_y_d'; emb = '01';
 
 filename = [folder,'/',fname];
-% Im_data = lsm_read_mod([filename,'.mat'],str2double(emb),1.5E4); 
+ Im_data = lsm_read_mod([filename,'.mat'],str2double(emb),1.5E4); 
 
 %%
 handles.mRNAchn1 = 1;
@@ -34,13 +34,13 @@ xp1= floor(h/2*m); xp2 = floor(h/2*(2-m));
 yp1 = floor(w/2*m); yp2 = floor(w/2*(2-m));
 
 
-    alphaE = 1;% 
-    sigmaE = 3;% 
-    alphaI = 1.0;%
-    min_int  = 0.01;% .05
+    alphaE = 1;%   % Not Necessary input, need fixed at 1
+    sigmaE = 3;%  IMPORTANT
+    alphaI = 1.0;%  % Not Necessary input, need fixed at 1 
+    min_int  = 0.01;% .05 % not necessary Fix at Zero
     FiltSize = 25;% 
     min_size = 10;% 
-    sigmaI = 3.2;
+    sigmaI = 3.2; % IMPORTANT
    
     % Build the Gaussian Filter   
     Ex = fspecial('gaussian',FiltSize,sigmaE); % excitatory gaussian
