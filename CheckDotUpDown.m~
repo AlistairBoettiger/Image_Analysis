@@ -8,15 +8,17 @@
 % accuracy.  
 
 
-function [inds_out, D1r,R3d] = CheckDotUpDown(ovlap,D0,D1,D2,h,w,plotdata)
+function [NewDotC] = CheckDotUpDown(DotData,DotMasks,Alldots,h,w,plotdata)
 %% Updates
 % 
 
 %% Approach 3: 
 % use 'ovlap'-size pixel masks instead of min distance for speed
 % use linear indexing of all dots
- 
-h = hs; w = ws;
+
+plotdata = 1; 
+ h = hs; w = ws;
+maxdots = 300; 
 
 % create list of 3d corrdinates of all dots.  Also assigns all dots a
 % unique linear index.
@@ -32,19 +34,21 @@ end
 
 
 NDots = length(dotC); % total number of dots;
-DotConn = zeros(NDots,Zs); % empty connectivity matrix for all dots;
-ConnInt = zeros(NDots,Zs); 
-
-
+DotConn = zeros(2*NDots,Zs); % empty connectivity matrix for all dots;
+ConnInt = zeros(2*NDots,Zs); 
+LayerJoin = zeros(2*NDots,Zs); 
+% Only enter data in every other line. This leaves black space to allow
+% for image segmentation routines to be used that will treat each dot as
+% separate.  
 
 for Z = 1:Zs % The primary layer
          % convert to pixel linear-index
          inds1 = floor(DotData{Z}(:,2))+floor(DotData{Z}(:,1))*h;  % indices in this layer  
          inds1(inds1>w*h) = w*h; 
-         R1 = false(h,w); R1(inds1) = 1; % convert indices to raster map         
+         R1 = false(h,w); R1(inds1) = 1; % convert indices to raster map               
+         st1_dot_num = sum(dotsinlayer(1:Z-1)); % starting dot number for the layer under study
          
-    for z=1:Zs % compare primary layer to all other layers
-         maxdots = 300; 
+    for z=1:Zs % compare primary layer to all other layers    
          Loz = maxdots*R1 + DotMasks{z};  % detect overlap with indices   
         % figure(3); clf; imagesc(Loz); 
         % figure(3); clf; imagesc(DotMasks{z}); 
@@ -53,114 +57,195 @@ for Z = 1:Zs % The primary layer
               % figure(3); clf; imagesc(Loz);   
          
       % Need to get linear index to stick correctly in array of all dots.  
-         st1_dot_num = sum(dotsinlayer(1:Z-1)); % starting dot number for the layer under study
-         stz_dot_num = sum(dotsinlayer(1:z-1));  % starting dot number for the comparison layer   
-         
+         stz_dot_num = sum(dotsinlayer(1:z-1));  % starting dot number for the comparison layer     
          inds_zin1 = Loz(inds1); % indices of layer z overlapping layer 1.
-         indsT = inds_zin1 + stz_dot_num;
-         indsT(indsT == stz_dot_num) = 0; 
-         DotConn(st1_dot_num+1:st1_dot_num + dotsinlayer(Z),z) =  indsT;
+         indsT = inds_zin1 + stz_dot_num; % convert layer indices to total overall dot indices 
+         indsT(indsT == stz_dot_num) = 0; % makes sure missing indices are still 'missing' and not last of previous layer.   
+         DotConn(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) =  indsT; % STORE in DotConn matrix the indices 
          
          % The single pixel version
-         Iw = Im{1,z}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
-         Ivals = Iw(inds1);
-         
-         ConnInt(st1_dot_num+1:st1_dot_num + dotsinlayer(Z),z) = Ivals; 
-         
+         Iw = Alldots(:,:,z); % Im{1,z}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
+         Ivals = Iw(inds1);  % also store the actual intenisites  
+         ConnInt(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) = Ivals;   
          % figure(3); clf; imagesc(DotConn); shading flat;
     end
+    LayerJoin( 2*st1_dot_num+1 :2*(st1_dot_num + dotsinlayer(Z)),Z) = ones(2*dotsinlayer(Z),1); 
+    
 end
 
-figure(3); clf; imagesc(DotConn); colormap hot; shading flat;
-figure(3); clf; imagesc(ConnInt); colormap hot; shading flat;  
+
+% figure(3); clf; imagesc(LayerJoin); 
+% figure(3); clf; imagesc(DotConn); colormap hot; shading flat;
+% figure(3); clf; imagesc(ConnInt); colormap hot; shading flat;  
  ConnInt_T = ConnInt.*(DotConn>0);
+%ConnInt_T(ConnInt_T <.02*2^16)=0;
  
-figure(4); clf; 
-colordef black; set(gcf,'color','k'); 
-imagesc( ConnInt_T ); colormap hot; shading flat;  colorbar;
-ylabel('mRNA index'); xlabel('z-depth'); 
+ MD = LayerJoin+ConnInt_T; % figure(4); clf; imagesc(MD);
+ MD = MD>0;  MD = bwareaopen(MD,20); % mask of major axis 
+ ConnInt_T = ConnInt_T.*MD;
+ 
+ 
+
+
+
+
+mask = ConnInt_T>0;
+W = ConnInt_T.*mask;
+W = watershed(max(W(:)) - W); 
+% figure(3); clf; imagesc(W); colormap lines;
+mask(W==0) = 0; 
+
+% before watershedding, after removing unflanked dots, each layer still
+% counts separtely.  Need to remove dots who are found in previous layer.  
+
+%figure(2); clf; imagesc(mask);
+
+if plotdata == 1;
+    figure(4); clf; 
+    colordef black; set(gcf,'color','k'); 
+    imagesc( ConnInt_T ); colormap hot; shading flat;  colorbar;
+    ylabel('mRNA index'); xlabel('z-depth'); 
+    labeled = bwlabel(mask);
+    R1 = regionprops(labeled,ConnInt,'WeightedCentroid');
+    cent = reshape([R1.WeightedCentroid],2,length(R1))';
+    figure(4); hold on; plot(cent(:,1),cent(:,2),'co'); 
+  title('Cross-Section of all dots'); 
+length(cent);
+end
+
+
+mask = bwareaopen(mask,2);
+
+
 
 %%
-mask = zeros(NDots,Zs);
-for i=1:NDots
-    mask(i,:)= bwareaopen(DotConn(i,:)>0,2);
-end
-figure(3); clf; imagesc(mask);
 
-   %%  Approach 2
-        % New approach. Take each dot.  Try to string together all the way
-     % down, using min distance.  Then find local maximia.  
-   
-     Z= 12;
-     ovlap = 3;
-     h = hs; w = ws;
-     
-     Ds = length(DotData{Z});
-      stack = zeros(Ds,Zs);
-      Ivalue = zeros(Ds,Zs);
-     for j=1:Ds   
-        
-       %  Compare up
-        z = Z; dist = 0;   
-        while dist< ovlap && z>1
-            [dist,i] = min( sqrt( (DotData{Z}(j,1) - DotData{z-1}(:,1)).^2 +  (DotData{Z}(j,2) - DotData{z-1}(:,2)).^2 ) ) ;
-            stack(j,z) = i;
-%             xmatch = round(DotData{z-1}(i,1)); if xmatch > w; xmatch = w; end
-%             ymatch = round(DotData{z-1}(i,2)); if ymatch > h; ymatch = h; end
-%             Ipatch = Im{1,z-1}{handles.mRNAchn1}( max(1,xmatch-5):min(w,xmatch+5),max(1,ymatch-5):min(h,ymatch+5) );
-            
-            
-            Iw = Im{1,z-1}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
-            Imask = zeros(hs,ws); 
-            pts = find(DotMasks{z-1}==i);
-            Imask(pts) = 1;                     %figure(3); clf; imagesc(Imask);
-            Imask(Imask==0) = NaN; 
-            Ipatch = Imask.*double(Iw); 
-            
-           % figure(3); clf; imagesc(Ipatch);  colorbar; colormap hot; caxis([0,2^13]); pause(.1);
-            Ivalue(j,z) = nanmean( Ipatch(:) );
-            
-            z=z-1;
+masked_inds = mask.*DotConn;
+remove_dot = zeros(NDots,1); 
+
+% loop through all dots
+tic
+for i = 1:2:2*NDots % i = 605 i = 5401; i=5693 i = 5547
+    j = find(masked_inds(i,:));
+    counted = masked_inds(i,j(2:end));   
+    if isempty(j) == 0
+        stacked_dots = max(j)-min(j) > length(j)-1;
+    
+        if stacked_dots == 0
+            try
+             ii = find(cent(:,2)==(i+1)/2);
+             dotC((i+1)/2,3) = cent(ii,1);
+             
         end
+    else
+        remove_dot((i+1)/2) = 1;
+    end
+    if stacked_dots == 1% if stacked dots split up.  
+        brk_pts =[0, find(diff(j)>1),length(j),length(j)]; % breakpoints in stack 
+        possibles = masked_inds(i,j); % all possible multicounted indices 
+        ii = find(possibles == (i+1)/2) ; % find this breakpoint    
+        % only need this if low intensity points have been removed
+        if isempty(ii); [jnk, ii] = min( ((i+1)/2 - possibles).^2 );  end
+       % find nearest breakpoint without going over
+          kk = (ii-brk_pts); kk(kk<0) = 100; [jnk,bi] = min(kk);    
+          counted = possibles(brk_pts(bi)+2:brk_pts(bi+1));  
           
-       % Compare down 
-        z = Z; dist = 0; 
-        while dist < ovlap && z<Zs+1 % max pixel seperation to be considered part of same dot.  
-            [dist,i] = min( sqrt( (DotData{Z}(j,1) - DotData{z+1}(:,1)).^2 +  (DotData{Z}(j,2) - DotData{z+1}(:,2)).^2 ) ) ;
-            stack(j,z) = i;
-%                    xmatch = round(DotData{z+1}(i,1)); if xmatch > w; xmatch = w; end
-%                    ymatch = round(DotData{z+1}(i,2));  if ymatch > h; ymatch = h; end
-%             Ipatch = Im{1,z+1}{handles.mRNAchn1}( max(1,xmatch-5):min(w,xmatch+5),max(1,ymatch-5):min(h,ymatch+5) );
+          ii = find(cent(:,2)==(i+1)/2);
+          dotC((i+1)/2,3) = cent(ii(bi),1);
+          
+    end
+    remove_dot(counted) = 1; 
+    
+    
+    
+end
+toc
+sum(remove_dot);
+% sum(stacked_dots)
+          % NB can't sum stacked dots, all stack dots are also multiply
+          % counted.  i.e. the first time a doublet is enountered we say
+          % Tstacked = Tstacked + 1, and then we enounter that the other of
+          % the pair and again say Tstacked = Tstacked + 1;  
+
+NewDotC = dotC(~remove_dot,:);
+N_dots = NDots - sum(remove_dot) % sum(stacked_dots)
 
 
-            Iw = Im{1,z+1}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
-            Imask = zeros(hs,ws); 
-            pts = find(DotMasks{z+1}==i);
-            Imask(pts) = 1;                     %figure(3); clf; imagesc(Imask);
-            Imask(Imask==0) = NaN; 
-            Ipatch = Imask.*double(Iw); 
 
-          %   figure(3); clf; imagesc(Ipatch);  colorbar; colormap hot;  caxis([0,2^13]);   pause(.1);
-            Ivalue(j,z) = nanmean( Ipatch(:) );    
-            z=z+1;
-        end
-        
-       
-     end
-     
-       dep =  sum(Ivalue>0,2);
-       sum(dep>1) / length(dep)
-       length(dep)
-       
-       % min_int = 0.00, Z = 12; count=  185, 70% multilayer  ~129 dots
-       % min_int = 0.05, Z = 12; count=  159, 79% multilayer  ~126 dots
-       % min_int = .1  Z=12 count 91, 78% multilayer.  
-      % Multilayer correction to 0 intensity is within 2.5% of the .05 threshold count.   
-     
-     figure(3); imagesc(Ivalue); colormap hot;
-     set(gcf,'color','k'); colordef black;
-     ylabel('Index of dot'); xlabel('z-axis');
-     
+%    %%  Approach 2
+%         % New approach. Take each dot.  Try to string together all the way
+%      % down, using min distance.  Then find local maximia.  
+%    
+%      Z= 12;
+%      ovlap = 3;
+%      h = hs; w = ws;
+%      
+%      Ds = length(DotData{Z});
+%       stack = zeros(Ds,Zs);
+%       Ivalue = zeros(Ds,Zs);
+%      for j=1:Ds   
+%         
+%        %  Compare up
+%         z = Z; dist = 0;   
+%         while dist< ovlap && z>1
+%             [dist,i] = min( sqrt( (DotData{Z}(j,1) - DotData{z-1}(:,1)).^2 +  (DotData{Z}(j,2) - DotData{z-1}(:,2)).^2 ) ) ;
+%             stack(j,z) = i;
+% %             xmatch = round(DotData{z-1}(i,1)); if xmatch > w; xmatch = w; end
+% %             ymatch = round(DotData{z-1}(i,2)); if ymatch > h; ymatch = h; end
+% %             Ipatch = Im{1,z-1}{handles.mRNAchn1}( max(1,xmatch-5):min(w,xmatch+5),max(1,ymatch-5):min(h,ymatch+5) );
+%             
+%             
+%             Iw = Im{1,z-1}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
+%             Imask = zeros(hs,ws); 
+%             pts = find(DotMasks{z-1}==i);
+%             Imask(pts) = 1;                     %figure(3); clf; imagesc(Imask);
+%             Imask(Imask==0) = NaN; 
+%             Ipatch = Imask.*double(Iw); 
+%             
+%            % figure(3); clf; imagesc(Ipatch);  colorbar; colormap hot; caxis([0,2^13]); pause(.1);
+%             Ivalue(j,z) = nanmean( Ipatch(:) );
+%             
+%             z=z-1;
+%         end
+%           
+%        % Compare down 
+%         z = Z; dist = 0; 
+%         while dist < ovlap && z<Zs+1 % max pixel seperation to be considered part of same dot.  
+%             [dist,i] = min( sqrt( (DotData{Z}(j,1) - DotData{z+1}(:,1)).^2 +  (DotData{Z}(j,2) - DotData{z+1}(:,2)).^2 ) ) ;
+%             stack(j,z) = i;
+% %                    xmatch = round(DotData{z+1}(i,1)); if xmatch > w; xmatch = w; end
+% %                    ymatch = round(DotData{z+1}(i,2));  if ymatch > h; ymatch = h; end
+% %             Ipatch = Im{1,z+1}{handles.mRNAchn1}( max(1,xmatch-5):min(w,xmatch+5),max(1,ymatch-5):min(h,ymatch+5) );
+% 
+% 
+%             Iw = Im{1,z+1}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
+%             Imask = zeros(hs,ws); 
+%             pts = find(DotMasks{z+1}==i);
+%             Imask(pts) = 1;                     %figure(3); clf; imagesc(Imask);
+%             Imask(Imask==0) = NaN; 
+%             Ipatch = Imask.*double(Iw); 
+% 
+%           %   figure(3); clf; imagesc(Ipatch);  colorbar; colormap hot;  caxis([0,2^13]);   pause(.1);
+%             Ivalue(j,z) = nanmean( Ipatch(:) );    
+%             z=z+1;
+%         end
+%         
+%        
+%      end
+%      
+%        dep =  sum(Ivalue>0,2);
+%        sum(dep>1) / length(dep)
+%        length(dep)
+%        
+%        % min_int = 0.00, Z = 12; count=  185, 70% multilayer  ~129 dots
+%        % min_int = 0.05, Z = 12; count=  159, 79% multilayer  ~126 dots
+%        % min_int = .1  Z=12 count 91, 78% multilayer.  
+%       % Multilayer correction to 0 intensity is within 2.5% of the .05 threshold count.   
+%      
+%      figure(3); imagesc(Ivalue); colormap hot;
+%      set(gcf,'color','k'); colordef black;
+%      ylabel('Index of dot'); xlabel('z-axis');
+%      
      
      
      
