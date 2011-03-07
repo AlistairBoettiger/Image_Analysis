@@ -11,22 +11,23 @@
 %  handles.fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
 % load([handles.fdata,'/','test']);
 
+clear all;
 folder = '/Volumes/Data/Lab Data/Raw_Data/02-17-11/';
 fname = 'MP05_22C_sna_y'; emb = '02';
 %fname = 'MP09_22C_hb_y_d'; emb = '01';
 
 filename = [folder,'/',fname];
-% Im_data = lsm_read_mod([filename,'.mat'],str2double(emb),1.5E4); 
+Im_data = lsm_read_mod([filename,'.mat'],str2double(emb),1.5E4); 
 
 %%
 handles.mRNAchn1 = 1;
 handles.Im = Im_data;
-Im = Im_data;
-
+Im = Im_data;  % pretty stupid memory handling here.  
+clear Im_data; %
 
 
 % zoom in on specific region
- m = .9; % .85;
+ m = .6; % .85;
 Zs = length(Im_data);
 [h,w] = size(Im_data{1,1}{1}); 
 
@@ -37,10 +38,10 @@ yp1 = floor(w/2*m); yp2 = floor(w/2*(2-m));
     alphaE = 1;%   % Not Necessary input, need fixed at 1
     sigmaE = 3;%  IMPORTANT
     alphaI = 1.0;%  % Not Necessary input, need fixed at 1 
-    min_int  = 0.01;% .05 % not necessary Fix at Zero
+    min_int  = 0.02;% .05 % not necessary Fix at Zero
     FiltSize = 25;% 
     min_size = 10;% 
-    sigmaI = 3.2; % IMPORTANT
+    sigmaI = 4; % IMPORTANT
    
     % Build the Gaussian Filter   
     Ex = fspecial('gaussian',FiltSize,sigmaE); % excitatory gaussian
@@ -74,9 +75,6 @@ z = 20;
      
  
      
-     
-     
-     
  
      % convert to indices. 
      inds1 = floor(D1(:,2))+floor(D1(:,1))*h; 
@@ -99,7 +97,7 @@ z = 20;
      Iz(:,:,1) = 5*I1 + 2*I4+    I3;
      Iz(:,:,2) =        3*I4 + 2*I3;
      Iz(:,:,3) = 5*I2+  2*I4+    I3;
-  figure(5); clf;  
+  figure(6); clf;  
      imshow(Iz);    hold on;    
      plot(D1(:,1),D1(:,2),'y+');
      plot(D2(:,1),D2(:,2),'co'); 
@@ -159,17 +157,17 @@ for z = 1:Zs % z = 20
           DotMasks{z} = dL; 
           Alldots(:,:,z) = I1; % 2 
 
- % Old method: DuplicateDots        
-            if z == 1 % z = 5;
-                D1 = []; % there is no previous layer if z = 1; 
-            else
-                D1 = DotData{z-1}; % all dots in the previous layer
-            end
-                D2 = DotData{z}; % all dots in this layer
-                [inds_Z{z}, D2u_Z{z}] = DuplicateDots(ovlap,D1,D2,hs,ws,plotdata); % custom fxn. 
-                % should have updated to hs ws earlier ? ! 
-                
-                
+%  % Old method: DuplicateDots        
+%             if z == 1 % z = 5;
+%                 D1 = []; % there is no previous layer if z = 1; 
+%             else
+%                 D1 = DotData{z-1}; % all dots in the previous layer
+%             end
+%                 D2 = DotData{z}; % all dots in this layer
+%                 [inds_Z{z}, D2u_Z{z}] = DuplicateDots(ovlap,D1,D2,hs,ws,plotdata); % custom fxn. 
+%                 % should have updated to hs ws earlier ? ! 
+%                 
+%                 
           bnd1 = imdilate(bw1,strel('disk',2)) -bw1;         
          % figure(2); clf; imshow(bnd2);
           mask = double(2*bw1)+bnd1;   

@@ -63,6 +63,7 @@ nucT = 0; % automatic threshold is manditory
   outE = imfilter(single(I),Ex,'replicate'); 
   outI = imfilter(single(I),Ix,'replicate'); 
   outims = a.*outE - outI;  
+  outims = makeuint(outims,16); 
   %    figure(3); clf; imshow(outims); 
    
    % Set negative values to zero and scale to span 16 bit color depth

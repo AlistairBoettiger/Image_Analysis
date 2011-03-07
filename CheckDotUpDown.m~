@@ -15,13 +15,14 @@ function [NewDotC] = CheckDotUpDown(DotData,DotMasks,Alldots,h,w,plotdata)
 %% Approach 3: 
 % use 'ovlap'-size pixel masks instead of min distance for speed
 % use linear indexing of all dots
-
-plotdata = 1; 
- h = hs; w = ws;
+tic
+%plotdata = 1; 
+% h = hs; w = ws;
 maxdots = 300; 
 
 % create list of 3d corrdinates of all dots.  Also assigns all dots a
 % unique linear index.
+Zs = length(DotData);
 dotsinlayer = zeros(1,Zs);
 dotC = [];
 for z = 1:Zs
@@ -72,8 +73,9 @@ for Z = 1:Zs % The primary layer
     LayerJoin( 2*st1_dot_num+1 :2*(st1_dot_num + dotsinlayer(Z)),Z) = ones(2*dotsinlayer(Z),1); 
     
 end
-
-
+toc
+%%
+tic
 % figure(3); clf; imagesc(LayerJoin); 
 % figure(3); clf; imagesc(DotConn); colormap hot; shading flat;
 % figure(3); clf; imagesc(ConnInt); colormap hot; shading flat;  
@@ -110,7 +112,7 @@ if plotdata == 1;
 end
 mask = bwareaopen(mask,2);
 
-
+toc
 
 %%
 
@@ -141,12 +143,12 @@ for i = 1:2:2*NDots % i = 605 i = 5401; i=5693 i = 5547  i = 6549
        % find nearest breakpoint without going over
           kk = (ii-brk_pts); kk(kk<0) = 100; [jnk,bi] = min(kk);    
           counted = possibles(brk_pts(bi)+2:brk_pts(bi+1));  
-         try 
+    %     try 
           ii = find(cent(:,2)==i);
-          dotC((i+1)/2,3) = cent(ii(bi),1);
-         catch err
-             disp(i)
-         end
+          dotC((i+1)/2,3) = cent(ii( min(bi,length(ii)) ),1);
+%          catch err
+%              disp(i)
+%          end
     stacked_dots =0;      
     end
     remove_dot(counted) = 1; 
