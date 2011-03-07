@@ -16,7 +16,7 @@ fname = 'MP05_22C_sna_y'; emb = '02';
 %fname = 'MP09_22C_hb_y_d'; emb = '01';
 
 filename = [folder,'/',fname];
- Im_data = lsm_read_mod([filename,'.mat'],str2double(emb),1.5E4); 
+% Im_data = lsm_read_mod([filename,'.mat'],str2double(emb),1.5E4); 
 
 %%
 handles.mRNAchn1 = 1;
@@ -157,80 +157,32 @@ for z = 1:Zs % z = 20
           
           DotData{z} = cent1;
           DotMasks{z} = dL; 
-           Alldots(:,:,z) = I1; % 2 
+          Alldots(:,:,z) = I1; % 2 
 
- % % Old method: DuplicateDots        
-%             if z == 1 % z = 5;
-%                 D1 = []; % there is no previous layer if z = 1; 
-%             else
-%                 D1 = DotData{z-1}; % all dots in the previous layer
-%             end
-%                 D2 = DotData{z}; % all dots in this layer
-%                 [inds_Z{z}, D2u_Z{z}] = DuplicateDots(ovlap,D1,D2,hs,ws,plotdata); % custom fxn. 
-  %               % should have updated to hs ws earlier ? ! 
-end
-toc;
-%%
-    tic; disp('checking dots...'); 
-for z=1:Zs
-
-         % New Method: Check layer above and below for same dot;        
+ % Old method: DuplicateDots        
             if z == 1 % z = 5;
-                D0 = NaN*ones(1,2); % there is no previous layer if z = 1; 
+                D1 = []; % there is no previous layer if z = 1; 
             else
-                D0 = DotData{z-1};  % all dots in the previous layer
+                D1 = DotData{z-1}; % all dots in the previous layer
             end
-            
-            D1 =DotData{z};  % all dots in this layer
-            
-            if z==Zs
-                D2 = NaN*ones(1,2);
-            else
-                D2 = DotData{z+1}; 
-            end
-            [inds_Z{z}, D2u_Z{z},R3d] = CheckDotUpDown(ovlap,D0,D1,D2,hs,ws,plotdata);
-          
-          
-          bw1 =  imdilate(R3d,strel('disk',5));  
+                D2 = DotData{z}; % all dots in this layer
+                [inds_Z{z}, D2u_Z{z}] = DuplicateDots(ovlap,D1,D2,hs,ws,plotdata); % custom fxn. 
+                % should have updated to hs ws earlier ? ! 
+                
+                
           bnd1 = imdilate(bw1,strel('disk',2)) -bw1;         
          % figure(2); clf; imshow(bnd2);
           mask = double(2*bw1)+bnd1;   
           mask(mask==0)=NaN; 
           mask(mask==1) = 0;       
-          % figure(2); clf; imagesc(mask);    
+         %  figure(2); clf; imagesc(mask);    
           I1 =  Im{1,z}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
           Isect1(:,:,z) = 255*double(I1)/2^16.*mask;
-            
-            
-                % Returns indices in layer 2 that are not also in layer 1. 
-         
-         % For projecting all dots into single plane 
-            
-          
-          
-          
-          
-%           % Dot finding for channel 2
-%           I2 = Im{1,z}{2}( xp1:xp2,yp1:yp2 );
-%           [cent2,bw2] = dotfinder(I2,alphaE,alphaI,Ex,Ix,min_int,min_size);
-%           bnd2 = imdilate(bw2,strel('disk',2)) -bw2;         
-%          % figure(2); clf; imshow(bnd2);
-%           mask = double(2*bw2)+bnd2;   
-%           mask(mask==0)=NaN; 
-%           mask(mask==1) = 0;       
-%           % figure(2); clf; imagesc(mask);          
-%           Isect2(:,:,z) = 255*double(I2)/2^16.*mask;
-%           
-%     % Nuclear finding            
-%     In = Im{1,z}{3}( xp1:xp2,yp1:yp2 ); 
-%     nucnoise = double(im2bw(In,.15)); 
-%     nucnoise(nucnoise==0) = NaN; 
-%     Inuc(:,:,z) = 255*double(In)/2^16.*nucnoise;
-%     figure(2); clf; imagesc(Inuc(:,:,z));
-    
-    
+                
 end
 toc;
+%%
+NewDotC = CheckDotUpDown(DotData,DotMasks,Alldots,hs,ws,plotdata);
 
 %%
 
@@ -240,19 +192,8 @@ Alldots_proj = max(Alldots(:,:,first:last),[],3); % perform max project
 
 
 figure(2); clf; colormap hot; imagesc(Alldots_proj); hold on;
-for z=first:last
-        
-     %   plot(  DotData{z}(:,1),DotData{z}(:,2),'.','MarkerSize',10,'Color',depth_code(z,:)); hold on;
-        try
-         plot(  D2u_Z{z}(:,1),D2u_Z{z}(:,2),'o','MarkerSize',5,'Color',depth_code(z,:)); hold on;
-        catch me
-            disp(me.message);
-        end
-   
-  %  end
-%     figure(11);  hold on;
-%      scatter3(  cent1(:,1)*50,cent1(:,2)*50,(Zs-z*340)*ones(1,length(cent1)),'r.','SizeData',100   );
-end
+ plot(  NewDotC(:,1),NewDotC(:,2),'bo','MarkerSize',10 );
+
 %%
 
 
@@ -279,11 +220,11 @@ for z=first:last
     I1 = Isect1(:,:,z) ;
    Z = (Zs - z*ones(hs,ws))*340;
     surf(X,Y,Z,I1); hold on;
-   % if z>2 && z<10
-       % plot3(  DotData{z}(:,1)*50,DotData{z}(:,2)*50,((Zs-z)*340)*ones(1,length(DotData{z})),'.','MarkerSize',10,'Color',depth_code(z,:)   );
-  %  end
-   plot3(D2u_Z{z}(:,1)*50,D2u_Z{z}(:,2)*50,((Zs-z)*340)*ones(1,length(D2u_Z{z})),'o','MarkerSize',10,'Color',depth_code(z,:)   ); hold on;
+
+   %plot3(D2u_Z{z}(:,1)*50,D2u_Z{z}(:,2)*50,((Zs-z)*340)*ones(1,length(D2u_Z{z})),'o','MarkerSize',10,'Color',depth_code(z,:)   ); hold on;
 end
+plot3(NewDotC(:,1)*50,NewDotC(:,2)*50,340*(Zs-NewDotC(:,3)) ,'.','MarkerSize',20); 
+
 shading interp;
 
 % figure(1);  hold on;
@@ -307,9 +248,12 @@ C1 = hot(c1max);
 % colormap([0,0,0;C1;C2;CN]); colorbar; caxis([0,nmax+c1max+c2max]); 
 colormap(C1); colorbar; caxis([0,c1max]);
 %view(-109,50); 
-view(40,39); axis on;
+view(40,-30); axis on;
 set(gca,'FontSize',12);
 zlim([(Zs-last)*340,(Zs-first+1)*340]);
 xlabel('nanometers');  ylabel('nanometers'); zlabel('nanometers');
 
  
+%%  Can we extract the intensities inside the sphere and rplot just the
+% sphere with the intensity of the original dot?  
+

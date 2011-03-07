@@ -1,11 +1,11 @@
 %%                              CheckDotUpDown
 % Alistair Boettiger                                   Date Begun: 01/30/11
-% Levine Lab                                        Last Modified: 02/01/11
+% Levine Lab                                        Last Modified: 02/06/11
 
 
 %% Description
-% Use layer adjacency to avoid double counting and improve dot segmentation
-% accuracy.  
+% Stitch multi-stack data together to find 3D positions of all dots. 
+% avoids multiple dot counting and avoids fusion of dots in Z.
 
 
 function [NewDotC] = CheckDotUpDown(DotData,DotMasks,Alldots,h,w,plotdata)
@@ -16,12 +16,13 @@ function [NewDotC] = CheckDotUpDown(DotData,DotMasks,Alldots,h,w,plotdata)
 % use 'ovlap'-size pixel masks instead of min distance for speed
 % use linear indexing of all dots
 
-plotdata = 1; 
- h = hs; w = ws;
+%plotdata = 1; 
+% h = hs; w = ws;
 maxdots = 300; 
 
 % create list of 3d corrdinates of all dots.  Also assigns all dots a
 % unique linear index.
+Zs = length(DotData);
 dotsinlayer = zeros(1,Zs);
 dotC = [];
 for z = 1:Zs
@@ -94,26 +95,20 @@ W = ConnInt_T.*mask;
 W = watershed(max(W(:)) - W); 
 % figure(3); clf; imagesc(W); colormap lines;
 mask(W==0) = 0; 
-
-% before watershedding, after removing unflanked dots, each layer still
-% counts separtely.  Need to remove dots who are found in previous layer.  
-
 %figure(2); clf; imagesc(mask);
+
+labeled = bwlabel(mask);
+R1 = regionprops(labeled,ConnInt,'WeightedCentroid');
+cent = reshape([R1.WeightedCentroid],2,length(R1))';
 
 if plotdata == 1;
     figure(4); clf; 
     colordef black; set(gcf,'color','k'); 
     imagesc( ConnInt_T ); colormap hot; shading flat;  colorbar;
     ylabel('mRNA index'); xlabel('z-depth'); 
-    labeled = bwlabel(mask);
-    R1 = regionprops(labeled,ConnInt,'WeightedCentroid');
-    cent = reshape([R1.WeightedCentroid],2,length(R1))';
-    figure(4); hold on; plot(cent(:,1),cent(:,2),'co'); 
-  title('Cross-Section of all dots'); 
-length(cent);
+    hold on; plot(cent(:,1),cent(:,2),'co'); 
+    title('Cross-Section of all dots'); 
 end
-
-
 mask = bwareaopen(mask,2);
 
 
@@ -125,19 +120,15 @@ remove_dot = zeros(NDots,1);
 stacked_dots =0;
 % loop through all dots
 tic
-for i = 1:2:2*NDots % i = 605 i = 5401; i=5693 i = 5547
+for i = 1:2:2*NDots % i = 605 i = 5401; i=5693 i = 5547  i = 6549
     j = find(masked_inds(i,:));
     counted = masked_inds(i,j(2:end));   
     if isempty(j) == 0
         stacked_dots = max(j)-min(j) > length(j)-1;
     
         if stacked_dots == 0
-            try
              ii = find(cent(:,2)==i);
-             dotC((i+1)/2,3) = cent(ii,1);
-            catch err
-                disp(err.message)
-            end
+             dotC((i+1)/2,3) = cent(ii(1),1);
         end
     else
         remove_dot((i+1)/2) = 1;
@@ -151,11 +142,12 @@ for i = 1:2:2*NDots % i = 605 i = 5401; i=5693 i = 5547
        % find nearest breakpoint without going over
           kk = (ii-brk_pts); kk(kk<0) = 100; [jnk,bi] = min(kk);    
           counted = possibles(brk_pts(bi)+2:brk_pts(bi+1));  
-         try 
+    %     try 
           ii = find(cent(:,2)==i);
-          dotC((i+1)/2,3) = cent(ii(bi),1);
-         catch
-         end
+          dotC((i+1)/2,3) = cent(ii( min(bi,length(ii)) ),1);
+%          catch err
+%              disp(i)
+%          end
     stacked_dots =0;      
     end
     remove_dot(counted) = 1; 
