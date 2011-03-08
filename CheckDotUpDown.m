@@ -30,7 +30,7 @@ Zs = length(DotData);
 dotsinlayer = zeros(1,Zs);
 dotC = [];
 for z = 1:Zs
-    dotsinlayer(z) = length(DotData{z});
+    dotsinlayer(z) = size(DotData{z},1);
     dotC = [dotC; DotData{z}, z*ones(dotsinlayer(z),1)];
 end
         % Rather memory inefficient, I have the same centroid data stored
@@ -54,7 +54,7 @@ for Z = 1:Zs % The primary layer
          st1_dot_num = sum(dotsinlayer(1:Z-1)); % starting dot number for the layer under study
          
     for z=1:Zs % compare primary layer to all other layers    
-         Loz = maxdots*R1 + DotMasks{z};  % detect overlap with indices   
+         Loz = uint16(maxdots*R1) + DotMasks{z};  % detect overlap with indices   
         % figure(3); clf; imagesc(Loz); 
         % figure(3); clf; imagesc(DotMasks{z}); 
          Loz(Loz<maxdots+1) = 0; % remove non-overlapping dots;
@@ -80,6 +80,7 @@ end
 toc
 %%
 tic
+disp('counting total dots...');
 % figure(3); clf; imagesc(LayerJoin); 
 % figure(3); clf; imagesc(DotConn); colormap hot; shading flat;
 % figure(3); clf; imagesc(ConnInt); colormap hot; shading flat;  
@@ -116,7 +117,7 @@ if plotdata == 1;
 end
 mask = bwareaopen(mask,2);
 
-toc
+
 
 %%
 
@@ -124,7 +125,7 @@ masked_inds = mask.*DotConn;
 remove_dot = zeros(NDots,1); 
 stacked_dots =0;
 % loop through all dots
-tic
+
 for i = 1:2:2*NDots % i = 605 i = 5401; i=5693 i = 5547  i = 6549
     j = find(masked_inds(i,:));
     counted = masked_inds(i,j(2:end));   

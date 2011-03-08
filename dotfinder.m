@@ -8,7 +8,7 @@
 %% 
 % Adapted from count_all_dots (which is adapted from im_nucdots_exon.
 
-function [cent,bw2,labeled] = dotfinder(I,alphaE,alphaI,Ex,Ix,min_int,min_size)
+function [cent,bw2,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
 
 
 %  % Optional display       
@@ -41,11 +41,11 @@ function [cent,bw2,labeled] = dotfinder(I,alphaE,alphaI,Ex,Ix,min_int,min_size)
    % Faster method to apply filter -- use straight Gaussians. 
   outE = imfilter(single(I),Ex,'replicate'); 
   outI = imfilter(single(I),Ix,'replicate'); 
-  outims = alphaE.*outE - alphaI*outI;
+  outims = outE - outI;
   
 %   figure(10); clf; subplot(2,1,1); imagesc(outE); shading flat;
 %   subplot(2,1,2); imagesc(outI); shading flat;
-%   figure(11); clf; imagesc(outims); shading flat;  colorbar; 
+ % figure(11); clf; imagesc(outims); shading flat;  colorbar; 
    
 
  % Automatic threshold calculated using Otsu's method.  

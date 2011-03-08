@@ -8,9 +8,9 @@
 
 function Io = makeuint(I,n)
 
- I = I - min(I(:));
- I = I/max(I(:)); 
+ I = double(I) - min(double(I(:)));
+ I = I./max(I(:));   % figure(2); clf; imagesc(I);
  Io = eval(['uint',num2str(n),'(2^n*I)']); 
- 
+  
 
 
