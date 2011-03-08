@@ -22,8 +22,7 @@ Im_data = lsm_read_mod([filename,'.mat'],str2double(emb),1.5E4);
 %%
 handles.mRNAchn1 = 1;
 handles.Im = Im_data;
-Im = Im_data;
-
+clear Im_data; %
 
 
 % zoom in on specific region
@@ -57,7 +56,6 @@ z = 20;
      I0 = handles.Im{1,z-1}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
      D0 = dotfinder(I0,alphaE,alphaI,Ex,Ix,min_int,min_size);
 
-
      I1 = handles.Im{1,z}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
      D1 = dotfinder(I1,alphaE,alphaI,Ex,Ix,min_int,min_size);
 
@@ -67,7 +65,7 @@ z = 20;
      I3 = handles.Im{1,z+2}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
      D3 = dotfinder(I3,alphaE,alphaI,Ex,Ix,min_int,min_size);
      
-       I4 = handles.Im{1,z+3}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
+     I4 = handles.Im{1,z+3}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
      D4 = dotfinder(I4,alphaE,alphaI,Ex,Ix,min_int,min_size);
     
      
@@ -94,9 +92,9 @@ z = 20;
  
 %  plotting    
      Iz = uint16(zeros(h,w,3));
-     Iz(:,:,1) = 5*I1 + 2*I4+    I3;
-     Iz(:,:,2) =        3*I4 + 2*I3;
-     Iz(:,:,3) = 5*I2+  2*I4+    I3;
+     Iz(:,:,1) = 5*I1 + 2*I4+    I3  + 3*I0;
+     Iz(:,:,2) =        3*I4 + 2*I3  + I0;
+     Iz(:,:,3) = 5*I2+  2*I4+    I3  + I0;
   figure(6); clf;  
      imshow(Iz);    hold on;    
      plot(D1(:,1),D1(:,2),'y+');
@@ -104,79 +102,56 @@ z = 20;
      plot(D2u(:,1),D2u(:,2),'c.','MarkerSize',10);
        plot(D3(:,1),D3(:,2),'+','color',[1,1,1]);
      plot(D4(:,1),D4(:,2),'+','color',[.5,1,.25]); 
-      
-   
+     plot(D0(:,1),D0(:,2),'+','color',[1,.2,.2]); 
+
+     clear D0 D1 D2 D3 D4 I1 I2 I3 I4 I0;
+     
      toc
      %%
      
-     
-
-
-
-[h,w] = size(Im{1,1}{1});
-
-
 
 % % Quick sample view:
 % z = 20;
-% Il0 = Im{1,z-1}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
-% Il1 = Im{1,z}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
-% Il2 = Im{1,z+1}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
+% Il0 = handles.Im{1,z-1}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
+% Il1 = handles.Im{1,z}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
+% Il2 = handles.Im{1,z+1}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
 % figure(1); clf; imshow(Il0);
 
 
 
 [hs,ws] = size(Iz(:,:,1)); 
-%Isect = uint16(zeros(hs,ws,Zs));
 
-Isect1 = zeros(hs,ws,Zs);
-Isect2 = zeros(hs,ws,Zs);
-Inuc = zeros(hs,ws,Zs);
-Cents = cell(1,Zs); 
+Isect1 = uint8(zeros(hs,ws,Zs));
+Isect2 = uint8(zeros(hs,ws,Zs));
+Inuc = uint8(zeros(hs,ws,Zs));
 
-        inds_Z = cell(Zs,1);
-        D2u_Z = cell(Zs,1); % store 
-        plotdata = 0 ;% don't show 
 
-        
-        ovlap = 5; 
-        
+
+plotdata = 0 ;% don't show 
+
  DotData = cell(1,Zs);    
   DotMasks = cell(1,Zs); 
- Alldots = uint16(zeros(hs,ws,1)); 
+ Alldots = uint8(zeros(hs,ws,1)); 
 
  tic; disp('finding dots...'); 
 for z = 1:Zs % z = 20        
       % Dot finding for channel 1
-          I1 =  Im{1,z}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
+          I1 =  handles.Im{1,z}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );       
           [cent1,bw1,dL] = dotfinder(I1,alphaE,alphaI,Ex,Ix,min_int,min_size);
-         
           % figure(2); clf; imagesc(  Isect1(:,:,z));
           
           DotData{z} = cent1;
           DotMasks{z} = dL; 
-          Alldots(:,:,z) = I1; % 2 
-
-%  % Old method: DuplicateDots        
-%             if z == 1 % z = 5;
-%                 D1 = []; % there is no previous layer if z = 1; 
-%             else
-%                 D1 = DotData{z-1}; % all dots in the previous layer
-%             end
-%                 D2 = DotData{z}; % all dots in this layer
-%                 [inds_Z{z}, D2u_Z{z}] = DuplicateDots(ovlap,D1,D2,hs,ws,plotdata); % custom fxn. 
-%                 % should have updated to hs ws earlier ? ! 
-%                 
-%                 
+          Alldots(:,:,z) = makeuint(I1,8); % 2 
+              
           bnd1 = imdilate(bw1,strel('disk',2)) -bw1;         
          % figure(2); clf; imshow(bnd2);
           mask = double(2*bw1)+bnd1;   
           mask(mask==0)=NaN; 
-          mask(mask==1) = 0;       
-         %  figure(2); clf; imagesc(mask);    
-          I1 =  Im{1,z}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
-          Isect1(:,:,z) = 255*double(I1)/2^16.*mask;
-                
+          mask(mask==1) = 0; 
+          Isect1(:,:,z) = makeuint(double(I1).*double(mask),8);
+         %  figure(2); clf; imagesc(mask);   
+          % figure(2); clf; imagesc(Isect1(:,:,z) );   colormap hot;
 end
 toc;
 %%

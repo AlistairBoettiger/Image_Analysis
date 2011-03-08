@@ -93,7 +93,8 @@ function [cent,bw2,labeled] = dotfinder(I,alphaE,alphaI,Ex,Ix,min_int,min_size)
   % figure(1); clf; imshow(uint8(1-Cell_bnd)); 
   
 % mRNA transcript locating counting
-       labeled = bwlabel(bw2,8); % count and label RNAs (8-> diagnols count as touch)    
+       labeled = bwlabel(bw2,8); % count and label RNAs (8-> diagnols count as touch)   
+       labeled =uint16(labeled); 
        R1 = regionprops(labeled,IO,'WeightedCentroid'); % compute mRNA centroids
       cent = reshape([R1.WeightedCentroid],2,length(R1))';
        

@@ -10,12 +10,16 @@
 
 function [NewDotC] = CheckDotUpDown(DotData,DotMasks,Alldots,h,w,plotdata)
 %% Updates
-% 
+% Rewritten 03/07/11 to convert more things to uint16 / uint8 to save
+% memory (even fragment of single stack is several gigs of active mem). 
+%  
+%
 
 %% Approach 3: 
 % use 'ovlap'-size pixel masks instead of min distance for speed
 % use linear indexing of all dots
-
+tic 
+disp('connecting dots in Z...') 
 %plotdata = 1; 
 % h = hs; w = ws;
 maxdots = 300; 
@@ -35,9 +39,9 @@ end
 
 
 NDots = length(dotC); % total number of dots;
-DotConn = zeros(2*NDots,Zs); % empty connectivity matrix for all dots;
-ConnInt = zeros(2*NDots,Zs); 
-LayerJoin = zeros(2*NDots,Zs); 
+DotConn = single(zeros(2*NDots,Zs)); % empty connectivity matrix for all dots;  as a uint16 restricts this to 65,536 dots per image.  
+ConnInt = single(zeros(2*NDots,Zs)); 
+LayerJoin = false(2*NDots,Zs); 
 % Only enter data in every other line. This leaves black space to allow
 % for image segmentation routines to be used that will treat each dot as
 % separate.  
@@ -62,19 +66,20 @@ for Z = 1:Zs % The primary layer
          inds_zin1 = Loz(inds1); % indices of layer z overlapping layer 1.
          indsT = inds_zin1 + stz_dot_num; % convert layer indices to total overall dot indices 
          indsT(indsT == stz_dot_num) = 0; % makes sure missing indices are still 'missing' and not last of previous layer.   
-         DotConn(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) =  indsT; % STORE in DotConn matrix the indices 
+         DotConn(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) =  single(indsT); % STORE in DotConn matrix the indices 
          
          % The single pixel version
          Iw = Alldots(:,:,z); % Im{1,z}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
          Ivals = Iw(inds1);  % also store the actual intenisites  
-         ConnInt(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) = Ivals;   
+         ConnInt(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) = single(Ivals);   
          % figure(3); clf; imagesc(DotConn); shading flat;
     end
-    LayerJoin( 2*st1_dot_num+1 :2*(st1_dot_num + dotsinlayer(Z)),Z) = ones(2*dotsinlayer(Z),1); 
+    LayerJoin( 2*st1_dot_num+1 :2*(st1_dot_num + dotsinlayer(Z)),Z) = true(2*dotsinlayer(Z),1); 
     
 end
-
-
+toc
+%%
+tic
 % figure(3); clf; imagesc(LayerJoin); 
 % figure(3); clf; imagesc(DotConn); colormap hot; shading flat;
 % figure(3); clf; imagesc(ConnInt); colormap hot; shading flat;  
@@ -111,7 +116,7 @@ if plotdata == 1;
 end
 mask = bwareaopen(mask,2);
 
-
+toc
 
 %%
 
