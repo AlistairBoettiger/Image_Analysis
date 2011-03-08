@@ -21,7 +21,7 @@ function dotC = CheckDotUpDown(DotData,DotMasks,Im,mRNAchn,h,w,plotdata,getpreci
 tic 
 disp('connecting dots in Z...') 
 %plotdata = 1; 
-% h = hs; w = ws; mRNAchn = 1; Im = handles.Im
+% h = hs; w = ws; mRNAchn = 1; Im = handles.Im;
 
 
 
@@ -108,58 +108,64 @@ disp('counting total dots...');
 
 
 
-stp = 100;  % 1000
+stp = 1000;  % 1000
 Nsects = floor(NDots/stp);  
+masked_inds = single(zeros(2*NDots,Zs)); 
+cent = [];
+getpreciseZ = 1; plotdata = 0; 
 
- mask = DotConn(1+(k-1)*stp:min(k*stp,NDots),:)>0;
+for k=1:Nsects
+% For each dot in the system, there is a row i, which contains all the dots
+% above and below it.  We want to concentrate only on the dots in z~=i
+% which are connected to the dot as z=i.  For this we use the LayerJoin
+% object.  
+     mask = DotConn(1+(k-1)*stp:min(k*stp,NDots),:)>0; % where dots exist 
+     ConnInt_T = ConnInt(1+(k-1)*stp:min(k*stp,NDots),:).*uint16(mask); % report intensities where dot connections are found 
+     MD = uint16(LayerJoin(1+(k-1)*stp:min(k*stp,NDots),:))+ConnInt_T; 
+     % figure(4); clf; imagesc(MD);
+     MD = MD>0;   
+     MD = bwareaopen(MD,20); % Remove all dots in z not connected to the dot at z=i  
+     % figure(4); clf; imagesc(MD);
+     ConnInt_T = ConnInt_T.*uint16(MD);
 
- ConnInt_T = ConnInt.*uint16(mask);
-%ConnInt_T(ConnInt_T <.02*2^16)=0;
- MD = uint16(LayerJoin)+ConnInt_T;  % figure(4); clf; imagesc(MD);
- MD = MD>0;   % tic;  MD = MD>0; toc;  
- MD = bwareaopen(MD,20); % mask of major axis 
- % figure(4); clf; imagesc(MD);
- ConnInt_T = ConnInt_T.*uint16(MD);
-
- 
- 
- longDots = bwareaopen(mask,4); % only split long dots;
- % figure(4); clf; imagesc(longDots);
- 
+    % %  The extra bwareaopen might cost more than we gain
+     % longDots = bwareaopen(mask,4); % only split long dots;
+     % figure(4); clf; imagesc(longDots);
 
 
-% Watershed to split dots
- mask = ConnInt_T>0;
-W = ConnInt_T.*uint16(mask.*longDots); figure(4); clf; imagesc(W);
-W = watershed(max(W(:)) - W);   % This is the Memory Kill Step; 
- figure(3); clf; imagesc(W); colormap lines;
-mask(W==0) = 0; 
-figure(4); clf; imagesc(mask);
+    % Watershed to split dots
+     mask = ConnInt_T>0;
+    % W = ConnInt_T.*uint16(mask.*longDots); figure(4); clf; imagesc(W);
+    W = ConnInt_T.*uint16(mask); 
+    % figure(4); clf; imagesc(W);
+    W = watershed(max(W(:)) - W);   % This is the Memory Kill Step; 
+     % figure(3); clf; imagesc(W); colormap lines;
+    mask(W==0) = 0; 
+    % figure(4); clf; imagesc(mask);
 
-if getpreciseZ == 1
-    labeled = bwlabel(mask);
-    R = regionprops(labeled,'Centroid');
-    cent = reshape([R.Centroid],2,length(R))'; clear R; 
-
-    if plotdata == 1;
-        figure(4); clf; 
-        colordef black; set(gcf,'color','k'); 
-        imagesc( ConnInt_T ); colormap hot; shading flat;  colorbar;
-        ylabel('mRNA index'); xlabel('z-depth'); 
-        hold on; plot(cent(:,1),cent(:,2),'co'); 
-        title('Cross-Section of all dots'); 
+    if getpreciseZ == 1
+        labeled = bwlabel(mask);
+        R = regionprops(labeled,ConnInt_T,'WeightedCentroid');
+        tcent =  reshape([R.WeightedCentroid],2,length(R))';
+        tcent(:,2) = (k-1)*stp + tcent(:,2) ;% 
+        cent = [cent; tcent];
+        
+        if plotdata == 1;
+            figure(4); clf; 
+            colordef black; set(gcf,'color','k'); 
+            imagesc( ConnInt_T ); colormap hot; shading flat;  colorbar;
+            ylabel('mRNA index'); xlabel('z-depth'); 
+            hold on; plot(cent(:,1),cent(:,2),'co'); 
+            title('Cross-Section of all dots'); 
+        end
     end
+
+    % This is very expensive for big images
+        mask = bwareaopen(mask,2);
+       masked_inds(1+(k-1)*stp:min(k*stp,NDots),:) = mask.*DotConn(1+(k-1)*stp:min(k*stp,NDots),:);
 end
-   
-% This is very expensive
 
-    mask = bwareaopen(mask,2);
-
-clear W ConnInt_T 
-
-masked_inds = mask.*DotConn;
-
-clear DotConn;
+% clear DotConn;
 toc
 %%
 
@@ -170,7 +176,7 @@ remove_dot = zeros(NDots,1);
 stacked_dots =0;
 % loop through all dots
 
-for i = 1:2:2*NDots % i = 605 i = 5401; i=5693 i = 5547  i = 6549
+for i = 1:2:2*NDots % i = 605 i = 5401; i=5693 i = 5547  i = 6549 
     j = find(masked_inds(i,:));
     counted = masked_inds(i,j(2:end));   
     if isempty(j) == 0
