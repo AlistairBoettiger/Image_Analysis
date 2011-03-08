@@ -306,7 +306,8 @@ end
         bins = str2double(get(handles.in2,'String'));
         spread = str2double(get(handles.in3,'String'));
         t = str2double(get(handles.in4,'String')); % threshold   
-        plotdata = str2double(get(handles.in5,'String')); % threshold 
+        plotdata = str2double(get(handles.in5,'String')); % plot Z-stack?
+        getpreciseZ = str2double(get(handles.in5,'String')); % get precise-centroid matched Z positions? 
         
         
         % Defining some variables we will need
@@ -316,7 +317,7 @@ end
          
         
  % $$$$$$$$$$$$ Get 3D nuclei positions $$$$$$$$$$$$$$$ %
-         dotC = CheckDotUpDown(handles.DotData1,handles.DotMasks1,handles.Im,handles.mRNAchn1,h,w,plotdata);
+         dotC = CheckDotUpDown(handles.DotData1,handles.DotMasks1,handles.Im,handles.mRNAchn1,h,w,plotdata,getpreciseZ);
          inds = floor(dotC(:,2))+floor(dotC(:,1))*h;   
          inds(inds>w*h) = w*h; 
 % ----------------------------------------------- % 
@@ -444,6 +445,7 @@ end
         spread = str2double(get(handles.in3,'String'));
         t = str2double(get(handles.in4,'String')); % threshold   
         plotdata = str2double(get(handles.in5,'String')); %
+         getpreciseZ = str2double(get(handles.in5,'String')); % get precise-centroid matched Z positions? 
         
         % Defining some variables we will need
         Zs = handles.Zs;  % number of z-sections
@@ -708,10 +710,10 @@ function setup(hObject,eventdata,handles)
   
   if handles.step == 5; % Find duplicates in channel 1
      load([handles.fdata,'/','singlemolecule_pars5.mat']); 
-     % pars = {'1','50','1.5','.4','0',' '};  save([handles.fdata,'singlemolecule_pars5'], 'pars' );    
+     % pars = {'1','50','1.5','.4','0','0'};  save([handles.fdata,'singlemolecule_pars5'], 'pars' );    
         set(handles.in1label,'String','Show improject?'); 
         set(handles.in1,'String', pars{1});
-        set(handles.in2label,'String','bins');
+        set(handles.in2label,'String','N bins');
         set(handles.in2,'String', pars{2});
         set(handles.in3label,'String','over/under factor'); 
         set(handles.in3,'String', pars{3}); 
@@ -719,7 +721,7 @@ function setup(hObject,eventdata,handles)
         set(handles.in4,'String', pars{4});
         set(handles.in5label,'String','plot Z-stack?');
         set(handles.in5,'String', pars{5});
-        set(handles.in6label,'String',' ');
+        set(handles.in6label,'String','Get precise z?');
         set(handles.in6,'String', pars{6});
    dir = {'Step 5: Count total mRNA in each nucleus across layers';
          'Connects pixels in Z and applies image segmenation.'};
@@ -752,18 +754,18 @@ function setup(hObject,eventdata,handles)
   
   if handles.step == 7; % Find duplicates in channel 2
      load([handles.fdata,'/','singlemolecule_pars7.mat']); 
-     % pars = {'1','50','1.5','.4','0',' '};  save([handles.fdata,'singlemolecule_pars7'], 'pars' );    
+     % pars = {'1','50','1.5','.4','0','0'};  save([handles.fdata,'singlemolecule_pars7'], 'pars' );    
         set(handles.in1label,'String','Show improject?'); 
         set(handles.in1,'String', pars{1});
-        set(handles.in2label,'String','bins');
+        set(handles.in2label,'String','N bins');
         set(handles.in2,'String', pars{2});
         set(handles.in3label,'String','over/under factor'); 
         set(handles.in3,'String', pars{3}); 
         set(handles.in4label,'String','Threshold for on');
         set(handles.in4,'String', pars{4});
-        set(handles.in5label,'String','plot Z-stack?');
+        set(handles.in5label,'String','Plot Z-stack?');
         set(handles.in5,'String', pars{5});
-        set(handles.in6label,'String',' ');
+        set(handles.in6label,'String','Get precise z?');
         set(handles.in6,'String', pars{6});
    dir = {'Step 7: Count total mRNA in each nucleus across layers';
          'Connects pixels in Z and applies image segmenation.'};
