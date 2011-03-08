@@ -8,31 +8,33 @@
 % 
 % 
 
-%  handles.fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
-% load([handles.fdata,'/','test']);
 
-% clear all;
-% folder = '/Volumes/Data/Lab Data/Raw_Data/02-17-11/';
-% fname = 'MP05_22C_sna_y'; emb = '02';
-% %fname = 'MP09_22C_hb_y_d'; emb = '01';
-% 
-% filename = [folder,'/',fname];
-% Im_data = lsm_read_mod([filename,'.mat'],str2double(emb),1.5E4); 
-% 
-% 
-% handles.mRNAchn1 = 1;
-% handles.Im = Im_data;
 
-% fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
+clear all;
+tic 
+disp('loading data...');
 
-% save([fdata,'opt_data'],'handles');
-% load([fdata,'opt_data']); 
+folder = '/Volumes/Data/Lab Data/Raw_Data/02-17-11/';
+fname = 'MP05_22C_sna_y'; emb = '02';
+%fname = 'MP09_22C_hb_y_d'; emb = '01';
+
+filename = [folder,'/',fname];
+handles.Im = lsm_read_mod([filename,'.mat'],str2double(emb),1.5E4); 
+
+
+handles.mRNAchn1 = 1;
+toc
+
+%fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
+
+%save([fdata,'opt_data'],'handles');
+%load([fdata,'opt_data']); 
 
 
 %%
 
 % zoom in on specific region
- m = .95; % .85;
+ m = .75; % .85;
 Zs = length(handles.Im);
 [h,w] = size(handles.Im{1,1}{1}); 
 
@@ -52,7 +54,7 @@ yp1 = floor(w/2*m); yp2 = floor(w/2*(2-m));
     Ix = fspecial('gaussian',FiltSize,sigmaI); % inhibitory gaussian
    
 Filt = Ex -Ix;
-figure(1); clf; imagesc(Filt); colorbar;   
+% figure(1); clf; imagesc(Filt); colorbar;   
 
 %% Quick view around layer z
   disp('running step 4...'); tic
@@ -121,7 +123,7 @@ for z = 1:Zs % z = 20
           
           DotData{z} = cent1;
           DotMasks{z} = dL; 
-          Alldots(:,:,z) = makeuint(I1,16); % 2 
+          Alldots(:,:,z) = I1; % 2 
           % figure(2); clf; imagesc(Alldots(:,:,z)); 
               
           bnd1 = imdilate(bw1,strel('disk',2)) -bw1;         
@@ -135,8 +137,8 @@ for z = 1:Zs % z = 20
 end
 toc;
 %%
-NewDotC = CheckDotUpDown(DotData,DotMasks,Alldots,hs,ws,plotdata);
 
+NewDotC = CheckDotUpDown(DotData,DotMasks,handles.Im,handles.mRNAchn1,h,w,plotdata);
 %% Project all layers
 
 first = 1; last = Zs;
@@ -144,68 +146,68 @@ depth_code = jet(last-first+1);
 Alldots_proj = max(Alldots(:,:,first:last),[],3); % perform max project
 
 figure(2); clf; colormap hot; imagesc(Alldots_proj); hold on;
-plot(  NewDotC(:,1),NewDotC(:,2),'bo','MarkerSize',10 );
+plot(  NewDotC(:,1),NewDotC(:,2),'bo','MarkerSize',4 );
 
-%% 3-D visualization
-
-
-[X,Y] = meshgrid((1:ws)*50,(1:hs)*50);
-Istack = zeros(hs,ws,Zs);
-%nmax = round(max(Inuc(:)));
-c1max = round(max(Isect1(:)));
-%c2max = round(max(Isect2(:)));
-figure(1);  clf;
-colordef black; set(gca,'color','k'); set(gcf,'color','k');
-
-% % Plot nuclei data
+% %% 3-D visualization
+% 
+% 
+% [X,Y] = meshgrid((1:ws)*50,(1:hs)*50);
+% Istack = zeros(hs,ws,Zs);
+% %nmax = round(max(Inuc(:)));
+% c1max = round(max(Isect1(:)));
+% %c2max = round(max(Isect2(:)));
+% figure(1);  clf;
+% colordef black; set(gca,'color','k'); set(gcf,'color','k');
+% 
+% % % Plot nuclei data
+% % for z=first:last
+% %     In = Inuc(:,:,z) + c1max + c2max; 
+% %     Z = (Zs - z*ones(hs,ws))*340;
+% %     surf(X,Y,Z,In); hold on;
+% % end
+% % shading interp;
+% % alpha(.45);  % make nuclei transparent 
+% 
+% figure(1); clf;  
 % for z=first:last
-%     In = Inuc(:,:,z) + c1max + c2max; 
-%     Z = (Zs - z*ones(hs,ws))*340;
-%     surf(X,Y,Z,In); hold on;
+%     figure(1);  hold on;
+%     I1 = Isect1(:,:,z) ;
+%    Z = (Zs - z*ones(hs,ws))*340;
+%     surf(X,Y,Z,I1); hold on;
+% 
+%    %plot3(D2u_Z{z}(:,1)*50,D2u_Z{z}(:,2)*50,((Zs-z)*340)*ones(1,length(D2u_Z{z})),'o','MarkerSize',10,'Color',depth_code(z,:)   ); hold on;
 % end
-% shading interp;
-% alpha(.45);  % make nuclei transparent 
-
-figure(1); clf;  
-for z=first:last
-    figure(1);  hold on;
-    I1 = Isect1(:,:,z) ;
-   Z = (Zs - z*ones(hs,ws))*340;
-    surf(X,Y,Z,I1); hold on;
-
-   %plot3(D2u_Z{z}(:,1)*50,D2u_Z{z}(:,2)*50,((Zs-z)*340)*ones(1,length(D2u_Z{z})),'o','MarkerSize',10,'Color',depth_code(z,:)   ); hold on;
-end
-plot3(NewDotC(:,1)*50,NewDotC(:,2)*50,340*(Zs-NewDotC(:,3)) ,'.','MarkerSize',20); 
-
-shading interp;
-
-% figure(1);  hold on;
-% for z=first:last
-%     I2 = Isect2(:,:,z) + c1max+1; 
-%     Z = (Zs - z*ones(hs,ws))*340;
-%     surf(X,Y,Z,I2); hold on;
-% end
+% plot3(NewDotC(:,1)*50,NewDotC(:,2)*50,340*(Zs-NewDotC(:,3)) ,'.','MarkerSize',20); 
+% 
 % shading interp;
 % 
-% C2 = zeros(c2max,3);
-% for cc = 1:c2max
-%     C2(cc,:) = [((cc-1)/c2max)^3,((cc-1)/c2max)^.5,((cc-1)/c2max)^2];
-% end
-
-
-C1 = hot(c1max);
-%C1 = flipud(1-hot(c1max));
-%CN = cool(nmax); 
-
-% colormap([0,0,0;C1;C2;CN]); colorbar; caxis([0,nmax+c1max+c2max]); 
-colormap(C1); colorbar; caxis([0,c1max]);
-%view(-109,50); 
-view(40,-30); axis on;
-set(gca,'FontSize',12);
-zlim([(Zs-last)*340,(Zs-first+1)*340]);
-xlabel('nanometers');  ylabel('nanometers'); zlabel('nanometers');
-
- 
-%%  Can we extract the intensities inside the sphere and rplot just the
-% sphere with the intensity of the original dot?  
-
+% % figure(1);  hold on;
+% % for z=first:last
+% %     I2 = Isect2(:,:,z) + c1max+1; 
+% %     Z = (Zs - z*ones(hs,ws))*340;
+% %     surf(X,Y,Z,I2); hold on;
+% % end
+% % shading interp;
+% % 
+% % C2 = zeros(c2max,3);
+% % for cc = 1:c2max
+% %     C2(cc,:) = [((cc-1)/c2max)^3,((cc-1)/c2max)^.5,((cc-1)/c2max)^2];
+% % end
+% 
+% 
+% C1 = hot(c1max);
+% %C1 = flipud(1-hot(c1max));
+% %CN = cool(nmax); 
+% 
+% % colormap([0,0,0;C1;C2;CN]); colorbar; caxis([0,nmax+c1max+c2max]); 
+% colormap(C1); colorbar; caxis([0,c1max]);
+% %view(-109,50); 
+% view(40,-30); axis on;
+% set(gca,'FontSize',12);
+% zlim([(Zs-last)*340,(Zs-first+1)*340]);
+% xlabel('nanometers');  ylabel('nanometers'); zlabel('nanometers');
+% 
+%  
+% %%  Can we extract the intensities inside the sphere and rplot just the
+% % sphere with the intensity of the original dot?  
+% 

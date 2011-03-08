@@ -52,7 +52,7 @@ nucT = 0; % automatic threshold is manditory
  %   H = - fspecial('log',FiltSize,FiltStd); % Step 2 : Filter Kernel
   
 % Advanced Guassian filtering    
-   a = FiltStr; 
+  % a = FiltStr; 
    Ex = fspecial('gaussian',FiltSize,sigmaE);
    Ix = fspecial('gaussian',FiltSize,sigmaI);
 % H = a.*Ex-Ix;  
@@ -62,12 +62,17 @@ nucT = 0; % automatic threshold is manditory
   % Faster method to apply filter -- use straight Gaussians.  
   outE = imfilter(single(I),Ex,'replicate'); 
   outI = imfilter(single(I),Ix,'replicate'); 
-  outims = a.*outE - outI;  
-  outims = makeuint(outims,16); 
-  %    figure(3); clf; imshow(outims); 
-   
+  outims = outE - outI;  
+
+  figure(3); clf; imshow(outims); 
+      
+  W = watershed(max(outims(:))-outims);
+  outims(W==0) = 0; 
+    outims = makeuint(outims,16); 
+     figure(4); clf; imshow(outims); 
+  
    % Set negative values to zero and scale to span 16 bit color depth
-   outims(outims<0) = 0; 
+   % outims(outims<0) = 0; 
    % outims=uint16(outims/max(outims(:))*(2^16-1));
 
     if nucT == 0 %loop that allows user to select own threhsold or apply automatic one.

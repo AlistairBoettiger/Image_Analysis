@@ -189,15 +189,21 @@ if step == 2;
 % load appropriate data
     disp('running step 2...'); tic
     FiltSize = str2double(get(handles.in1,'String'));  % 
-    FiltStr = str2double(get(handles.in2,'String'));
+    imblur = str2double(get(handles.in2,'String'));
     sigmaE = str2double(get(handles.in3,'String'));
     sigmaI = str2double(get(handles.in4,'String'));
     PercP = str2double(get(handles.in5,'String'));
     minN = str2double(get(handles.in6,'String'));   
     I = handles.Nucs; 
     
+    
+     H = fspecial('disk',imblur); % Filter Kernel       
+     I = imfilter(I,H,0); %Apply Filter
+    figure(2); clf; imshow(I); 
+     
+     
   % get threshold image 'bw' and nuclei centroids 'cent'  
-    [handles.bw,handles.cent] = fxn_nuc_seg(I,FiltSize,FiltStr,sigmaE,sigmaI,PercP,minN);
+    [handles.bw,handles.cent] = fxn_nuc_seg(I,FiltSize,1,sigmaE,sigmaI,PercP,minN);
    
  % Save data values  
  %      handles.output = hObject; guidata(hObject, handles);   
@@ -248,29 +254,46 @@ end
   % uses fxn dotfinder
  if step == 4   
      disp('running step 4...'); tic
-    sigmaE =   str2double(get(handles.in1,'String')); % alphaE = ; %
-    sigmaI =str2double(get(handles.in2,'String')); %    sigmaE = ; %
-    =str2double(get(handles.in3,'String')); %   alphaI = 8; % 
+    sigmaE = str2double(get(handles.in1,'String')); % sigmaE = 3 ;%
+    sigmaI = str2double(get(handles.in2,'String')); %    sigmaI =  4; %
+    FiltSize = str2double(get(handles.in3,'String')); %    FiltSize = 25;%  % 
     min_int  = str2double(get(handles.in4,'String')); %   min_int  = .02; % 
-    FiltSize = str2double(get(handles.in5,'String')); %   FiltSize = 20;% 
-    min_size = str2double(get(handles.in6,'String')); %  min_size = 15; % 
-    sigmaI = 3/2*sigmaE;
+    min_size = str2double(get(handles.in5,'String')); %  min_size = 15; % 
+    disp_data = str2double(get(handles.in5,'String')); % disp_data = 1;
+
    
     % Build the Gaussian Filter   
     Ex = fspecial('gaussian',FiltSize,sigmaE); % excitatory gaussian
     Ix = fspecial('gaussian',FiltSize,sigmaI); % inhibitory gaussian
   
     DotData = cell(1,handles.Zs); 
-   for i=1:handles.Zs
-       I2 = handles.Im{1,i}{handles.mRNAchn1};
-     DotData{i} = dotfinder(I2,alphaE,alphaI,Ex,Ix,min_int,min_size);
+    DotMasks = cell(1,handles.Zs);
+    if disp_data == 1;
+        [h,w] = size(handles.Im{1,z}{1});
+        AllDots = uint16(zeros(h,w)); 
+    end
+    
+   for z=1:handles.Zs
+     [DotData{z},bw1, DotMasks{z}] = dotfinder(handles.Im{1,z}{handles.mRNAchn1},Ex,Ix,min_int,min_size);   
+     if disp_data == 1
+         AllDots = max( cat(3,AllDots,handles.Im{1,z}{handles.mRNAchn1}),[],3); 
+     end
    end
      % save([handles.fdata,'/','test']);
     % load([handles.fdata,'/','test']);
    
+    if disp_data == 1;
+        figure(5); clf; imagesc(AllDots);
+        D = cell2mat(DotData'); 
+        hold on;
+        plot(D(:,1),D(:,2),'w+'); 
+    end
+    
+    
    handles.DotData1 = DotData;
-    guidata(hObject, handles);  % update GUI data with new handles  
-    toc;   
+   handles.DotMasks1 = DotMasks;
+   guidata(hObject, handles);  % update GUI data with new handles  
+   toc;   
  end
 
 
@@ -278,44 +301,31 @@ end
  % uses fxn DuplicateDots.m, which calls fxn vect2rast.m
  if step == 5 
      disp('running step 5...');    tic
-     % This requires square images as written.  
-        ovlap = str2double(get(handles.in1,'String'));
+
+        showim = str2double(get(handles.in1,'String')); % plot all mRNA locations with depth filter results
         bins = str2double(get(handles.in2,'String'));
-        showim = str2double(get(handles.in3,'String')); % plot all mRNA locations with depth filter results
-        showraw = str2double(get(handles.in4,'String')); % polt raw image with labels.   
+        spread = str2double(get(handles.in3,'String'));
+        t = str2double(get(handles.in4,'String')); % threshold   
+        plotdata = str2double(get(handles.in5,'String')); % threshold 
+        
         
         % Defining some variables we will need
         Zs = handles.Zs;  % number of z-sections
-        DotData = handles.DotData1; % Dot data for each section (from prev)
         [h,w] = size(handles.Im{1,1}{1});  % original image dimensions 
         NucLabeled = handles.NucLabeled; % our nuclei label matrix 
          
- % % $$$$$$$$$ FIND DUPLICATE DOTS  $$$$$$$$$$ % %     
-    % This loop also checks for vertically duplicated dots that have
-    % centroids which overlap by 'scale' pixels or less.  
-      % initialize a few things before looping through sections;     
-        inds_Z = cell(Zs,1);
-        D2u_Z = cell(Zs,1); % store 
-        plotdata = 0 ;% don't show 
-        for z = 1:Zs           
-            if z == 1 % z = 5;
-                D1 = []; % there is no previous layer if z = 1; 
-            else
-                D1 = DotData{z-1}; % all dots in the previous layer
-            end
-                D2 = DotData{z}; % all dots in this layer
-                [inds_Z{z}, D2u_Z{z}] = DuplicateDots(ovlap,D1,D2,h,w,plotdata); % custom fxn. 
-                % Returns indices in layer 2 that are not also in layer 1. 
-        end
-        inds = vertcat(inds_Z{:});  % stich these together
-        %  save([handles.fdata,'/','test']);
-        % load([handles.fdata,'/','test']);
-              
+        
+ % $$$$$$$$$$$$ Get 3D nuclei positions $$$$$$$$$$$$$$$ %
+         dotC = CheckDotUpDown(handles.DotData1,handles.DotMasks1,handles.Im,handles.mRNAchn1,h,w,plotdata);
+         inds = floor(dotC(:,2))+floor(dotC(:,1))*h;   
+         inds(inds>w*h) = w*h; 
+% ----------------------------------------------- % 
+        
         
   % % $$$$$$$ % Loop through nuclei counting total dots in region   $$$$$$$$$ % %           
-        hn = size(NucLabeled,1);  % size
-        Nnucs = max(NucLabeled(:)); % total nuclei 
-        NucLabeled = imresize(NucLabeled,h/hn,'nearest');
+         Nnucs = max(NucLabeled(:)); % total nuclei 
+         hn = size(NucLabeled,1);  % size
+         NucLabeled = imresize(NucLabeled,h/hn,'nearest'); % upscale NucLabeled to resolution of mRNA chanel;  
                   
         % Get list of all pixels associated with each nucleus               
         imdata2 = regionprops(NucLabeled,'PixelIdxList','Area'); 
@@ -339,8 +349,7 @@ end
         s_den = std(mRNA_sadj);  
             % save([handles.fdata,'/','test']);
             % load([handles.fdata,'/','test']);    
-        
-        
+            
          %  % Plotting counts 
                 colordef white; 
                 figure(5); clf; hist(mRNA_cnt,bins); set(gcf,'color','w');
@@ -349,22 +358,26 @@ end
                 title(['Cell size adjusted mRNA per cell. mean = ',...
                       num2str(m_den,4),' std=',num2str(s_den,4)]); 
 
-        % % Optional Plotting
-            % 2048x2048 resolution depth labeled dots with cell boundaries    
-               if showim ==1 
-                      DepthDots(handles.In,handles.Cell_bnd,inds_Z,h,w);
-               end
-       
-               if isnan(showraw) == 0 
-                  checkZsep(showraw,handles.Cell_bnd,handles.Im,handles.mRNAchn1,DotData,D2u_Z); 
-               end
+
+         if showim == 1        
+%             [mRNA_plot,mRNA_var] = fxn_compdotvar1(NucLabeled,handles.conn_map,mRNA_sadj,Nncs);
+%             mean_var = mean(mRNA_var);   
+            figure(3); clf;  colordef black;
+            imagesc(C); colormap('hot'); colorbar; 
+            set(gcf,'color','k');  % title(['mean CoV = ',num2str(mean_var)]); 
+         end
+         
+        if t ~= 0 && showim == 1 
+            figure(4); clf;
+            [on_cnts,off_cnts]= fxn_regionvar(NucLabeled,mRNA_plot,mRNA_sadj,t,spread,Nnucs);
+        end
     
      % Export data
         handles.nuc_area = nuc_area; 
+        handles.dotC = dotC; % 3D positions of all mRNA molecules;
         handles.mRNA_cnt1 = mRNA_cnt; % mRNA 1 count per cell
         handles.mRNA_den1 = mRNA_den; % mRNA 1 density per cell 
         handles.mRNA_sadj1 = mRNA_sadj; % size adjusted mRNA 1 counts
-        handles.mRNA_ind1 = inds_Z;     % inidices of mRNA 1 per layer
         handles.NucLabeled = NucLabeled; % indices and scale that match mRNA counts
         
         guidata(hObject, handles);     
@@ -380,27 +393,43 @@ end
   % uses fxn dotfinder
  if step == 6   
      disp('running step 6...'); tic
-    alphaE =   str2double(get(handles.in1,'String')); % alphaE = .955; %
-    sigmaE =str2double(get(handles.in2,'String')); %    sigmaE = 2; %
-    alphaI =str2double(get(handles.in3,'String')); %   alphaI = .98; % 
-    min_int  = str2double(get(handles.in4,'String')); %   min_int  = .07; % 
-    FiltSize = str2double(get(handles.in5,'String')); %   FiltSize = 20;% 
-    min_size = str2double(get(handles.in6,'String')); %  min_size = 15; % 
-    sigmaI = 3/2*sigmaE;
+    sigmaE = str2double(get(handles.in1,'String')); % sigmaE = 3 ;%
+    sigmaI = str2double(get(handles.in2,'String')); %    sigmaI =  4; %
+    FiltSize = str2double(get(handles.in3,'String')); %    FiltSize = 25;%  % 
+    min_int  = str2double(get(handles.in4,'String')); %   min_int  = .02; % 
+    min_size = str2double(get(handles.in5,'String')); %  min_size = 15; % 
+    disp_data = str2double(get(handles.in5,'String')); % disp_data = 1;
    
     % Build the Gaussian Filter   
     Ex = fspecial('gaussian',FiltSize,sigmaE); % excitatory gaussian
     Ix = fspecial('gaussian',FiltSize,sigmaI); % inhibitory gaussian
   
     DotData = cell(1,handles.Zs); 
-   for i=1:handles.Zs
-       I2 = handles.Im{1,i}{handles.mRNAchn2};
-     DotData{i} = dotfinder(I2,alphaE,alphaI,Ex,Ix,min_int,min_size);
+    DotMasks = cell(1,handles.Zs);
+    if disp_data == 1;
+        [h,w] = size(handles.Im{1,z}{1});
+        AllDots = uint16(zeros(h,w)); 
+    end
+    
+   for z=1:handles.Zs
+     [DotData{z},bw1, DotMasks{z}] = dotfinder(handles.Im{1,z}{handles.mRNAchn1},Ex,Ix,min_int,min_size);   
+     if disp_data == 1
+         AllDots = max( cat(3,AllDots,handles.Im{1,z}{handles.mRNAchn1}),[],3); 
+     end
    end
      % save([handles.fdata,'/','test']);
     % load([handles.fdata,'/','test']);
    
-   handles.DotData2 = DotData;
+    if disp_data == 1;
+        figure(5); clf; imagesc(AllDots);
+        D = cell2mat(DotData'); 
+        hold on;
+        plot(D(:,1),D(:,2),'w+'); 
+    end
+    
+    
+    handles.DotData2 = DotData;
+    handles.DotMasks2 = DotMasks;
     guidata(hObject, handles);  % update GUI data with new handles  
     toc;   
  end
@@ -410,44 +439,26 @@ end
  % uses fxn DuplicateDots.m,
  if step == 7 
      disp('running step 7...');    tic
-     % This requires square images as written.  
-        ovlap = str2double(get(handles.in1,'String'));
+         showim = str2double(get(handles.in1,'String')); % plot all mRNA locations with depth filter results
         bins = str2double(get(handles.in2,'String'));
-        showim = str2double(get(handles.in3,'String')); % plot all mRNA locations with depth filter results
-        showraw = str2double(get(handles.in4,'String')); % polt raw image with labels.   
+        spread = str2double(get(handles.in3,'String'));
+        t = str2double(get(handles.in4,'String')); % threshold   
+        
         
         % Defining some variables we will need
         Zs = handles.Zs;  % number of z-sections
-        DotData = handles.DotData2; % Dot data for each section (from prev)
         [h,w] = size(handles.Im{1,1}{1});  % original image dimensions 
         NucLabeled = handles.NucLabeled; % our nuclei label matrix 
          
- % % $$$$$$$$$ FIND DUPLICATE DOTS  $$$$$$$$$$ % %     
-    % This loop also checks for vertically duplicated dots that have  centroids 
-    % which overlap by 'scale' pixels or less.  
-      % initialize a few things before looping through sections;     
-        inds_Z = cell(Zs,1);
-        D2u_Z = cell(Zs,1); % store 
-        plotdata = 0 ;% don't show 
-        for z = 1:Zs           
-            if z == 1 % z = 5;
-                D1 = []; % there is no previous layer if z = 1; 
-            else
-                D1 = DotData{z-1}; % all dots in the previous layer
-            end
-                D2 = DotData{z}; % all dots in this layer
-                [inds_Z{z}, D2u_Z{z}] = DuplicateDots(ovlap,D1,D2,h,w,plotdata); % custom fxn. 
-                % Returns indices in layer 2 that are not also in layer 1. 
-        end
-        inds = vertcat(inds_Z{:});  % stich these together
-        %  save([handles.fdata,'/','test']);
-        % load([handles.fdata,'/','test']);
-              
+        
+ % $$$$ Get 3D dots $$$$$
+         dotC = CheckDotUpDown(handles.DotData2,handles.DotMasks2,handles.Im,handles.mRNAchn2,h,w,plotdata);
+         inds = floor(dotC(:,2))+floor(dotC(:,1))*h;   
+         inds(inds>w*h) = w*h; 
+% ------------------------- %
+        
         
   % % $$$$$$$ % Loop through nuclei counting total dots in region   $$$$$$$$$ % %           
-        hn = size(NucLabeled,1);  % size
-        Nnucs = max(NucLabeled(:)); % total nuclei 
-        NucLabeled = imresize(NucLabeled,h/hn,'nearest');
                   
         % Get list of all pixels associated with each nucleus               
         imdata2 = regionprops(NucLabeled,'PixelIdxList','Area'); 
@@ -471,8 +482,7 @@ end
         s_den = std(mRNA_sadj);  
             % save([handles.fdata,'/','test']);
             % load([handles.fdata,'/','test']);    
-        
-        
+            
          %  % Plotting counts 
                 colordef white; 
                 figure(5); clf; hist(mRNA_cnt,bins); set(gcf,'color','w');
@@ -481,23 +491,25 @@ end
                 title(['Cell size adjusted mRNA per cell. mean = ',...
                       num2str(m_den,4),' std=',num2str(s_den,4)]); 
 
-        % % Optional Plotting
-            % 2048x2048 resolution depth labeled dots with cell boundaries    
-               if showim ==1 
-                      DepthDots(handles.In,handles.Cell_bnd,inds_Z,h,w);
-               end
-       
-               if isnan(showraw) == 0 
-                  checkZsep(showraw,handles.Cell_bnd,handles.Im,handles.mRNAchn2,DotData,D2u_Z); 
-               end
+
+         if showim == 1        
+%             [mRNA_plot,mRNA_var] = fxn_compdotvar1(NucLabeled,handles.conn_map,mRNA_sadj,Nncs);
+%             mean_var = mean(mRNA_var);   
+            figure(3); clf;  colordef black;
+            imagesc(C); colormap('hot'); colorbar; 
+            set(gcf,'color','k');  % title(['mean CoV = ',num2str(mean_var)]); 
+         end
+         
+        if t ~= 0 && showim == 1 
+            figure(4); clf;
+            [on_cnts,off_cnts]= fxn_regionvar(NucLabeled,mRNA_plot,mRNA_sadj,t,spread,Nnucs);
+        end
     
      % Export data
-        handles.nuc_area = nuc_area; 
+        handles.dotC2 = dotC; % 3d positions of all dots. 
         handles.mRNA_cnt2 = mRNA_cnt; % mRNA 2 count per cell
         handles.mRNA_den2 = mRNA_den; % mRNA 2 density per cell 
         handles.mRNA_sadj2 = mRNA_sadj; % size adjusted mRNA 2 counts
-        handles.mRNA_ind2 = inds_Z;     % inidices of mRNA 2 per layer
-        handles.NucLabeled = NucLabeled; % indices and scale that match mRNA counts
         
         guidata(hObject, handles);     
         toc     
@@ -670,42 +682,43 @@ function setup(hObject,eventdata,handles)
   end
   
   
+
   
   if handles.step == 4;  % Find dots in channel 1
      load([handles.fdata,'/','singlemolecule_pars4.mat']); 
-     % pars = {'1','2','1.05','.1','25','10'}; save([handles.fdata,'singlemolecule_pars4'], 'pars' );
+     % pars = {'3','4','25','.02','15','1'}; save([handles.fdata,'singlemolecule_pars4'], 'pars' );
      
-        set(handles.in1label,'String','\alpha_E'); 
+        set(handles.in1label,'String','\sigma_E'); 
         set(handles.in1,'String', pars{1});
-        set(handles.in2label,'String','\sigma_E');
+        set(handles.in2label,'String','\sigma_I');
         set(handles.in2,'String', pars{2});
-        set(handles.in3label,'String','\alpha_I'); 
+        set(handles.in3label,'String','Filter Size'); 
         set(handles.in3,'String', pars{3}); 
         set(handles.in4label,'String','min intensity');
         set(handles.in4,'String', pars{4});
-        set(handles.in5label,'String','Filter Size');
+        set(handles.in5label,'String','min dot size');
         set(handles.in5,'String', pars{5});
-        set(handles.in6label,'String','min dot size');
+        set(handles.in6label,'String','display result?');
         set(handles.in6,'String', pars{6});
         set(handles.VarButtonName,'String','Manual Reg Select');
    dir = {'Step 4: identify and count nascent transcripts of mRNA1.';
-         'Uses Difference of Gaussian Filter \alpha_E*exp(-x^2/\sigma_E) - alpha_I*exp(-x^2/\sigma_I)'};
+         'Uses Difference of Gaussian Filter exp(-x^2/\sigma_E) - exp(-x^2/\sigma_I)'};
   set(handles.directions,'String',dir); 
   end
   
   if handles.step == 5; % Find duplicates in channel 1
      load([handles.fdata,'/','singlemolecule_pars5.mat']); 
-     % pars = {'2','50','1','5',' ',' '};  save([handles.fdata,'singlemolecule_pars5'], 'pars' );
+     % pars = {'1','50','1.5','.4','0',' '};  save([handles.fdata,'singlemolecule_pars5'], 'pars' );
      
-        set(handles.in1label,'String','min overlap'); 
+        set(handles.in1label,'String','Show improject?'); 
         set(handles.in1,'String', pars{1});
         set(handles.in2label,'String','bins');
         set(handles.in2,'String', pars{2});
-        set(handles.in3label,'String','Show high res im?'); 
+        set(handles.in3label,'String','over/under factor'); 
         set(handles.in3,'String', pars{3}); 
-        set(handles.in4label,'String','Show chn x data');
+        set(handles.in4label,'String','Threshold for on');
         set(handles.in4,'String', pars{4});
-        set(handles.in5label,'String',' ');
+        set(handles.in5label,'String','plot Z-stack>');
         set(handles.in5,'String', pars{5});
         set(handles.in6label,'String',' ');
         set(handles.in6,'String', pars{6});
@@ -716,25 +729,30 @@ function setup(hObject,eventdata,handles)
   end
 
   
+          showim = str2double(get(handles.in1,'String')); % plot all mRNA locations with depth filter results
+        bins = str2double(get(handles.in2,'String'));
+        spread = str2double(get(handles.in3,'String'));
+        t = str2double(get(handles.in4,'String')); % threshold   
+        plotdata = str2double(get(handles.in5,'String')); % threshold
+  
+  
     
   
   if handles.step == 6;  % Find dots in channel 2
      load([handles.fdata,'/','singlemolecule_pars6.mat']); 
-     % pars = {'1','2','1.05','.1','25','10'}; save([handles.fdata,'singlemolecule_pars6'], 'pars' );
-     
-        set(handles.in1label,'String','\alpha_E'); 
+   %  pars = {'3','4','25','.02','15','1'}; save([handles.fdata,'singlemolecule_pars6'], 'pars' );  
+        set(handles.in1label,'String','\sigma_E'); 
         set(handles.in1,'String', pars{1});
-        set(handles.in2label,'String','\sigma_E');
+        set(handles.in2label,'String','\sigma_I');
         set(handles.in2,'String', pars{2});
-        set(handles.in3label,'String','\alpha_I'); 
+        set(handles.in3label,'String','Filter Size'); 
         set(handles.in3,'String', pars{3}); 
         set(handles.in4label,'String','min intensity');
         set(handles.in4,'String', pars{4});
-        set(handles.in5label,'String','Filter Size');
+        set(handles.in5label,'String','min dot size');
         set(handles.in5,'String', pars{5});
-        set(handles.in6label,'String','min dot size');
+        set(handles.in6label,'String','display result?');
         set(handles.in6,'String', pars{6});
-        set(handles.VarButtonName,'String','Manual Reg Select');
    dir = {'Step 6: identify and count nascent transcripts of mRNA2.';
          'Uses Difference of Gaussian Filter \alpha_E*exp(-x^2/\sigma_E) - alpha_I*exp(-x^2/\sigma_I)'};
   set(handles.directions,'String',dir); 
