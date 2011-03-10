@@ -39,7 +39,7 @@ toc
 %% Set-up
 
 % zoom in on specific region
- m =  1/2048;   % .9; % .85;
+ m =  1/2048;  % .7; %   1/2048;   % .9; % .85;
 Zs = length(handles.Im);
 [h,w] = size(handles.Im{1,1}{1}); 
 

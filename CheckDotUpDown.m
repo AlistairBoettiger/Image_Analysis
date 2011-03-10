@@ -183,7 +183,7 @@ for i = 1:2:2*NDots % i = 605 i = 5401; i=5693 i = 5547  i = 6549
         stacked_dots = max(j)-min(j) > length(j)-1;
     
         if stacked_dots == 0  && getpreciseZ == 1
-             ii = find(cent(:,2)==i);
+             ii = find(cent(:,2)==i,1);
              dotC((i+1)/2,3) = cent(ii(1),1);
         end
     else
@@ -192,7 +192,7 @@ for i = 1:2:2*NDots % i = 605 i = 5401; i=5693 i = 5547  i = 6549
     if stacked_dots == 1% if stacked dots split up.  
         brk_pts =[0, find(diff(j)>1),length(j),length(j)]; % breakpoints in stack 
         possibles = masked_inds(i,j); % all possible multicounted indices 
-        ii = find(possibles == (i+1)/2) ; % find this breakpoint    
+        ii = find(possibles == (i+1)/2,1) ; % find this breakpoint    
         % only need this if low intensity points have been removed
         if isempty(ii); [jnk, ii] = min( ((i+1)/2 - possibles).^2 );  end
        % find nearest breakpoint without going over
