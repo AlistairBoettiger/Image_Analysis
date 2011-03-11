@@ -52,7 +52,7 @@ nucT = 0; % automatic threshold is manditory
  %   H = - fspecial('log',FiltSize,FiltStd); % Step 2 : Filter Kernel
   
 % Advanced Guassian filtering    
-   a = FiltStr; 
+  % a = FiltStr; 
    Ex = fspecial('gaussian',FiltSize,sigmaE);
    Ix = fspecial('gaussian',FiltSize,sigmaI);
 % H = a.*Ex-Ix;  
@@ -62,13 +62,15 @@ nucT = 0; % automatic threshold is manditory
   % Faster method to apply filter -- use straight Gaussians.  
   outE = imfilter(single(I),Ex,'replicate'); 
   outI = imfilter(single(I),Ix,'replicate'); 
-  outims = a.*outE - outI;  
-  outims = makeuint(outims,16); 
-  figure(3); clf; imshow(outims); 
+  outims = outE - outI;  
+
+ % figure(3); clf; imshow(outims); 
       
-  W = watershed(max(outims
+  W = watershed(max(outims(:))-outims);
+  outims(W==0) = 0; 
+  outims = makeuint(outims,16); 
+  figure(4); clf; imshow(outims); 
   
-   
    % Set negative values to zero and scale to span 16 bit color depth
    % outims(outims<0) = 0; 
    % outims=uint16(outims/max(outims(:))*(2^16-1));
@@ -78,6 +80,13 @@ nucT = 0; % automatic threshold is manditory
     else
         bw = im2bw(outims,nucT); %Apply user chosen threshold
     end
+  
+    
+%       D = -bwdist(~bw);
+%       L = watershed(D);
+%       bw(L==0)=0; 
+
+    
     
 % % Plotting stuff    
     % handles.bw = bw;  % Output binary image to next step
@@ -89,25 +98,22 @@ nucT = 0; % automatic threshold is manditory
 %% Count Nuclei
 %  this section needs PercP, dilp, and minN
 
-nuc_bw = bw;
+% nuc_bw = bw;
+% 
+% %  clean up large and fused nuclei
+% L = bwlabeln(nuc_bw,8); % label
+% S = regionprops(L,'Perimeter','Area','Centroid','MajorAxisLength','MinorAxisLength'); % measure areas
+% bwjn = ismember(L,find([S.MajorAxisLength] < AspectRatio*[S.MinorAxisLength] )); % map of all unjoined nuclei
+% bwj =  ismember(L,find([S.MajorAxisLength] > AspectRatio*[S.MinorAxisLength] ));% map of all joined nuclei
+% bwj = imerode(bwj,strel('disk',dilp)); %errode joined nuclei
+% bwj = imdilate(bwj,strel('disk',dilp-1));
+% 
 
-%  clean up large and fused nuclei
-L = bwlabeln(nuc_bw,8); % label
-S = regionprops(L,'Perimeter','Area','Centroid','MajorAxisLength','MinorAxisLength'); % measure areas
-bwjn = ismember(L,find([S.MajorAxisLength] < AspectRatio*[S.MinorAxisLength] )); % map of all unjoined nuclei
-bwj =  ismember(L,find([S.MajorAxisLength] > AspectRatio*[S.MinorAxisLength] ));% map of all joined nuclei
-bwj = imerode(bwj,strel('disk',dilp)); %errode joined nuclei
-bwj = imdilate(bwj,strel('disk',dilp-1));
-
-%   D = -bwdist(~bwj);
-%   L = watershed(D);
-%   BW = bwj; BW(L==0)=0; 
-%   bwj = BW;
-
-
-% save([fdata,'/','test2']); % figure(3); clf; imshow(bw);
-
-bw = logical(bwj + bwjn); 
+% 
+% 
+% % save([fdata,'/','test2']); % figure(3); clf; imshow(bw);
+% 
+% bw = logical(bwj + bwjn); 
 bw = bwareaopen(bw,minN); 
 % figure(3); clf; imshow(bw); 
 
@@ -115,14 +121,29 @@ bw = bwareaopen(bw,minN);
 
 S = regionprops(labeled,'Centroid');
 cents = reshape([S.Centroid],2,length(S));
+CM=label2rgb(labeled, 'hsv', [1,1,1],'shuffle');
+CM = 255-CM;
+
+ [h,w] = size(I);
+Io = uint8(zeros(h,w,3)); 
+Io(:,:,1) = makeuint(I,8) - uint8(195*bw);
+Io(:,:,2) = makeuint(I,8) - uint8(195*bw);
+Io(:,:,3) = makeuint(I,8) - uint8(195*bw);
+Io = imadd(Io,CM);
+%figure(21); clf; imagesc( Io);
 
 
-CM=label2rgb(labeled, 'jet', [1,1,1],'shuffle');
 
 
- DI = uint8(bsxfun(@times,double(CM)/255,double(I)));
-figure(22); imshow(DI,'Border','tight','InitialMagnification',100); %maxwindow
-title(['nuclei count: ', num2str(nucs)]);
+% Io(:,:,1) = .5*(makeuint(I,8)-CM(:,:,1))  +.5*makeuint(I,8).*CM(:,:,1);
+% Io(:,:,2) = .5*(makeuint(I,8)-CM(:,:,2))  +.5*makeuint(I,8).*CM(:,:,2);
+% Io(:,:,3) = .5*(makeuint(I,8)-CM(:,:,3))  +.5*makeuint(I,8).*CM(:,:,3);
+
+
+% Io(:,:,1) =2*makeuint(I,8) - .5*CM(:,:,1);
+% Io(:,:,2) =2*makeuint(I,8) - .5*CM(:,:,2);
+% Io(:,:,3) =2*makeuint(I,8) - .5*CM(:,:,3);
+figure(22); clf; imagesc( Io);  title([num2str(nucs),' total nuclei']); 
 
 % toc 
 % save test2;

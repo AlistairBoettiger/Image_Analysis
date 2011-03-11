@@ -124,7 +124,7 @@ if step == 0;
     handles.output = hObject; % update handles object with new step number
     guidata(hObject, handles);  % update GUI data with new handles
     [handles] = imload(hObject, eventdata, handles); % load new embryo
-   guidata(hObject, handles);  % update GUI data with new handles
+    guidata(hObject, handles);  % update GUI data with new handles
    
     Zs = length(handles.Im); 
     
@@ -646,10 +646,11 @@ function setup(hObject,eventdata,handles)
  
  
    if handles.step == 2; 
-       load([handles.fdata,'/','singlemolecule_pars2']); %pars = {'70','.999','40','37','99','10'};  save([handles.fdata,'singlemolecule_pars2'], 'pars' );
+       load([handles.fdata,'/','singlemolecule_pars2']); 
+       %pars = {'40','4','20','23','2','5'}; save([handles.fdata,'singlemolecule_pars2'], 'pars' );
         set(handles.in1label,'String','min Nuc size'); % number of pixels in filter (linear dimension of a square)
         set(handles.in1,'String', pars{1});
-        set(handles.in2label,'String','Filter Strength'); % width of Gaussian in pixels
+        set(handles.in2label,'String','Imblur'); % width of Gaussian in pixels
         set(handles.in2,'String',pars{2});
         set(handles.in3label,'String','Excitation Width');
         set(handles.in3,'String',pars{3}); 

@@ -135,11 +135,9 @@ end
 
 
 %%%%%% Display  %%%%%%%%%
-                CM=label2rgb(La2, 'jet', [1,1,1],'shuffle');    
-               % figure, imshow(CM);
-
-         DI = uint8(bsxfun(@times,double(CM)/255,double(I)));
-        figure(21); imshow(DI,'Border','tight','InitialMagnification',100);% maxwindow
+%                 CM=label2rgb(La2, 'jet', [1,1,1],'shuffle');    
+%          DI = uint8(bsxfun(@times,double(CM)/255,double(I)));
+%         figure(21); imshow(DI,'Border','tight','InitialMagnification',100);% maxwindow
 
  % compute centroids       
         S = regionprops(La2,'Centroid'); % measure areas

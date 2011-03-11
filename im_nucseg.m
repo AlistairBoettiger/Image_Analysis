@@ -1,8 +1,8 @@
 
-%%                  imviewer_lsm.m  Multi Channel
-% Alistair Boettiger                                  Date Begund: 02/12/11
-% Levine Lab, UC Berkeley                        Version Complete: 02/12/11 
-% Functionally complete                             Last Modified: 03/10/11
+%%                  im_nucseg.m  Multi Channel
+% Alistair Boettiger                                  Date Begund: 01/21/11
+% Levine Lab, UC Berkeley                        Version Complete: 02/01/11 
+% Functionally complete                             Last Modified: 02/07/11
 % 
 % 
 %% Attribution:
@@ -23,41 +23,46 @@
 %
 %
 %% Overview:
+%  This code uses DNA staining to associate cytoplasmic domains with the
+%  nearest nucleus.  High reslolution mRNA FISH localizes transcripts
 %
 %
 %% Required subroutines
-
+% fxn_nuc_seg.m  -- segmentation filter, identifies all nuclei
+% fxn_nuc_reg.m -- expands nuclei to assign all regions of embryo to one
+% nuclei or another.
+% dotfinder.m -- locates dots using difference of gaussians and watershed
+% DuplicateDots.m -- compares layers to ID duplicate dots
+% vect2rast.m -- simple vector to raster conversion, called by DuplicateDots
 % 
 %% Updates: 
-% 03/10/11: changed export name to max_fname from fname_max.
-% it's easier to work with filenames with the number at the end, not in the
-% middle.  
+%  02/07/11 moved plotting 
 
 
-function varargout = imviewer_lsm(varargin)
-% IMVIEWER_LSM M-file for imviewer_lsm.fig
-%      IMVIEWER_LSM, by itself, launches the GUI
+function varargout = im_nucseg(varargin)
+% IM_NUCSEG M-file for im_nucseg.fig
+%      IM_NUCSEG, by itself, launches the GUI
 %
-%      IMVIEWER_LSM('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in IMVIEWER_LSM.M with the given input arguments.
+%      IM_NUCSEG('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in IM_NUCSEG.M with the given input arguments.
 %
-%      IMVIEWER_LSM('Property','Value',...) creates a new IMVIEWER_LSM or raises the
+%      IM_NUCSEG('Property','Value',...) creates a new IM_NUCSEG or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before imviewer_lsm_OpeningFcn gets called.  An
+%      applied to the GUI before im_nucseg_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to imviewer_lsm_OpeningFcn via varargin.
+%      stop.  All inputs are passed to im_nucseg_OpeningFcn via varargin.
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help imviewer_lsm
-% Last Modified by GUIDE v2.5 12-Feb-2011 19:35:13
+% Edit the above text to modify the response to help im_nucseg
+% Last Modified by GUIDE v2.5 10-Mar-2011 12:19:13
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @imviewer_lsm_OpeningFcn, ...
-                   'gui_OutputFcn',  @imviewer_lsm_OutputFcn, ...
+                   'gui_OpeningFcn', @im_nucseg_OpeningFcn, ...
+                   'gui_OutputFcn',  @im_nucseg_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -72,22 +77,18 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before imviewer_lsm is made visible.
-function imviewer_lsm_OpeningFcn(hObject, eventdata, handles, varargin)
+% --- Executes just before im_nucseg is made visible.
+function im_nucseg_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to imviewer_lsm (see VARARGIN)
+% varargin   command line arguments to im_nucseg (see VARARGIN)
    handles.output = hObject; % Choose default command line output for im_nucdots_v5
    
   % Some initial setup 
       % Folder to save .mat data files in for normal script function.  
      handles.fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
-     
-     handles.first = [1,1,1,1];
-     handles.last = [0,0,0,0];
-     handles.nmax = 1.5E4; 
      handles.step = 0;  % starting step is step 0 
      set(handles.stepnum,'String',handles.step); % change step label in GUI
      handles.output = hObject; % update handles object with new step number
@@ -98,7 +99,7 @@ function imviewer_lsm_OpeningFcn(hObject, eventdata, handles, varargin)
 % Update handles structure
 guidata(hObject, handles);
 
-% UIWAIT makes imviewer_lsm wait for user response (see UIRESUME)
+% UIWAIT makes im_nucseg wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
 
@@ -114,162 +115,125 @@ step = handles.step;
 % Step 0: Load Data into script
 if step == 0;
     disp('running...'); tic
-    dispfl = str2double(get(handles.in1,'String')); 
-    handles.nmax = str2double(get(handles.in2,'String'));
+    
+     handles.NucChn = str2double(get(handles.in1,'String'));  % 
+     handles.imsize = str2double(get(handles.in2,'String'));
+     % save([handles.fdata,'/','test']);
+     % load([handles.fdata,'/','test']);
+ 
     handles.output = hObject; % update handles object with new step number
-    guidata(hObject, handles);  % update GUI data with new handles
-    [handles] = imload(hObject, eventdata, handles,dispfl); % load new embryo
-    guidata(hObject, handles);  
-    %    save([handles.fdata,'/','test']);
-    %    load([handles.fdata,'/','test']);
+   % guidata(hObject, handles);  % update GUI data with new handles
+    handles = imload(hObject, eventdata,handles); % load new embryo
+   guidata(hObject, handles);  % update GUI data with new handles
+   
+      
+    
+    
     toc
 end
 
-% Step 1: Max Project nuclear channel at 1024  1024 resoultion
-if step == 1; 
+% Step 1: Nuclear Threshold
+% uses fxn: fxn_nuc_seg
+if step == 1;
+% load appropriate data
     disp('running step 1...'); tic
-  
-    handles.fname = get(handles.in1,'String'); 
-    firstc =  get(handles.in2,'String'); 
-    lastc = get(handles.in3,'String');
-    handles.first = eval(firstc{:});
-    handles.last = eval(lastc{:}); 
+    FiltSize = str2double(get(handles.in1,'String'));  % 
+    imblur = str2double(get(handles.in2,'String'));
+    sigmaE = str2double(get(handles.in3,'String'));
+    sigmaI = str2double(get(handles.in4,'String'));
+    PercP = str2double(get(handles.in5,'String'));
+    minN = str2double(get(handles.in6,'String'));   
+    I = handles.Nucs; 
     
-    handles.folderout = get(handles.fout,'String');   
     
-    handles.output = hObject; % update handles object with new step number
-    guidata(hObject, handles);  % update GUI data with new handles
-    [handles] = projectNsave(hObject, eventdata, handles); % load new embryo
-    guidata(hObject, handles); 
-  
+     H = fspecial('disk',imblur); % Filter Kernel       
+     I = imfilter(I,H,0); %Apply Filter
+    figure(2); clf; imshow(I); 
+     
+     
+  % get threshold image 'bw' and nuclei centroids 'cent'  
+    [handles.bw,handles.cent] = fxn_nuc_seg(I,FiltSize,1,sigmaE,sigmaI,PercP,minN);
+   
+ % Save data values  
+ %      handles.output = hObject; guidata(hObject, handles);   
+     guidata(hObject, handles);  % update GUI data with new handles 
+    toc;
+end
+ 
+% Step 2: Get Region for each Nuclei
+% uses fxn  fxn_nuc_reg
+if step == 2;   
+    tic
+    disp('running step 2...');
+    Mthink = str2double(get(handles.in1,'String'));  % 
+    Mthin = str2double(get(handles.in2,'String'));
+    Imnn = str2double(get(handles.in3,'String'));
+    [NucLabeled,Nuc_overlay,conn_map,cell_bords] = fxn_nuc_reg(handles.Nucs,handles.bw,Mthink,Mthin,Imnn);  
+
+    
+    
+    % save([handles.fdata,'/','test']);
+    % load([handles.fdata,'/','test']);
+    
+    [h,w] = size(NucLabeled);
+    
+    Cell_bnd = false(h,w);
+    Cell_bnd(cell_bords) = 1;
+    Cell_bnd = bwareaopen( Cell_bnd,100);
+    
+    Nucs = handles.Nucs + uint16(2^16*Cell_bnd);
+    figure(21); clf; imagesc(Nucs); colormap('hot');    
+    
+    
+       
+    handles.NucLabeled = NucLabeled; 
+    handles.Cell_bnd = Cell_bnd; 
+    handles.conn_map = conn_map; 
+    guidata(hObject, handles);  % update GUI data with new handles  
+    toc
 end
 
 
 
-function [handles] = projectNsave(hObject, eventdata, handles);    
-    fname =handles.fname;
-    fout = handles.folderout;
-    first = handles.first;
-    last = handles.last;
-       
-    % find if data is uint16 or something else; 
-     inttype =  class(handles.Im{1,1}{1}); 
-     disp(['data is ',inttype]); 
+ % export data
+ if step == 3
+ tic
+    fout = get(handles.fout,'String');
+    fname = get(handles.in1,'String');
+    disp(['exporting data to ',fout,fname,'...']); 
     
-   % Determine the number of channels in the image data
-    try 
-        test = handles.Im{1,1}{4};
-        channels = 4;
-    catch chn
-        try 
-             test = handles.Im{1,1}{3};
-             channels = 3;
-        catch chn
-            try
-                 test = handles.Im{1,1}{2};
-                 channels = 2;  
-            catch chn
-                 test = handles.Im{1,1}{1};
-                 channels = 1;  
-            end
-        end
-    end
-    clear test 
-    disp(['Data contains ', num2str(channels),' channels']); 
-
+        
+    NucLabeled = handles.NucLabeled;
+    nuc_cents = handles.cent; 
+    Nucs = handles.Nucs; 
+    conn_map = handles.conn_map; 
+    Cell_bnd = handles.Cell_bnd;
     
+    save([fout,fname,'_nucdata'],...
+        'NucLabeled','nuc_cents','conn_map','Cell_bnd'); 
+  
     
-    [h,w] = size(handles.Im{1,1}{1});
-    
-    % interpret last slice of zero as all slices in stack.  
-    Zs = length(handles.Im);
-    for c=1:channels
-        if last(c) == 0 
-            last(c) = Zs; 
-        end
-    end
-       
-    
-   Imax = eval([inttype,'(zeros(h,w,channels));']);
-    for i=1:Zs
-        Im_layer = eval([inttype,'(zeros(h,w,channels));']);
-        for c=1:channels
-            Im_layer(:,:,c) = handles.Im{1,i}{c};
-            
-            % not enough memory to do one shot max project, need to do this
-            % progressively.  Fortunately max doesn't care (unlike ave). 
-            if i>first(c) && i<last(c)+1
-                Imax(:,:,c) = max( cat(3,Imax(:,:,c),Im_layer(:,:,c)),[],3);       
-            end
-            if channels == 2
-                
- %     save([handles.fdata,'/','test']);
-%      load([handles.fdata,'/','test']);
-                Im_layer(:,:,3) = eval([inttype,'(zeros(h,w,1));']); 
-            end
-        end
-        imwrite(Im_layer,[fout,'/',fname,'_z', num2str(i),'.tif'],'tif');
-     end
-    
-
-% Can't write a 2 channel tif, need to convert to a 3 channel version.  
-            if channels == 2
-                Imax(:,:,3) = eval([inttype,'(zeros(h,w,1))']); 
-            end
-    imwrite(Imax,[fout,'/','max_',fname,'.tif'],'tif');
-    guidata(hObject, handles);  % update GUI data with new handles
-    toc
-
-
+    guidata(hObject, handles); 
+ toc
+   disp('data saved'); 
+     
+ end
+ 
+ 
 %========================================================================%
  %  end of functional processing script
  % The rest of this code is GUI manipulations
 
 
 
-% --- Executes on button press in AutoCycle.
-function AutoCycle_Callback(hObject, eventdata, handles)
 
-    froot = get(handles.froot,'String'); % where to find images
-    emb = str2double(get(handles.embin,'String'));  
-    handles.folderout = get(handles.fout,'String');   % where to save images
 
-     tic 
-     
-     err = 0; 
-    try  
-     while err == 0;
-         handles.emb = emb; % needed for imload to get the right embyro 
 
-         if emb < 10
-             embin = ['0',num2str(emb)];
-         else
-            embin = num2str(emb);
-         end
-            handles.fname = [froot,'_',embin];  % needed for savename. 
-            set(handles.embin,'String',embin); 
 
-        disp(['running embryo ',embin,'...']); tic
-        handles.output = hObject; % update handles object with new step number
-        guidata(hObject, handles);  % update GUI data with new handles
-        [handles] = imload(hObject, eventdata, handles,0); % load new embryo
-        guidata(hObject, handles);  
+% --- Executes on button press in VarButton.
+function VarButton_Callback(hObject, eventdata, handles)
 
-        handles.output = hObject; % update handles object with new step number
-        guidata(hObject, handles);  % update GUI data with new handles
-        [handles] = projectNsave(hObject, eventdata, handles); % load new embryo
-        guidata(hObject, handles); 
 
-        emb = emb + 1;    
-        toc
-     end
-         
-    catch error
-       disp(error.message); 
-       disp('Export finished.' ); toc; 
-   end
-     
-    
 
 % ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ %
 %                        File managining scripts                          %  
@@ -277,13 +241,16 @@ function AutoCycle_Callback(hObject, eventdata, handles)
 % This function sets up the new steps with the appropriate input labels and
 % defalut label parameters
 
+
+  % handles.fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
+
 function setup(hObject,eventdata,handles)
  if handles.step == 0; 
-       load([handles.fdata, 'imviewer_lsm_pars0']); 
-       % pars = {'1','1.5E4',' ',' ',' ',' '}; save([handles.fdata,'imviewer_lsm_pars0'], 'pars' );
-        set(handles.in1label,'String','Display first/last');
+       load([handles.fdata, 'imnucseg_pars0']); 
+       % pars = {'3','512',' ',' ',' ',' '}; save([handles.fdata,'imnucseg_pars0'], 'pars' );
+        set(handles.in1label,'String','Nuclei channel');
         set(handles.in1,'String', pars(1));
-        set(handles.in2label,'String','noise max');
+        set(handles.in2label,'String','imsize');
         set(handles.in2,'String', pars(2));
        set(handles.in3label,'String',' ');
         set(handles.in3,'String', pars(3));
@@ -293,39 +260,91 @@ function setup(hObject,eventdata,handles)
         set(handles.in5,'String', pars(5));
         set(handles.in6label,'String',' ');
         set(handles.in6,'String', pars(6));
+            set(handles.VarButtonName,'String','');
+%         % For aesthetics, grey out input 5 and 6
+%         set(handles.in5label,'String',' '); 
+%         set(handles.in5,'String',' ');
+%         set(handles.in5,'BackgroundColor',[.7 .7 .7]); 
+%         set(handles.in6label,'String',' '); 
+%         set(handles.in6,'String',' ');
+%         set(handles.in6,'BackgroundColor',[.7 .7 .7]);        
         dir = {
        'Load lsm file and display all layers in stack in 3 color';
        'red will be channel 1, green chn 2, blue chn 3'} ;
         set(handles.directions,'String',dir); 
  end
-  if handles.step == 1; 
-       load([handles.fdata,'/','imviewer_lsm_pars1']); 
-       
+
+ 
+ 
+   if handles.step == 1; 
+       load([handles.fdata,'/','imnucseg_pars1']);
+       %pars = {'40','4','20','23','2','5'};  save([handles.fdata,'imnucseg_pars1'], 'pars' );
+        set(handles.in1label,'String','min Nuc size'); % number of pixels in filter (linear dimension of a square)
+        set(handles.in1,'String', pars{1});
+        set(handles.in2label,'String','Imblur'); % width of Gaussian in pixels
+        set(handles.in2,'String',pars{2});
+        set(handles.in3label,'String','Excitation Width');
+        set(handles.in3,'String',pars{3}); 
+        set(handles.in4label,'String','Inhibition Width');
+        set(handles.in4,'String', pars{4});
+        set(handles.in5label,'String','Max aspect ratio');
+        set(handles.in5,'String', pars{5});
+        set(handles.in6label,'String','Erode fused');
+        set(handles.in6,'String', pars{6});  
+       dir = {
+        'Step 2: Find nuclei.  Uses a difference of Gaussian filter with';
+        'a min nucleus size filter and a aspect ratio filter'}; 
+        set(handles.directions,'String',dir);
+  end      
+  if handles.step == 2;  % nuclei segmentation
+    load([handles.fdata,'/','imnucseg_pars2']); 
+    % pars = {'45','3','2','','','',''};  save([handles.fdata,'imnucseg_pars2'], 'pars' );
+        set(handles.in1label,'String','thicken nuclei'); 
+        set(handles.in1,'String', pars{1});
+        set(handles.in2label,'String','thin boundaries');
+        set(handles.in2,'String', pars{2});
+        set(handles.in3label,'String','erode'); 
+        set(handles.in3,'String', pars{3});
+        set(handles.in4label,'String',' ');
+        set(handles.in4,'String', pars{4}); 
+        set(handles.in5label,'String',' ');
+        set(handles.in5,'String', pars{5}); 
+        set(handles.in6label,'String',' ');
+        set(handles.in6,'String', pars{6});  
+                dir = {'Step 2: Map nuclear region';
+    'nuclei expand until they collide.  Borders are assigned to different nuclei'} ;
+        set(handles.directions,'String',dir); 
+  end
+  
+  
+  
+  if handles.step == 3;
+     load([handles.fdata,'/','imnucseg_pars3']); 
+     % pars = {' ',' ',' ',' ',' ',' '}; save([handles.fdata,'imnucseg_pars3'], 'pars' );
+     
      froot = get(handles.froot,'String');
      emb = get(handles.embin,'String');
      fname = [froot,'_',emb];  
-       
-       % pars = {' ','[1,1,1,1]','[0,0,0,0]',' ',' ',' '}; save([handles.fdata,'imviewer_lsm_pars1'], 'pars' );
-        set(handles.in1label,'String','save name');
+     
+     
+        set(handles.in1label,'String','Save Name'); 
         set(handles.in1,'String', fname);
-        set(handles.in2label,'String','starting frames');
-        set(handles.in2,'String', pars(2));
-       set(handles.in3label,'String','end frames');
-        set(handles.in3,'String', pars(3));
-        set(handles.in4label,'String','Nuclear Blur');
-        set(handles.in4,'String', pars(4));
-        set(handles.in5label,'String','Working Size');
-        set(handles.in5,'String', pars(5));
-        set(handles.in6label,'String','First,Last Layer');
-        set(handles.in6,'String', pars(6));
-        %    set(handles.VarButtonName,'String',''); 
-        dir = {'Step 1: Export layer data as tifs and max project between chosen';
-            'starting and ending frames.  Use 0 for last frame to use all data.'} ;
-        set(handles.directions,'String',dir); 
- end
- 
- 
- 
+        set(handles.in2label,'String',' ');
+        set(handles.in2,'String', pars{2});
+        set(handles.in3label,'String',' '); 
+        set(handles.in3,'String', pars{3}); 
+        set(handles.in4label,'String',' ');
+        set(handles.in4,'String', pars{4});
+        set(handles.in5label,'String',' ');
+        set(handles.in5,'String', pars{5});
+        set(handles.in6label,'String',' ');
+        set(handles.in6,'String', pars{6});
+        set(handles.VarButtonName,'String','Manual Reg Select');
+   dir = {'Step 8: Save Data'};
+  set(handles.directions,'String',dir); 
+  end
+  
+guidata(hObject, handles); % update GUI data with new labels
 
 
 
@@ -349,7 +368,7 @@ function savePars_Callback(hObject, eventdata, handles)
      end 
   % Export parameters 
      stp_label = get(handles.stepnum,'String');     
-     savelabel = ['imviewer_lsm_pars',stp_label];  
+     savelabel = ['imnucseg_pars',stp_label];  
      % labeled as nucdot_parsi.mat where "i" is the step number 
      save([handles.fdata, savelabel], 'pars');        % export values
      disp([handles.fdata, savelabel]);
@@ -406,65 +425,27 @@ function LoadNext_Callback(hObject, eventdata, handles)
 
 
         %========== change source images ================%
-function [handles] = imload(hObject, eventdata, handles,dispfl)
-handles.fin = get(handles.source,'String'); % folder
-handles.ename = get(handles.froot,'String'); % embryo name
-handles.emb = str2double(get(handles.embin,'String')); % embryo number
+function [handles] = imload(hObject, eventdata,handles)
 
-filename = [handles.fin,'/',handles.ename];
-% load images
-
-if handles.emb == 1 % only need to do this once.  
-    jacquestiffread([filename,'.lsm']);
-end
-   %  handles.Im = loadlsm([filename,'.mat'],handles.emb);  % old version
-   
-   
-    handles.Im = lsm_read_mod([filename,'.mat'],handles.emb,handles.nmax); 
+disp('loading image...');
+ % handles.source
+    handles.fin = get(handles.source,'String'); % folder
+    handles.fname = get(handles.froot,'String'); % embryo name
+    handles.embn = get(handles.embin,'String'); % embryo number
+    handles.emb = str2double(handles.embn);
     
-    Zs = length(handles.Im);
-    [h,w] = size(handles.Im{1,1}{1});
+    fname =  [handles.fin,'/',handles.fname,'_',handles.embn,'_max.tif']; 
+    handles.Im =  imread(fname);
+    h = size(handles.Im,1);
     
-
-    if dispfl == 1; 
-        try
-        % display image stack at 512x512 resolution
-            m = 512/h; 
-            for j=1:Zs
-                    I = uint16(zeros(512,512,3));
-                    I(:,:,1) = imresize(handles.Im{1,j}{1},m);
-                    I(:,:,2) = imresize(handles.Im{1,j}{2},m);
-                    I(:,:,3) = imresize(handles.Im{1,j}{3},m);
-                    figure(10); clf; imshow(I); pause(.001); 
-            end
-        catch error
-            disp(error.message);
-            disp('Only 2 data channels found'); 
-        end          
+    scale = 512/h;
+    Imini = imresize(handles.Im,scale);
+    figure(1); clf; imshow(Imini);    
     
-  %      display first and last in stack
-          figure(1); clf; set(gcf,'color','k'); colordef black;
-            subplot(1,2,1); imshow(handles.Im{1,1}{1}); title('First slice, chn 1');
-            subplot(1,2,2); imshow(handles.Im{1,Zs}{1});  title('Last slice, chn 1');
-
-            figure(2); clf; set(gcf,'color','k'); colordef black;
-            subplot(1,2,1); imshow(handles.Im{1,1}{2}); title('First slice, chn 2');
-            subplot(1,2,2); imshow(handles.Im{1,Zs}{2}); title('Last slice, chn 2');
-
-        try
-            figure(3); clf; set(gcf,'color','k'); colordef black;
-            subplot(1,2,1); imshow(handles.Im{1,1}{3}); title('First slice, chn 3');
-            subplot(1,2,2); imshow(handles.Im{1,Zs}{3}); title('Last slice, chn 3');  
-            
-        catch error
-            disp(error.message);
-            disp('Only 2 data channels found'); 
-        end          
-    end
- 
-    
-    
-    
+   Nuc = handles.Im(:,:,handles.NucChn);
+   h = size(Nuc,1); 
+   handles.Nucs = imresize(Nuc,handles.imsize/h); 
+   disp(['rescaling to ',num2str(handles.imsize/h*100,3), ' percent']); 
     
     handles.output = hObject; 
     guidata(hObject,handles);% pause(.1);
@@ -522,7 +503,7 @@ function SourceBrowse_Callback(hObject, eventdata, handles)
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = imviewer_lsm_OutputFcn(hObject, eventdata, handles) 
+function varargout = im_nucseg_OutputFcn(hObject, eventdata, handles) 
 varargout{1} = handles.output;
 
 
@@ -584,11 +565,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --------------------------------------------------------------------
-function Untitled_1_Callback(hObject, eventdata, handles)
-% hObject    handle to Untitled_1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 
 
 
@@ -599,6 +575,3 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-% --- Executes on button press in pushbutton14.
-function pushbutton14_Callback(hObject, eventdata, handles)
