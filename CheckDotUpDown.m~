@@ -8,7 +8,7 @@
 % avoids multiple dot counting and avoids fusion of dots in Z.
 
 
-function dotC = CheckDotUpDown(DotData,DotMasks,Im,mRNAchn,h,w,plotdata,getpreciseZ)
+function dotC = CheckDotUpDown(DotData,DotMasks,Im,mRNAchn,hs,ws,plotdata,getpreciseZ,consec_layers,ovlap)
 %% Updates
 % Rewritten 03/07/11 to convert more things to uint16 / uint8 to save
 % memory (even fragment of single stack is several gigs of active mem). 
@@ -21,7 +21,7 @@ function dotC = CheckDotUpDown(DotData,DotMasks,Im,mRNAchn,h,w,plotdata,getpreci
 tic 
 disp('connecting dots in Z...') 
 %plotdata = 1; 
-% h = hs; w = ws; mRNAchn = 1; Im = handles.Im;
+% h = hs; w = ws; mRNAchn = 1; ovlap = 4;
 
 
 
@@ -53,27 +53,48 @@ LayerJoin = false(2*NDots,Zs);
 % for image segmentation routines to be used that will treat each dot as
 % separate.  
 
-for Z = 1:Zs % The primary layer
+
+
+
+
+for Z = 1:Zs % The primary layer Z = 10
          % convert to pixel linear-index
-         inds1 = floor(DotData{Z}(:,2))+floor(DotData{Z}(:,1))*h;  % indices in this layer  
-         inds1(inds1>w*h) = w*h;  
-         R1 = uint16(zeros(h,w));   
-         R1(inds1) = maxdots; % convert indices to raster map               
-         st1_dot_num = sum(dotsinlayer(1:Z-1)); % starting dot number for the layer under study     
-        
+         inds1 = floor(DotData{Z}(:,2))+floor(DotData{Z}(:,1))*hs;  % indices in this layer  
+         inds1(inds1>ws*hs) = ws*hs;  
+         R1 = uint16(zeros(hs,ws));   
+       %  R1(inds1) = maxdots; % convert indices to raster map   
          
-    for z=1:Zs % compare primary layer to all other layers    
-         Loz = R1 + DotMasks{z};  % detect overlap with indices   
-        % figure(3); clf; imagesc(Loz); 
+        % R1 = false(hs,ws); 
+         R1(inds1) = maxdots; % convert indices to raster map   
+         R1d = imdilate(R1,strel('disk',ovlap));
+        % figure(3); clf; imagesc(R1d);  colorbar; colormap jet;
+         
+        
+         st1_dot_num = sum(dotsinlayer(1:Z-1)); % starting dot number for the layer under study     
+
+         
+    for z=1:Zs % compare primary layer to all other layers  z = Z+1  
+         % Loz = R1 + DotMasks{z};  % detect overlap with indices  
+         
+         
+         indsz = floor(DotData{z}(:,2))+floor(DotData{z}(:,1))*hs;  % indices in this layer  
+         indsz(inds1>ws*hs) = ws*hs;  
+         Rz = uint16(zeros(hs,ws));   
+         Rz(indsz) = DotMasks{z}(indsz); % convert indices to raster map   
+         % figure(3); clf; imagesc(Rz); 
+                 
+         Loz = R1d + Rz; 
+         Inds1 = nonzeros(DotMasks{Z}(indsz));
+         
+        % figure(3); clf; imagesc(Loz);  colorbar; colormap jet;
         % figure(3); clf; imagesc(DotMasks{z}); 
          Loz(Loz<maxdots+1) = 0; % remove non-overlapping dots;
          Loz = Loz - maxdots; % LoZ is already positive, so we don't need to worry about negative values.  
-        % Loz(Loz<0) = 0;
-              % figure(3); clf; imagesc(Loz);   
-         
+        %  figure(2); clf;  imagesc(Loz); colorbar; colormap jet;
+
       % Need to get linear index to stick correctly in array of all dots.  
          stz_dot_num = sum(dotsinlayer(1:z-1));  % starting dot number for the comparison layer     
-         inds_zin1 = Loz(inds1); % indices of layer z overlapping layer 1.
+         inds_zin1 = Loz(Inds1); % indices of layer z overlapping layer 1.
          indsT = inds_zin1 + stz_dot_num; % convert layer indices to total overall dot indices 
          indsT(indsT == stz_dot_num) = 0; % makes sure missing indices are still 'missing' and not last of previous layer.   
          DotConn(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) =  single(indsT); % STORE in DotConn matrix the indices 
@@ -89,11 +110,12 @@ for Z = 1:Zs % The primary layer
 end
 
 toc
-%%
- %clear Im Ivals LoZ R1 DotMasks DotData;
 
 
+
 %%
+% plotdata = 1; getpreciseZ = 1;
+
 tic
 disp('counting total dots...');
 % figure(3); clf; imagesc(LayerJoin); 
@@ -112,7 +134,6 @@ stp = 1000;  % 1000
 Nsects = floor(NDots/stp);  
 masked_inds = single(zeros(2*NDots,Zs)); 
 cent = [];
-getpreciseZ = 1; plotdata = 0; 
 
 for k=1:Nsects
 % For each dot in the system, there is a row i, which contains all the dots
@@ -161,7 +182,7 @@ for k=1:Nsects
     end
 
     % This is very expensive for big images
-        mask = bwareaopen(mask,2);
+        mask = bwareaopen(mask,consec_layers);
        masked_inds(1+(k-1)*stp:min(k*stp,NDots),:) = mask.*DotConn(1+(k-1)*stp:min(k*stp,NDots),:);
 end
 
@@ -172,6 +193,7 @@ toc
 tic
 disp('Building spheres from cross-section disks...');
 
+% testL = NaN*zeros(1,2*NDots); 
 remove_dot = zeros(NDots,1); 
 stacked_dots =0;
 % loop through all dots
@@ -183,7 +205,7 @@ for i = 1:2:2*NDots % i = 605 i = 5401; i=5693 i = 5547  i = 6549
         stacked_dots = max(j)-min(j) > length(j)-1;
     
         if stacked_dots == 0  && getpreciseZ == 1
-             ii = find(cent(:,2)==i);
+             ii = find(cent(:,2)==i,1);
              dotC((i+1)/2,3) = cent(ii(1),1);
         end
     else
@@ -197,17 +219,20 @@ for i = 1:2:2*NDots % i = 605 i = 5401; i=5693 i = 5547  i = 6549
         if isempty(ii); [jnk, ii] = min( ((i+1)/2 - possibles).^2 );  end
        % find nearest breakpoint without going over
           kk = (ii-brk_pts); kk(kk<0) = 100; [jnk,bi] = min(kk);    
-          counted = possibles(brk_pts(bi)+2:brk_pts(bi+1));  
+          counted = possibles(brk_pts(bi)+2:brk_pts(bi+1)); 
           if  getpreciseZ == 1
               ii = find(cent(:,2)==i);
               dotC((i+1)/2,3) = cent(ii( min(bi,length(ii)) ),1);
           end
     stacked_dots =0;      
     end
-    remove_dot(counted) = 1;     
+     remove_dot(counted) = 1;   
+   % testL(i) = length(remove_dot);
 end
 toc
 sum(remove_dot);
+
+% figure(1); clf; plot(testL,'w.');
 % sum(stacked_dots)
           % NB can't sum stacked dots, all stack dots are also multiply
           % counted.  i.e. the first time a doublet is enountered we say

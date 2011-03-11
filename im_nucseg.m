@@ -204,7 +204,7 @@ end
     Cell_bnd = handles.Cell_bnd;
     
     save([fout,fname,'_nucdata'],...
-        'NucLabeled','nuc_cents','conn_map','Cell_bnd'); 
+        'NucLabeled','nuc_cents','conn_map','Cell_bnd','Nucs'); 
   
     
     guidata(hObject, handles); 
