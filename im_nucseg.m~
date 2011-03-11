@@ -116,19 +116,14 @@ step = handles.step;
 if step == 0;
     disp('running...'); tic
     
-     NucChn = str2double(get(handles.in1,'String'));  % 
-     imsize = str2double(get(handles.in2,'String'));
+     handles.NucChn = str2double(get(handles.in1,'String'));  % 
+     handles.imsize = str2double(get(handles.in2,'String'));
      % save([handles.fdata,'/','test']);
      % load([handles.fdata,'/','test']);
  
     handles.output = hObject; % update handles object with new step number
    % guidata(hObject, handles);  % update GUI data with new handles
     handles = imload(hObject, eventdata,handles); % load new embryo
-    
-   Nuc = handles.Im(:,:,NucChn);
-   h = size(Nuc,1); 
-   handles.Nucs = imresize(Nuc,imsize/h); 
-   disp(['rescaling to ',num2str(imsize/h*100,3), ' percent']); 
    guidata(hObject, handles);  % update GUI data with new handles
    
       
@@ -141,7 +136,7 @@ end
 % uses fxn: fxn_nuc_seg
 if step == 1;
 % load appropriate data
-    disp('running step 2...'); tic
+    disp('running step 1...'); tic
     FiltSize = str2double(get(handles.in1,'String'));  % 
     imblur = str2double(get(handles.in2,'String'));
     sigmaE = str2double(get(handles.in3,'String'));
@@ -157,7 +152,7 @@ if step == 1;
      
      
   % get threshold image 'bw' and nuclei centroids 'cent'  
-    [handles.bw,handles.cent] = fxn_nuc_seg(I,FiltSize,1,sigmaE,sigmaI,PercP,minN);
+    [handles.bw,handles.cent] = fxn_nuc_seg(I,FiltSize,imblur,sigmaE,sigmaI,PercP,minN);
    
  % Save data values  
  %      handles.output = hObject; guidata(hObject, handles);   
@@ -169,15 +164,13 @@ end
 % uses fxn  fxn_nuc_reg
 if step == 2;   
     tic
-    disp('running step 3...');
+    disp('running step 2...');
     Mthink = str2double(get(handles.in1,'String'));  % 
     Mthin = str2double(get(handles.in2,'String'));
     Imnn = str2double(get(handles.in3,'String'));
     [NucLabeled,Nuc_overlay,conn_map,cell_bords] = fxn_nuc_reg(handles.Nucs,handles.bw,Mthink,Mthin,Imnn);  
 
     
-    figure(1); clf; imshow(handles.Nucs); hold on;
-    plot(cell_bords);
     
     % save([handles.fdata,'/','test']);
     % load([handles.fdata,'/','test']);
@@ -189,11 +182,10 @@ if step == 2;
     Cell_bnd = bwareaopen( Cell_bnd,100);
     
     Nucs = handles.Nucs + uint16(2^16*Cell_bnd);
-    figure(1); clf; imagesc(Nucs); colormap('hot');    
+    figure(21); clf; imagesc(Nucs); colormap('hot');    
     
     
-    figure(21); close; 
-    
+       
     handles.NucLabeled = NucLabeled; 
     handles.Cell_bnd = Cell_bnd; 
     handles.conn_map = conn_map; 
@@ -219,10 +211,11 @@ end
     
     save([fout,fname,'_nucdata'],...
         'NucLabeled','nuc_cents','conn_map','Cell_bnd'); 
-    disp('data saved'); 
+  
     
     guidata(hObject, handles); 
  toc
+   disp('data saved'); 
      
  end
  
@@ -434,6 +427,7 @@ function LoadNext_Callback(hObject, eventdata, handles)
         %========== change source images ================%
 function [handles] = imload(hObject, eventdata,handles)
 
+disp('loading image...');
  % handles.source
     handles.fin = get(handles.source,'String'); % folder
     handles.fname = get(handles.froot,'String'); % embryo name
@@ -447,6 +441,11 @@ function [handles] = imload(hObject, eventdata,handles)
     scale = 512/h;
     Imini = imresize(handles.Im,scale);
     figure(1); clf; imshow(Imini);    
+    
+   Nuc = handles.Im(:,:,handles.NucChn);
+   h = size(Nuc,1); 
+   handles.Nucs = imresize(Nuc,handles.imsize/h); 
+   disp(['rescaling to ',num2str(handles.imsize/h*100,3), ' percent']); 
     
     handles.output = hObject; 
     guidata(hObject,handles);% pause(.1);

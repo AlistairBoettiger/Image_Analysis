@@ -188,22 +188,16 @@ end
 if step == 2;
 % load appropriate data
     disp('running step 2...'); tic
-    FiltSize = str2double(get(handles.in1,'String'));  % 
+     minN = str2double(get(handles.in1,'String'));  % 
     imblur = str2double(get(handles.in2,'String'));
     sigmaE = str2double(get(handles.in3,'String'));
     sigmaI = str2double(get(handles.in4,'String'));
-    PercP = str2double(get(handles.in5,'String'));
-    minN = str2double(get(handles.in6,'String'));   
+    FiltSize = str2double(get(handles.in5,'String'));
+  
     I = handles.Nucs; 
-    
-    
-     H = fspecial('disk',imblur); % Filter Kernel       
-     I = imfilter(I,H,0); %Apply Filter
-    figure(2); clf; imshow(I); 
-     
-     
+      
   % get threshold image 'bw' and nuclei centroids 'cent'  
-    [handles.bw,handles.cent] = fxn_nuc_seg(I,FiltSize,1,sigmaE,sigmaI,PercP,minN);
+    [handles.bw,handles.cent] = fxn_nuc_seg(I,minN,sigmaE,sigmaI,FiltSize,imblur);
    
  % Save data values  
  %      handles.output = hObject; guidata(hObject, handles);   
@@ -647,7 +641,7 @@ function setup(hObject,eventdata,handles)
  
    if handles.step == 2; 
        load([handles.fdata,'/','singlemolecule_pars2']); 
-       %pars = {'40','4','20','23','2','5'}; save([handles.fdata,'singlemolecule_pars2'], 'pars' );
+       % pars = {'40','4','20','23','30',' '}; save([handles.fdata,'singlemolecule_pars2'], 'pars' );
         set(handles.in1label,'String','min Nuc size'); % number of pixels in filter (linear dimension of a square)
         set(handles.in1,'String', pars{1});
         set(handles.in2label,'String','Imblur'); % width of Gaussian in pixels
@@ -656,7 +650,7 @@ function setup(hObject,eventdata,handles)
         set(handles.in3,'String',pars{3}); 
         set(handles.in4label,'String','Inhibition Width');
         set(handles.in4,'String', pars{4});
-        set(handles.in5label,'String','Max aspect ratio');
+        set(handles.in5label,'String','Filter Size');
         set(handles.in5,'String', pars{5});
         set(handles.in6label,'String','Erode fused');
         set(handles.in6,'String', pars{6});  
@@ -679,7 +673,7 @@ function setup(hObject,eventdata,handles)
         set(handles.in5,'String', pars{5}); 
         set(handles.in6label,'String',' ');
         set(handles.in6,'String', pars{6});  
-                dir = {'Step 2: Map nuclear region';
+                dir = {'Step 3: Map nuclear region';
     'nuclei expand until they collide.  Borders are assigned to different nuclei'} ;
         set(handles.directions,'String',dir); 
   end

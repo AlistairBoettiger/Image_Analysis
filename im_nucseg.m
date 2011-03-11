@@ -137,22 +137,16 @@ end
 if step == 1;
 % load appropriate data
     disp('running step 1...'); tic
-    FiltSize = str2double(get(handles.in1,'String'));  % 
+    minN = str2double(get(handles.in1,'String'));  % 
     imblur = str2double(get(handles.in2,'String'));
     sigmaE = str2double(get(handles.in3,'String'));
     sigmaI = str2double(get(handles.in4,'String'));
-    PercP = str2double(get(handles.in5,'String'));
-    minN = str2double(get(handles.in6,'String'));   
+    FiltSize = str2double(get(handles.in5,'String'));
+  
     I = handles.Nucs; 
-    
-    
-     H = fspecial('disk',imblur); % Filter Kernel       
-     I = imfilter(I,H,0); %Apply Filter
-    figure(2); clf; imshow(I); 
-     
-     
+      
   % get threshold image 'bw' and nuclei centroids 'cent'  
-    [handles.bw,handles.cent] = fxn_nuc_seg(I,FiltSize,1,sigmaE,sigmaI,PercP,minN);
+    [handles.bw,handles.cent] = fxn_nuc_seg(I,minN,sigmaE,sigmaI,FiltSize,imblur);
    
  % Save data values  
  %      handles.output = hObject; guidata(hObject, handles);   
@@ -260,17 +254,9 @@ function setup(hObject,eventdata,handles)
         set(handles.in5,'String', pars(5));
         set(handles.in6label,'String',' ');
         set(handles.in6,'String', pars(6));
-            set(handles.VarButtonName,'String','');
-%         % For aesthetics, grey out input 5 and 6
-%         set(handles.in5label,'String',' '); 
-%         set(handles.in5,'String',' ');
-%         set(handles.in5,'BackgroundColor',[.7 .7 .7]); 
-%         set(handles.in6label,'String',' '); 
-%         set(handles.in6,'String',' ');
-%         set(handles.in6,'BackgroundColor',[.7 .7 .7]);        
+            set(handles.VarButtonName,'String',''); 
         dir = {
-       'Load lsm file and display all layers in stack in 3 color';
-       'red will be channel 1, green chn 2, blue chn 3'} ;
+       'Load max-projected image from folder.'} ;
         set(handles.directions,'String',dir); 
  end
 
@@ -278,7 +264,7 @@ function setup(hObject,eventdata,handles)
  
    if handles.step == 1; 
        load([handles.fdata,'/','imnucseg_pars1']);
-       %pars = {'40','4','20','23','2','5'};  save([handles.fdata,'imnucseg_pars1'], 'pars' );
+       %  pars = {'100','4','20','23','30',' '};  save([handles.fdata,'imnucseg_pars1'], 'pars' );
         set(handles.in1label,'String','min Nuc size'); % number of pixels in filter (linear dimension of a square)
         set(handles.in1,'String', pars{1});
         set(handles.in2label,'String','Imblur'); % width of Gaussian in pixels
@@ -287,13 +273,13 @@ function setup(hObject,eventdata,handles)
         set(handles.in3,'String',pars{3}); 
         set(handles.in4label,'String','Inhibition Width');
         set(handles.in4,'String', pars{4});
-        set(handles.in5label,'String','Max aspect ratio');
+        set(handles.in5label,'String','FilterSize');
         set(handles.in5,'String', pars{5});
-        set(handles.in6label,'String','Erode fused');
+        set(handles.in6label,'String',' ');
         set(handles.in6,'String', pars{6});  
        dir = {
-        'Step 2: Find nuclei.  Uses a difference of Gaussian filter with';
-        'a min nucleus size filter and a aspect ratio filter'}; 
+        'Step 1: Find nuclei.  Uses a difference of Gaussian filter with';
+        'a min nucleus size filter and watershed splitter'}; 
         set(handles.directions,'String',dir);
   end      
   if handles.step == 2;  % nuclei segmentation
