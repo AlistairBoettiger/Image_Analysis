@@ -14,8 +14,19 @@
 
 
 
-function [on_cnts,off_cnts]= fxn_regionvar(NucLabeled,cell_sadj1,mRNA_sadj1,t1,spread,Nnucs)
+function [on_cnts,off_cnts]= fxn_regionvar(NucLabeled,cell_sadj1,mRNA_sadj1,t1,spread,Nnucs,Nuc_list)
 %%
+
+NucLabeled = NucLabel; 
+cell_sadj1 = Plot_mRNA;
+mRNA_sadj1 = mRNA_sadj;
+t1 =t; 
+
+if isempty(Nuc_list) == 1
+    Nuc_list = 1:Nnucs;
+end
+
+
 
 % Parameters that might want to be user controlled. 
 minObjSize = 2E4;
@@ -45,19 +56,23 @@ bndry1 = bwboundaries(bw1);
 
 temp = bw1.*NucLabeled;
 temp2 = hist(temp(:),1:max(NucLabeled(:)));
-%figure(2); clf; hist(temp(:),1:max(NucLabeled(:)));
-
+% figure(2); clf; bar(1:max(NucLabeled(:)),temp2);
 
 inReg = find(temp2>1E4); 
 % [b,m] = unique(bw1.*NucLabeled);
 % inReg  = b(m>2E6);
 % inReg(inReg==0) = [];
 
-onMask = ismember(NucLabeled,inReg);
+[Nons,on_inds] = intersect(Nuc_list,inReg);
+[Noffs,off_inds] = setdiff(Nuc_list,inReg);
+onMask = ismember(NucLabeled,Nons);
 
-outReg = setdiff(1:Nnucs,inReg);
-on_cnts = mRNA_sadj1(inReg);
-off_cnts = mRNA_sadj1(outReg);
+
+figure(2); clf; imagesc(onMask);
+
+
+on_cnts = mRNA_sadj1(on_inds);
+off_cnts = mRNA_sadj1(off_inds);
 
 
 on_mean = mean(on_cnts);
@@ -76,17 +91,19 @@ off_mean = mean(off_cnts);
 over1 = find(mRNA_sadj1>on_mean*spread);
 under1 = find(mRNA_sadj1<on_mean/spread); 
 
-Over1 = ismember(NucLabeled,over1).*onMask; 
-Under1 = ismember(NucLabeled,under1).*onMask; 
+Over1 = ismember(NucLabeled,Nuc_list(over1)).*onMask; 
+Under1 = ismember(NucLabeled,Nuc_list(under1)).*onMask; 
+
+% figure(3); clf; imagesc(Over1);
 
 I = uint8(zeros(h,w,3));
 I(:,:,1) =  C1;
 I(:,:,2) = C1 - uint8(255*Over1);
 I(:,:,3) = uint8(255*Under1)+C1 -uint8(255*Over1);
 
-C = gray(max(mRNA_sadj1));
-imshow(I); colormap C; colorbar;
-title(['sna  mean=',num2str(on_mean,4),' std=',num2str(on_std,4),...
+C = gray(max(mRNA_sadj1)); % figure(5); clf;
+imshow(I); colormap(C); colorbar; cbfreeze; 
+title(['mean=',num2str(on_mean,4),' std=',num2str(on_std,4),...
     ' cov=',num2str(on_std/on_mean,3)]);
 set(gcf,'color','k');
  hold on;  plot(bndry1{1}(:,2),bndry1{1}(:,1),'c');

@@ -8,7 +8,7 @@
 % avoids multiple dot counting and avoids fusion of dots in Z.
 
 
-function dotC = CheckDotUpDown(DotData,DotMasks,Im,mRNAchn,hs,ws,plotdata,getpreciseZ,consec_layers,ovlap)
+function New_dotC = CheckDotUpDown(DotData,DotMasks,I,hs,ws,plotdata,getpreciseZ,consec_layers,ovlap)
 %% Updates
 % Rewritten 03/07/11 to convert more things to uint16 / uint8 to save
 % memory (even fragment of single stack is several gigs of active mem). 
@@ -22,6 +22,8 @@ tic
 disp('connecting dots in Z...') 
 %plotdata = 1; 
 % h = hs; w = ws; mRNAchn = 1; ovlap = 4;
+  % I = Im{1,z}{mRNAchn}( xp1:xp2,yp1:yp2 );
+  
 
 
 
@@ -54,9 +56,15 @@ LayerJoin = false(2*NDots,Zs);
 % separate.  
 
 % pre-calc
-
+Rs = cell(Zs,1);
+Inds = cell(Zs,1); 
 for z=1:Zs
-    
+         inds = floor(DotData{z}(:,2))+floor(DotData{z}(:,1))*hs;  % indices in this layer  
+         inds(inds>ws*hs) = ws*hs;  
+         Rz = uint16(zeros(hs,ws));   
+         Rz(inds) = DotMasks{z}(inds); % convert indices to raster map 
+         Inds{z} = inds; 
+         Rs{z} = imdilate(Rz,strel('disk',ovlap));
 end
 
 
@@ -67,28 +75,14 @@ for Z = 1:Zs % The primary layer Z = 10
          inds1 = floor(DotData{Z}(:,2))+floor(DotData{Z}(:,1))*hs;  % indices in this layer  
          inds1(inds1>ws*hs) = ws*hs;  
          R1 = uint16(zeros(hs,ws));   
-       %  R1(inds1) = maxdots; % convert indices to raster map   
-         
-        % R1 = false(hs,ws); 
          R1(inds1) = maxdots; % convert indices to raster map   
-         R1d = imdilate(R1,strel('disk',ovlap));
         % figure(3); clf; imagesc(R1d);  colorbar; colormap jet;
-         
-        
          st1_dot_num = sum(dotsinlayer(1:Z-1)); % starting dot number for the layer under study     
 
          
-    for z=1:Zs % compare primary layer to all other layers  z = Z+1  
-         % Loz = R1 + DotMasks{z};  % detect overlap with indices  
-         
-         
-         indsz = floor(DotData{z}(:,2))+floor(DotData{z}(:,1))*hs;  % indices in this layer  
-         indsz(inds1>ws*hs) = ws*hs;  
-         Rz = uint16(zeros(hs,ws));   
-         Rz(indsz) = DotMasks{z}(indsz); % convert indices to raster map   
-         % figure(3); clf; imagesc(Rz); 
-                 
-         Loz = R1 + Rz; 
+    for z=1:Zs % compare primary layer to all other layers  z = Z+1                  
+         Loz = R1 + Rs{z}; 
+       %  Loz = R1 + DotMasks{z}; (only makes a small difference to use overlap box rather than within found dot.  
          
         % figure(3); clf; imagesc(Loz);  colorbar; colormap jet;
         % figure(3); clf; imagesc(DotMasks{z}); 
@@ -98,7 +92,7 @@ for Z = 1:Zs % The primary layer Z = 10
 
       % Need to get linear index to stick correctly in array of all dots.  
          stz_dot_num = sum(dotsinlayer(1:z-1));  % starting dot number for the comparison layer     
-         inds_zin1 = Loz(Inds1); % indices of layer z overlapping layer 1.
+         inds_zin1 = Loz(inds1); % indices of layer z overlapping layer 1.
          indsT = inds_zin1 + stz_dot_num; % convert layer indices to total overall dot indices 
          indsT(indsT == stz_dot_num) = 0; % makes sure missing indices are still 'missing' and not last of previous layer.   
          DotConn(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) =  single(indsT); % STORE in DotConn matrix the indices 
@@ -106,7 +100,7 @@ for Z = 1:Zs % The primary layer Z = 10
          % The single pixel version
         % Iw % ( xp1:xp2,yp1:yp2 );  % Alldots(:,:,z); %
        %  Ivals =;  % also store the actual intenisites  
-         ConnInt(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) =  Im{1,z}{mRNAchn}(inds1);   
+         ConnInt(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) =  I(inds1);   
          % figure(3); clf; imagesc(DotConn); shading flat;
     end
     LayerJoin( 2*st1_dot_num+1 :2*(st1_dot_num + dotsinlayer(Z)),Z) = true(2*dotsinlayer(Z),1); 
@@ -135,7 +129,7 @@ disp('counting total dots...');
 
 
 stp = 1000;  % 1000
-Nsects = floor(NDots/stp);  
+Nsects = floor(2*NDots/stp);  
 masked_inds = single(zeros(2*NDots,Zs)); 
 cent = [];
 
@@ -144,18 +138,14 @@ for k=1:Nsects
 % above and below it.  We want to concentrate only on the dots in z~=i
 % which are connected to the dot as z=i.  For this we use the LayerJoin
 % object.  
-     mask = DotConn(1+(k-1)*stp:min(k*stp,NDots),:)>0; % where dots exist 
-     ConnInt_T = ConnInt(1+(k-1)*stp:min(k*stp,NDots),:).*uint16(mask); % report intensities where dot connections are found 
-     MD = uint16(LayerJoin(1+(k-1)*stp:min(k*stp,NDots),:))+ConnInt_T; 
+     mask = DotConn(1+(k-1)*stp:min(k*stp,2*NDots),:)>0; % where dots exist 
+     ConnInt_T = ConnInt(1+(k-1)*stp:min(k*stp,2*NDots),:).*uint16(mask); % report intensities where dot connections are found 
+     MD = uint16(LayerJoin(1+(k-1)*stp:min(k*stp,2*NDots),:))+ConnInt_T; 
      % figure(4); clf; imagesc(MD);
      MD = MD>0;   
      MD = bwareaopen(MD,20); % Remove all dots in z not connected to the dot at z=i  
      % figure(4); clf; imagesc(MD);
      ConnInt_T = ConnInt_T.*uint16(MD);
-
-    % %  The extra bwareaopen might cost more than we gain
-     % longDots = bwareaopen(mask,4); % only split long dots;
-     % figure(4); clf; imagesc(longDots);
 
 
     % Watershed to split dots
@@ -172,22 +162,22 @@ for k=1:Nsects
         labeled = bwlabel(mask);
         R = regionprops(labeled,ConnInt_T,'WeightedCentroid');
         tcent =  reshape([R.WeightedCentroid],2,length(R))';
-        tcent(:,2) = (k-1)*stp + tcent(:,2) ;% 
-        cent = [cent; tcent];
+       % tcent(:,2) =  ;% 
+        cent = [cent; tcent(:,1),(k-1)*stp + tcent(:,2)];
         
         if plotdata == 1;
             figure(4); clf; 
             colordef black; set(gcf,'color','k'); 
             imagesc( ConnInt_T ); colormap hot; shading flat;  colorbar;
             ylabel('mRNA index'); xlabel('z-depth'); 
-            hold on; plot(cent(:,1),cent(:,2),'co'); 
+            hold on; plot(tcent(:,1),tcent(:,2),'co'); 
             title('Cross-Section of all dots'); 
         end
     end
 
     % This is very expensive for big images
-        mask = bwareaopen(mask,consec_layers);
-       masked_inds(1+(k-1)*stp:min(k*stp,NDots),:) = mask.*DotConn(1+(k-1)*stp:min(k*stp,NDots),:);
+       mask = bwareaopen(mask,consec_layers); % figure(3); clf; imagesc(mask);
+       masked_inds(1+(k-1)*stp:min(k*stp,2*NDots),:) = mask.*DotConn(1+(k-1)*stp:min(k*stp,2*NDots),:);
 end
 
 % clear DotConn;
@@ -197,12 +187,14 @@ toc
 tic
 disp('Building spheres from cross-section disks...');
 
+% figure(3); clf; imagesc(masked_inds); colormap hot;
+
 % testL = NaN*zeros(1,2*NDots); 
 remove_dot = zeros(NDots,1); 
 stacked_dots =0;
 % loop through all dots
 
-for i = 1:2:2*NDots % i = 605 i = 5401; i=5693 i = 5547  i = 6549 
+for i = 1:2:2*NDots-1 % i = 605 i = 5401; i=5693 i = 5547  i = 6549 
     j = find(masked_inds(i,:));
     counted = masked_inds(i,j(2:end));   
     if isempty(j) == 0
@@ -243,8 +235,13 @@ sum(remove_dot);
           % Tstacked = Tstacked + 1, and then we enounter that the other of
           % the pair and again say Tstacked = Tstacked + 1;  
 
-dotC = dotC(~remove_dot,:);
+New_dotC = dotC(~remove_dot,:);
 %N_dots = NDots - sum(remove_dot) % sum(stacked_dots)
-N_dots = length(dotC); 
+N_dots = length(New_dotC); 
 disp(['Counted ',num2str(N_dots),' spheres']); 
 
+if plotdata ==1
+    test_dotC = dotC; test_dotC(logical(remove_dot),3) = 0;
+    figure(4); clf; imagesc(masked_inds); colormap hot;
+    hold on; plot(test_dotC(:,3),linspace(1,2*NDots-1,NDots),'co');
+end
