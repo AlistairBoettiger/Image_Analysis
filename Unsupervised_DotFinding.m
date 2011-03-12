@@ -113,13 +113,13 @@ for e= 1:100
          
         if show_projected == 1
             Imax = imread([rawfolder,stackfolder,fname,'_',emb,'_max.tif']); 
-             Imax_dots = Imax(xp1:xp2,yp1:yp2,mRNAchn);  
-             Iout = figure(2);  clf;  imagesc(Imax_dots);
-             colordef black; set(gcf,'color','k'); 
-             colormap hot; hold on;
-                plot(  dotC(:,1),dotC(:,2),'w+','MarkerSize',14 );
-                plot(  Cents(:,1),Cents(:,2),'yo','MarkerSize',4);
-               saveas(Iout,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'.fig']); 
+            Imax_dots = Imax(xp1:xp2,yp1:yp2,mRNAchn);  
+            Iout = figure(2);  clf;  imagesc(Imax_dots);
+            colordef black; set(gcf,'color','k'); 
+            colormap hot; hold on;
+            plot(  dotC(:,1),dotC(:,2),'w+','MarkerSize',14 );
+            plot(  Cents(:,1),Cents(:,2),'yo','MarkerSize',4);
+            saveas(Iout,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'.fig']); 
         end
         %%
         
@@ -129,8 +129,8 @@ for e= 1:100
         
         tic
         disp('assigning dots to nuclei...');
-         inds = floor(dotC(:,2))+floor(dotC(:,1))*hs;   
-         inds(inds>ws*hs) = ws*hs;        
+        inds = floor(dotC(:,2))+floor(dotC(:,1))*hs;   
+        inds(inds>ws*hs) = ws*hs;        
         
   % % $$$$$$$ % Loop through nuclei counting total dots in region % $$$$$$$$$ % %        
         
@@ -151,11 +151,8 @@ for e= 1:100
 %           M(inds) = 300; 
 %           figure(1); clf; imagesc(M);
          
-        % Get list of all pixels associated with each nucleus  
-        
-        
+        % Get list of all pixels associated with each nucleus         
         imdata2 = regionprops(NucLabeled,'PixelIdxList','Area'); 
-                
         
      %   C=NucLabel;
         mRNA_cnt = zeros(1,Nnucs); % store counts of mRNA per cell  

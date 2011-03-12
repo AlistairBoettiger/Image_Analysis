@@ -79,6 +79,7 @@ for Z = 1:Zs % The primary layer Z = 10
         % figure(3); clf; imagesc(R1d);  colorbar; colormap jet;
          st1_dot_num = sum(dotsinlayer(1:Z-1)); % starting dot number for the layer under study     
         Iw = imread(im_folder{z}); 
+        Iw = Iw(:,:,mRNAchn);
          
     for z=1:Zs % compare primary layer to all other layers  z = Z+1                  
          Loz = R1 + Rs{z}; 
@@ -96,20 +97,12 @@ for Z = 1:Zs % The primary layer Z = 10
          indsT = inds_zin1 + stz_dot_num; % convert layer indices to total overall dot indices 
          indsT(indsT == stz_dot_num) = 0; % makes sure missing indices are still 'missing' and not last of previous layer.   
          DotConn(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) =  single(indsT); % STORE in DotConn matrix the indices 
-         
-         % The single pixel version
-        % Iw % ( xp1:xp2,yp1:yp2 );  % Alldots(:,:,z); %
-       %  Ivals =;  % also store the actual intenisites  
-         ConnInt(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) = Iw(:,:,mRNAchn)    
-         % figure(3); clf; imagesc(DotConn); shading flat;
+         ConnInt(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) = Iw(inds1) ;   % store actual intensities.  
+        % figure(3); clf; imagesc(DotConn); shading flat;
     end
-    LayerJoin( 2*st1_dot_num+1 :2*(st1_dot_num + dotsinlayer(Z)),Z) = true(2*dotsinlayer(Z),1); 
-    
+    LayerJoin( 2*st1_dot_num+1 :2*(st1_dot_num + dotsinlayer(Z)),Z) = true(2*dotsinlayer(Z),1);    
 end
-
 toc
-
-
 
 %%
 % plotdata = 1; getpreciseZ = 1;
@@ -119,16 +112,11 @@ disp('counting total dots...');
 % figure(3); clf; imagesc(LayerJoin); 
 % figure(3); clf; imagesc(DotConn); colormap hot; shading flat;
 % figure(3); clf; imagesc(ConnInt); colormap hot; shading flat;  
- 
 
 % The road blocks in this process are the imageprocessing algorithms which
 % require a labeled matrix of regionprops: watershed, bwareaopen
-% 
 
-
-
-
-stp = 1000;  % 1000
+stp = 1000;  
 Nsects = floor(2*NDots/stp);  
 masked_inds = single(zeros(2*NDots,Zs)); 
 cent = [];
