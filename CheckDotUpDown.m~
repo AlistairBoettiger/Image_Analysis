@@ -78,7 +78,7 @@ for Z = 1:Zs % The primary layer Z = 10
          R1(inds1) = maxdots; % convert indices to raster map   
         % figure(3); clf; imagesc(R1d);  colorbar; colormap jet;
          st1_dot_num = sum(dotsinlayer(1:Z-1)); % starting dot number for the layer under study     
-
+        Iw = imread(im_folder{z}); 
          
     for z=1:Zs % compare primary layer to all other layers  z = Z+1                  
          Loz = R1 + Rs{z}; 
@@ -100,7 +100,7 @@ for Z = 1:Zs % The primary layer Z = 10
          % The single pixel version
         % Iw % ( xp1:xp2,yp1:yp2 );  % Alldots(:,:,z); %
        %  Ivals =;  % also store the actual intenisites  
-         ConnInt(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) =  I(inds1);   
+         ConnInt(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) = Iw(:,:,mRNAchn)    
          % figure(3); clf; imagesc(DotConn); shading flat;
     end
     LayerJoin( 2*st1_dot_num+1 :2*(st1_dot_num + dotsinlayer(Z)),Z) = true(2*dotsinlayer(Z),1); 
@@ -194,7 +194,7 @@ remove_dot = zeros(NDots,1);
 stacked_dots =0;
 % loop through all dots
 
-for i = 1:2:2*NDots % i = 605 i = 5401; i=5693 i = 5547  i = 6549 
+for i = 1:2:2*NDots-1 % i = 605 i = 5401; i=5693 i = 5547  i = 6549 
     j = find(masked_inds(i,:));
     counted = masked_inds(i,j(2:end));   
     if isempty(j) == 0
@@ -240,7 +240,8 @@ New_dotC = dotC(~remove_dot,:);
 N_dots = length(New_dotC); 
 disp(['Counted ',num2str(N_dots),' spheres']); 
 
-test_dotC = dotC; test_dotC(remove_dot,:) = [0,0,0];
-figure(4); clf; imagesc(masked_inds); colormap hot;
-hold on; plot(dotC(:,3),linspace(1,2*NDots-1,NDots),'co');
-
+if plotdata ==1
+    test_dotC = dotC; test_dotC(logical(remove_dot),3) = 0;
+    figure(4); clf; imagesc(masked_inds); colormap hot;
+    hold on; plot(test_dotC(:,3),linspace(1,2*NDots-1,NDots),'co');
+end

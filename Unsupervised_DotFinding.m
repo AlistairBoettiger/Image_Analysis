@@ -45,6 +45,10 @@ mRNA_channels =  2; % 1; % total mRNA channels
     Filt = Ex -Ix;
 %---------------------------------%
 
+    Zs = 44; % length(Im);
+    h = 2048; w=2048;
+    % [h,w] = size(Im{1,1}{1}); 
+
 Data = cell(10,mRNA_channels); 
 
 for e= 1:100
@@ -69,12 +73,11 @@ for e= 1:100
         break
     end
        
-    filename = [rawfolder,'/',fname];
-    Im = lsm_read_mod([filename,'.mat'],str2double(emb),1.5E4);    
+%     filename = [rawfolder,'/',fname];
+%     Im = lsm_read_mod([filename,'.mat'],str2double(emb),1.5E4);    
     
 
-    Zs = length(Im);
-    [h,w] = size(Im{1,1}{1}); 
+
     xp1= floor(h/2*m)+1; 
     xp2 = floor(h/2*(2-m))+1;
     yp1 = floor(w/2*m)+1;
@@ -90,9 +93,12 @@ for e= 1:100
     for mRNAchn = 1:mRNA_channels % mRNAchn =2
             DotData = cell(1,Zs);    
             DotMasks = cell(1,Zs); 
+            im_folder = cell(1,Zs);
             tic; disp('finding dots...'); 
-            for z = 1:Zs % z = 11         
-                  [cent1,bw1,dL] = dotfinder(Im{1,z}{mRNAchn}( xp1:xp2,yp1:yp2 ),Ex,Ix,min_int,min_size,thresh);
+            for z = 1:Zs % z = 11 
+                  im_folder{z} = [rawfolder,stackfolder,fname,'_',emb,'_z',num2str(z),'.tif'];
+                  Iin_z = imread(im_folder{z}); 
+                  [cent1,bw1,dL] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
                   DotData{z} = cent1;
                   DotMasks{z} = dL;
             end     
@@ -102,7 +108,7 @@ for e= 1:100
             
         %%
 
-         dotC = CheckDotUpDown(DotData,DotMasks,Im{1,z}{mRNAchn}( xp1:xp2,yp1:yp2 ),hs,ws,plotZdata,getpreciseZ,consec_layers,ovlap);
+         dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,hs,ws,plotZdata,getpreciseZ,consec_layers,ovlap);
         % Project all layers
          
         if show_projected == 1
@@ -220,9 +226,9 @@ for e= 1:100
      toc
     end % end loop over mNRA channels
        %  clean up;
-%         clear Im DotData DotMasks I_max cent1 bw dL Cents ...
-%             Nmin imdata2 NucLabeled Plot_mRNA M C ...
-%             nuc_area dotC mRNA_cnt mRNA_den mRNA_sadj;
-%             
+        clear Im DotData DotMasks I_max cent1 bw dL Cents ...
+            Nmin imdata2 NucLabeled Plot_mRNA M C ...
+            nuc_area dotC mRNA_cnt mRNA_den mRNA_sadj;
+            
     
 end % end loop over embryos 

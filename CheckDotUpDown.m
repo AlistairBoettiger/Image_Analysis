@@ -8,7 +8,7 @@
 % avoids multiple dot counting and avoids fusion of dots in Z.
 
 
-function New_dotC = CheckDotUpDown(DotData,DotMasks,I,hs,ws,plotdata,getpreciseZ,consec_layers,ovlap)
+function New_dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,hs,ws,plotdata,getpreciseZ,consec_layers,ovlap)
 %% Updates
 % Rewritten 03/07/11 to convert more things to uint16 / uint8 to save
 % memory (even fragment of single stack is several gigs of active mem). 
@@ -78,7 +78,7 @@ for Z = 1:Zs % The primary layer Z = 10
          R1(inds1) = maxdots; % convert indices to raster map   
         % figure(3); clf; imagesc(R1d);  colorbar; colormap jet;
          st1_dot_num = sum(dotsinlayer(1:Z-1)); % starting dot number for the layer under study     
-
+        Iw = imread(im_folder{z}); 
          
     for z=1:Zs % compare primary layer to all other layers  z = Z+1                  
          Loz = R1 + Rs{z}; 
@@ -100,7 +100,7 @@ for Z = 1:Zs % The primary layer Z = 10
          % The single pixel version
         % Iw % ( xp1:xp2,yp1:yp2 );  % Alldots(:,:,z); %
        %  Ivals =;  % also store the actual intenisites  
-         ConnInt(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) =  I(inds1);   
+         ConnInt(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) = Iw(:,:,mRNAchn)    
          % figure(3); clf; imagesc(DotConn); shading flat;
     end
     LayerJoin( 2*st1_dot_num+1 :2*(st1_dot_num + dotsinlayer(Z)),Z) = true(2*dotsinlayer(Z),1); 

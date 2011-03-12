@@ -16,12 +16,12 @@ fname ='MP10_22C_sna_y_c';
 mRNA_channels =  2; % 1; % total mRNA channels
 
 % Focus on subset of image: 
-     m =  1/2048;  %  .8; % .7; %   1/2048; %  .85;
+     m =   1/2048;  %  .7; % .5; .7; %   1/2048; % 
 
 
    getpreciseZ = 0;
    consec_layers = 2;
-   ovlap = 3; 
+   ovlap = 2; 
    thresh = .1;
 
    show_projected = 1; % show max-project with all dots and linked dots.  
@@ -90,9 +90,12 @@ for e= 1:100
     for mRNAchn = 1:mRNA_channels % mRNAchn =2
             DotData = cell(1,Zs);    
             DotMasks = cell(1,Zs); 
+            im_folder = cell(1,Zs);
             tic; disp('finding dots...'); 
-            for z = 1:Zs % z = 11         
-                  [cent1,bw1,dL] = dotfinder(Im{1,z}{mRNAchn}( xp1:xp2,yp1:yp2 ),Ex,Ix,min_int,min_size,thresh);
+            for z = 1:Zs % z = 11 
+                  im_folder{z} = [rawfolder,stackfolder,fname,'_',emb,'_z',num2str(z),'.tif'];
+                  Iin_z = imread(im_folder{z}); 
+                  [cent1,bw1,dL] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
                   DotData{z} = cent1;
                   DotMasks{z} = dL;
             end     
@@ -102,7 +105,7 @@ for e= 1:100
             
         %%
 
-         dotC = CheckDotUpDown(DotData,DotMasks,Im{1,z}{mRNAchn}( xp1:xp2,yp1:yp2 ),hs,ws,plotZdata,getpreciseZ,consec_layers,ovlap);
+         dotC = CheckDotUpDown(DotData,DotMasks,im_folder{z},hs,ws,plotZdata,getpreciseZ,consec_layers,ovlap);
         % Project all layers
          
         if show_projected == 1
@@ -220,9 +223,9 @@ for e= 1:100
      toc
     end % end loop over mNRA channels
        %  clean up;
-%         clear Im DotData DotMasks I_max cent1 bw dL Cents ...
-%             Nmin imdata2 NucLabeled Plot_mRNA M C ...
-%             nuc_area dotC mRNA_cnt mRNA_den mRNA_sadj;
-%             
+        clear Im DotData DotMasks I_max cent1 bw dL Cents ...
+            Nmin imdata2 NucLabeled Plot_mRNA M C ...
+            nuc_area dotC mRNA_cnt mRNA_den mRNA_sadj;
+            
     
 end % end loop over embryos 

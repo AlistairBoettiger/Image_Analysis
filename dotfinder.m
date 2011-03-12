@@ -8,7 +8,7 @@
 %% 
 % Adapted from count_all_dots (which is adapted from im_nucdots_exon.
 
-function [cent,bw2,labeled] = dotfinder(I,Ex,Ix,min_int,min_size,thresh)
+function [cent,bw2,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
 %%     
  
   % I = Im{1,z}{mRNAchn}( xp1:xp2,yp1:yp2 );
@@ -80,7 +80,8 @@ function [cent,bw2,labeled] = dotfinder(I,Ex,Ix,min_int,min_size,thresh)
  % figure(10); clf; imagesc(IO); shading flat; colormap hot;
  M = max(IO(:)); 
  L = watershed(double(M-IO));  %  figure(2); clf; imagesc(L); shading flat;
- Iw = IO; Iw(L==0)=0; 
+ IO(L==0) = 0;
+ %Iw = IO; Iw(L==0)=0; 
  
  % figure(2); clf; imagesc(Iw); shading flat; colormap hot;
 
@@ -92,7 +93,7 @@ function [cent,bw2,labeled] = dotfinder(I,Ex,Ix,min_int,min_size,thresh)
 %    figure(2); clf; imshow(BW);
   
 
-  bw2 = logical(Iw); % do threholding first;
+  bw2 = logical(IO); % do threholding first;
   
   
   % Old threshold last;  
@@ -106,9 +107,9 @@ function [cent,bw2,labeled] = dotfinder(I,Ex,Ix,min_int,min_size,thresh)
   % save([fdata,'/','test2']);
   
 % mRNA transcript locating counting
-       [labeled Ndots] = bwlabel(bw2,8); % count and label RNAs (8-> diagnols count as touch)   
+       labeled = bwlabel(bw2,8); % count and label RNAs (8-> diagnols count as touch)   
 % labeled =uint16(labeled); 
-       R1 = regionprops(labeled,Iw,'WeightedCentroid'); % compute mRNA centroids
+       R1 = regionprops(labeled,IO,'WeightedCentroid'); % compute mRNA centroids
        cent = reshape([R1.WeightedCentroid],2,length(R1))';
 
 end
