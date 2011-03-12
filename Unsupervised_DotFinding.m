@@ -6,18 +6,21 @@
 
 clear all;
 
-
+tot_time = tic;
 % Input options 
-rawfolder = '/Volumes/Data/Lab Data/Raw_Data/02-06-11/';
-stackfolder = 'MP10_22C_sna_y_c/';
 folder = '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/Enhancer_Modeling/Data/'; 
-fname ='MP10_22C_sna_y_c';
-%fname = 'MP05_22C_sna_y';
+
+rawfolder = '/Volumes/Data/Lab Data/Raw_Data/02-17-11/'; % '/Volumes/Data/Lab Data/Raw_Data/02-06-11/';
+stackfolder = 'MP05_22C/'; %  'MP10_22C_sna_y_c/';
+fname = 'MP05_22C_sna_y';  % 'MP10_22C_sna_y_c';
 mRNA_channels =  2; % 1; % total mRNA channels
 
 % Focus on subset of image: 
      m =   1/2048;  %  .7; % .5; .7; %   1/2048; % 
 
+    Zs = 50; % Upper limit on number of Z sections   length(Im);
+    h = 2048; w=2048;
+    % [h,w] = size(Im{1,1}{1}); 
 
    getpreciseZ = 0;
    consec_layers = 2;
@@ -45,9 +48,7 @@ mRNA_channels =  2; % 1; % total mRNA channels
     Filt = Ex -Ix;
 %---------------------------------%
 
-    Zs = 44; % length(Im);
-    h = 2048; w=2048;
-    % [h,w] = size(Im{1,1}{1}); 
+
 
 Data = cell(10,mRNA_channels); 
 
@@ -96,8 +97,15 @@ for e= 1:100
             im_folder = cell(1,Zs);
             tic; disp('finding dots...'); 
             for z = 1:Zs % z = 11 
+                try 
                   im_folder{z} = [rawfolder,stackfolder,fname,'_',emb,'_z',num2str(z),'.tif'];
                   Iin_z = imread(im_folder{z}); 
+                catch meZ
+                    Zs = z-1;
+                    disp(meZ.message);
+                    disp(['stack depth = ',num2str(Zs)]);
+                    break
+                end            
                   [cent1,bw1,dL] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
                   DotData{z} = cent1;
                   DotMasks{z} = dL;
@@ -105,6 +113,8 @@ for e= 1:100
             toc;
             
             Cents = cell2mat(DotData');
+            DotData = DotData(1:Zs);
+            DotMasks = DotMasks(1:Zs); 
             
         %%
 
@@ -151,8 +161,8 @@ for e= 1:100
 %           M(inds) = 300; 
 %           figure(1); clf; imagesc(M);
          
-        % Get list of all pixels associated with each nucleus         
-        imdata2 = regionprops(NucLabeled,'PixelIdxList','Area'); 
+   %     % Get list of all pixels associated with each nucleus         
+   %     % imdata2 = regionprops(NucLabeled,'PixelIdxList','Area'); 
         
      %   C=NucLabel;
         mRNA_cnt = zeros(1,Nnucs); % store counts of mRNA per cell  
@@ -219,13 +229,27 @@ for e= 1:100
      Data{e,mRNAchn}.mRNAcnt = mRNA_cnt;
      Data{e,mRNAchn}.mRNAden = mRNA_den;
      Data{e,mRNAchn}.mRNAsadj = mRNA_sadj;
+    % Data{e,mRNAchn}.imdata = imdata;
      
      toc
     end % end loop over mNRA channels
        %  clean up;
-        clear Im DotData DotMasks I_max cent1 bw dL Cents ...
-            Nmin imdata2 NucLabeled Plot_mRNA M C ...
+        clear Iin_z DotData DotMasks I_max cent1 bw dL Cents ...
+            Nmin imdata imdata2 NucLabeled Plot_mRNA M C ...
             nuc_area dotC mRNA_cnt mRNA_den mRNA_sadj;
             
     
 end % end loop over embryos 
+
+
+      clear Iin_z DotData DotMasks I_max cent1 bw dL Cents ...
+            Nmin imdata imdata2 NucLabeled Plot_mRNA M C ...
+            nuc_area dotC mRNA_cnt mRNA_den mRNA_sadj;
+        
+      save([folder,fname,'_slidedata'], 'Data'); 
+      
+      toc(tot_time)
+      disp('All slide data saved'); 
+      
+        
+
