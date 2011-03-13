@@ -31,16 +31,20 @@ disp('connecting dots in Z...')
 % create list of 3d corrdinates of all dots.  Also assigns all dots a
 % unique linear index.
 Zs = length(DotData);
-dotsinlayer = zeros(1,Zs);
-dotC = [];
+dotsinlayer = single(zeros(1,Zs)); % important for later math functions
+dotzpos = cell(Zs,1); 
+%dotC = [];
 for z = 1:Zs
     dotsinlayer(z) = size(DotData{z},1);
-    dotC = [dotC; DotData{z}, z*ones(dotsinlayer(z),1)];
+    dotzpos{z} = z*ones(dotsinlayer(z),1);
+   % dotC = [dotC; DotData{z}, z*ones(dotsinlayer(z),1)];
 end
+dotC = [cell2mat(DotData'), cell2mat(dotzpos)];  
 
-
-maxdots = max(dotsinlayer) +100
-totaldots = length(dotC)
+maxdots = uint16(max(dotsinlayer) +100);
+totaldots = length(dotC);
+disp(['Max dots per layer = ',num2str(maxdots)]); 
+disp(['Total dots = ',num2str(totaldots)]); 
 
         % Rather memory inefficient, I have the same centroid data stored
         % in 2 different data structures.  Could build this guy to start
@@ -94,9 +98,9 @@ for Z = 1:Zs % The primary layer Z = 10
       % Need to get linear index to stick correctly in array of all dots.  
          stz_dot_num = sum(dotsinlayer(1:z-1));  % starting dot number for the comparison layer     
          inds_zin1 = Loz(inds1); % indices of layer z overlapping layer 1.
-         indsT = inds_zin1 + stz_dot_num; % convert layer indices to total overall dot indices 
+         indsT = single(inds_zin1) + stz_dot_num; % convert layer indices to total overall dot indices 
          indsT(indsT == stz_dot_num) = 0; % makes sure missing indices are still 'missing' and not last of previous layer.   
-         DotConn(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) =  single(indsT); % STORE in DotConn matrix the indices 
+         DotConn(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) =  indsT; % STORE in DotConn matrix the indices 
          ConnInt(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) = Iw(inds1) ;   % store actual intensities.  
         % figure(3); clf; imagesc(DotConn); shading flat;
     end
@@ -108,7 +112,7 @@ toc
 % plotdata = 1; getpreciseZ = 1;
 
 tic
-disp('counting total dots...');
+disp('clustering disks...');
 % figure(3); clf; imagesc(LayerJoin); 
 % figure(3); clf; imagesc(DotConn); colormap hot; shading flat;
 % figure(3); clf; imagesc(ConnInt); colormap hot; shading flat;  
@@ -118,8 +122,9 @@ disp('counting total dots...');
 
 stp = 1000;  
 Nsects = floor(2*NDots/stp);  
-masked_inds = single(zeros(2*NDots,Zs)); 
-cent = [];
+masked_inds = double(zeros(2*NDots,Zs)); 
+%cent = [];
+Cent = cell(1,Nsects); 
 
 for k=1:Nsects
 % For each dot in the system, there is a row i, which contains all the dots
@@ -150,8 +155,9 @@ for k=1:Nsects
         labeled = bwlabel(mask);
         R = regionprops(labeled,ConnInt_T,'WeightedCentroid');
         tcent =  reshape([R.WeightedCentroid],2,length(R))';
-       % tcent(:,2) =  ;% 
-        cent = [cent; tcent(:,1),(k-1)*stp + tcent(:,2)];
+
+      %  cent = [cent; tcent(:,1),(k-1)*stp + tcent(:,2)];
+        Cent{k} = [tcent(:,1),(k-1)*stp + tcent(:,2)];
         
         if plotdata == 1;
             figure(4); clf; 
@@ -168,6 +174,9 @@ for k=1:Nsects
        masked_inds(1+(k-1)*stp:min(k*stp,2*NDots),:) = mask.*DotConn(1+(k-1)*stp:min(k*stp,2*NDots),:);
 end
 
+if plotdata == 1
+    cent = cell2mat(Cent); 
+end
 % clear DotConn;
 toc
 %%
@@ -215,6 +224,12 @@ for i = 1:2:2*NDots-1 % i = 605 i = 5401; i=5693 i = 5547  i = 6549
 end
 toc
 sum(remove_dot);
+
+% clear DotData DotMasks 
+% clear ConnInt ConnInt_T DotConn  LayerJoin R1 Rz Rs  
+% clear W Nuclabeld  Cell_bnd dL bw1 
+% clear dotC New_dotC test_dotC  Cents
+% clear Iin_z LoZ MD conn_map mask masked_inds 
 
 % figure(1); clf; plot(testL,'w.');
 % sum(stacked_dots)

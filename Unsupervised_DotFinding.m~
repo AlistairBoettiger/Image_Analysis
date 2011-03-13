@@ -18,6 +18,9 @@ mRNA_channels =  2; % 1; % total mRNA channels
 % Focus on subset of image: 
      m =   1/2048;  %  .7; % .5; .7; %   1/2048; % 
 
+    Zs = 50; % Upper limit on number of Z sections   length(Im);
+    h = 2048; w=2048;
+    % [h,w] = size(Im{1,1}{1}); 
 
    getpreciseZ = 0;
    consec_layers = 2;
@@ -45,13 +48,11 @@ mRNA_channels =  2; % 1; % total mRNA channels
     Filt = Ex -Ix;
 %---------------------------------%
 
-    Zs = 44; % length(Im);
-    h = 2048; w=2048;
-    % [h,w] = size(Im{1,1}{1}); 
 
 Data = cell(10,mRNA_channels); 
-
+%%
 for e= 1:100
+%%
     tic 
     disp('loading data...');
     if e<10
@@ -96,8 +97,15 @@ for e= 1:100
             im_folder = cell(1,Zs);
             tic; disp('finding dots...'); 
             for z = 1:Zs % z = 11 
+                try 
                   im_folder{z} = [rawfolder,stackfolder,fname,'_',emb,'_z',num2str(z),'.tif'];
                   Iin_z = imread(im_folder{z}); 
+                catch meZ
+                    Zs = z-1;
+                    disp(meZ.message);
+                    disp(['stack depth = ',num2str(Zs)]);
+                    break
+                end            
                   [cent1,bw1,dL] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
                   DotData{z} = cent1;
                   DotMasks{z} = dL;
@@ -105,6 +113,8 @@ for e= 1:100
             toc;
             
             Cents = cell2mat(DotData');
+            DotData = DotData(1:Zs);
+            DotMasks = DotMasks(1:Zs); 
             
         %%
 
@@ -219,6 +229,8 @@ for e= 1:100
      Data{e,mRNAchn}.mRNAcnt = mRNA_cnt;
      Data{e,mRNAchn}.mRNAden = mRNA_den;
      Data{e,mRNAchn}.mRNAsadj = mRNA_sadj;
+     Data{e,mRNAchn}.DotData = DotData;
+     Data{e,mRNAchn}.DotMasks = DotMasks;
     % Data{e,mRNAchn}.imdata = imdata;
      
      toc
@@ -236,7 +248,7 @@ end % end loop over embryos
             Nmin imdata imdata2 NucLabeled Plot_mRNA M C ...
             nuc_area dotC mRNA_cnt mRNA_den mRNA_sadj;
         
-      save([folder,fname,'_slidedata'], 'Data'); 
+      save([folder,fname,'_slidedata_5te'], 'Data'); 
       
       toc(tot_time)
       disp('All slide data saved'); 

@@ -49,10 +49,10 @@ mRNA_channels =  2; % 1; % total mRNA channels
 %---------------------------------%
 
 
-
 Data = cell(10,mRNA_channels); 
-
+%%
 for e= 1:100
+%%
     tic 
     disp('loading data...');
     if e<10
@@ -229,6 +229,8 @@ for e= 1:100
      Data{e,mRNAchn}.mRNAcnt = mRNA_cnt;
      Data{e,mRNAchn}.mRNAden = mRNA_den;
      Data{e,mRNAchn}.mRNAsadj = mRNA_sadj;
+     Data{e,mRNAchn}.DotData = DotData;
+     Data{e,mRNAchn}.DotMasks = DotMasks;
     % Data{e,mRNAchn}.imdata = imdata;
      
      toc
@@ -246,7 +248,7 @@ end % end loop over embryos
             Nmin imdata imdata2 NucLabeled Plot_mRNA M C ...
             nuc_area dotC mRNA_cnt mRNA_den mRNA_sadj;
         
-      save([folder,fname,'_slidedata'], 'Data'); 
+      save([folder,fname,'_slidedata_5te'], 'Data'); 
       
       toc(tot_time)
       disp('All slide data saved'); 

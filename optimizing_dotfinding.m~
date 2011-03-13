@@ -7,7 +7,8 @@
 % imsinglemolecule.fig
 % 
 % 
-
+% Modified to require images from projected files.  This is more memory
+% efficient than reading in directly the whole lsm file.  
 
 
 clear all;
@@ -39,7 +40,7 @@ toc
 %% Set-up
 
 % zoom in on specific region
- m = .7; %   1/2048;   % .9; % .85;
+ m =  1/2048;  % .7; %   1/2048;   % .9; % .85;
 Zs = length(handles.Im);
 [h,w] = size(handles.Im{1,1}{1}); 
 
@@ -107,6 +108,9 @@ end
 
 [hs,ws] = size( handles.Im{1,1}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 )); 
 
+[rawfolder,stackfolder,fname,'_',emb,'_z',num2str(z),'.tif'];
+          Iin_z = imread(im_folder{z}); 
+
 
 if hs< max_size
     % NEEDS to be Double 
@@ -121,13 +125,15 @@ plotdata = 0 ;% don't show
 
  DotData = cell(1,Zs);    
  DotMasks = cell(1,Zs); 
-
-
+ im_folder = cell(1,Zs);
+ 
  tic; disp('finding dots...'); 
 for z = 1:Zs % z = 20        
       % Dot finding for channel 1
-          I1 =  handles.Im{1,z}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );       
-          [cent1,bw1,dL] = dotfinder(I1,Ex,Ix,min_int,min_size);
+          im_folder{z} = [rawfolder,stackfolder,fname,'_',emb,'_z',num2str(z),'.tif'];
+          Iin_z = imread(im_folder{z}); 
+            
+         [cent1,bw1,dL] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
           % figure(2); clf; imagesc(  I1);
           DotData{z} = cent1;
           DotMasks{z} = dL; 
@@ -135,7 +141,7 @@ for z = 1:Zs % z = 20
           % figure(2); clf; imagesc(Alldots(:,:,z)); 
           
           if hs< max_size
-              Alldots(:,:,z) = I1; % 2 
+              Alldots(:,:,z) =   Iin_z; % 2 
               bnd1 = imdilate(bw1,strel('disk',2)) -bw1;         
              % figure(2); clf; imshow(bnd2);
               mask = double(2*bw1)+bnd1;   
@@ -149,7 +155,20 @@ end
 toc;
 %%
 
-NewDotC = CheckDotUpDown(DotData,DotMasks,handles.Im,handles.mRNAchn1,h,w,plotdata,0);
+        NewDotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,hs,ws,plotZdata,getpreciseZ,consec_layers,ovlap);
+        % Project all layers
+         
+        if show_projected == 1
+            Imax = imread([rawfolder,stackfolder,fname,'_',emb,'_max.tif']); 
+            Imax_dots = Imax(xp1:xp2,yp1:yp2,mRNAchn);  
+            Iout = figure(2);  clf;  imagesc(Imax_dots);
+            colordef black; set(gcf,'color','k'); 
+            colormap hot; hold on;
+            plot(  dotC(:,1),dotC(:,2),'w+','MarkerSize',14 );
+            plot(  Cents(:,1),Cents(:,2),'yo','MarkerSize',4);
+            saveas(Iout,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'.fig']); 
+        end
+
 %% Project all layers
 
 first = 1; last = Zs;
