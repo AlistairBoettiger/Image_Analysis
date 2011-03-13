@@ -25,22 +25,22 @@ mRNA_channels =  2; % 1; % total mRNA channels
    getpreciseZ = 0;
    consec_layers = 2;
    ovlap = 2; 
-   thresh = .1;
+   thresh = .25;
 
    show_projected = 1; % show max-project with all dots and linked dots.  
    plotZdata = 0 ;% show z-map of data
-   showhist = 0; % show histogram of mRNA counts per cell. 
-   showim = 0; % show colorcoded mRNA counts per cell
+   showhist = 1; % show histogram of mRNA counts per cell. 
+   showim = 1; % show colorcoded mRNA counts per cell
    bins = 40; % bins for histograms of mRNA
-   t = .2; % threshold for region definition plotting
-   spread = 1.5; % over/under
+   t = 0; %.45; % threshold for region definition plotting
+   spread = 1.3; % over/under
 
 %---- Dot Finding Parameters ----- %
     sigmaE = 3.5;%  IMPORTANT
     sigmaI = 4; % IMPORTANT
-    min_int  = 0.02  ;    %  5    ;% .05 % not necessary Fix at Zero
+    min_int  = 0.03;    %  5    ;% .05 % not necessary Fix at Zero
     FiltSize = 30;% 
-    min_size = 10;% 
+    min_size = 15;% 
    
     % Build the Gaussian Filter   
     Ex = fspecial('gaussian',FiltSize,sigmaE); % excitatory gaussian
@@ -129,7 +129,7 @@ for e= 1:100
             colormap hot; hold on;
             plot(  dotC(:,1),dotC(:,2),'w+','MarkerSize',14 );
             plot(  Cents(:,1),Cents(:,2),'yo','MarkerSize',4);
-            saveas(Iout,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'.fig']); 
+            saveas(Iout,[folder,fname,'_',emb,'b_chn',num2str(mRNAchn),'.fig']); 
         end
         %%
         
@@ -201,24 +201,27 @@ for e= 1:100
       disp('plotting and saving data...');
          if showhist == 1
                 colordef white; 
-                figure(5); clf; hist(mRNA_cnt,bins); set(gcf,'color','w');
-                title(['mRNA per cell. mean = ',num2str(m_cnt,4),' std=',num2str(s_cnt,4)]); 
-                figure(4); clf; hist(mRNA_sadj,bins);set(gcf,'color','w');
+%                 figure(5); clf; hist(mRNA_cnt,bins); set(gcf,'color','w');
+%                 title(['mRNA per cell. mean = ',num2str(m_cnt,4),' std=',num2str(s_cnt,4)]); 
+                histfig  = figure(4); clf; hist(mRNA_sadj,bins);set(gcf,'color','w');
                 title(['Cell size adjusted mRNA per cell. mean = ',...
                 num2str(m_den,4),' std=',num2str(s_den,4)]); 
+            saveas(Iout,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'_hist.jpg'],'jpg'); 
             % write to disk? 
          end
 
          if showim == 1        
-            figure(3); clf;  colordef black;
+            mRNA_map = figure(3); clf;  colordef black;
             imagesc(Plot_mRNA); colormap('hot'); colorbar; 
             set(gcf,'color','k');  
+            saveas(mRNA_map,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'rvar.fig']); 
          end
          
          
         if t ~= 0 && showim == 1 
-            Fig_regvar = figure(40); subplot(1,2,mRNAchn);
+            Fig_regvar = figure(40); clf; % subplot(1,2,mRNAchn);
             [on_cnts,off_cnts]= fxn_regionvar(NucLabel,Plot_mRNA,mRNA_sadj,t,spread,Nnucs,Nucs_list);
+             saveas(Fig_regvar,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'rvar.fig']); 
         end
     
         
@@ -227,10 +230,10 @@ for e= 1:100
      Data{e,mRNAchn}.nucarea = nuc_area;
      Data{e,mRNAchn}.dotC = dotC;
      Data{e,mRNAchn}.mRNAcnt = mRNA_cnt;
-     Data{e,mRNAchn}.mRNAden = mRNA_den;
+    % Data{e,mRNAchn}.mRNAden = mRNA_den;
      Data{e,mRNAchn}.mRNAsadj = mRNA_sadj;
-     Data{e,mRNAchn}.DotData = DotData;
-     Data{e,mRNAchn}.DotMasks = DotMasks;
+    % Data{e,mRNAchn}.DotData = DotData; % break the camel; 
+    % Data{e,mRNAchn}.DotMasks = DotMasks;
     % Data{e,mRNAchn}.imdata = imdata;
      
      toc
