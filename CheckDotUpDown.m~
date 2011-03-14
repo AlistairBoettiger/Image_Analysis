@@ -32,12 +32,14 @@ disp('connecting dots in Z...')
 % unique linear index.
 Zs = length(DotData);
 dotsinlayer = single(zeros(1,Zs)); % important for later math functions
-dotC = [];
+dotzpos = cell(Zs,1); 
+%dotC = [];
 for z = 1:Zs
     dotsinlayer(z) = size(DotData{z},1);
-    dotC = [dotC; DotData{z}, z*ones(dotsinlayer(z),1)];
+    dotzpos{z} = z*ones(dotsinlayer(z),1);
+   % dotC = [dotC; DotData{z}, z*ones(dotsinlayer(z),1)];
 end
-dotC = cell2mat(DotData); 
+dotC = [cell2mat(DotData'), cell2mat(dotzpos)];  
 
 maxdots = uint16(max(dotsinlayer) +100);
 totaldots = length(dotC);
@@ -107,7 +109,10 @@ end
 toc
 
 %%
-% plotdata = 1; getpreciseZ = 1;
+
+clear DotMasks DotData;
+
+%%
 
 tic
 disp('clustering disks...');
@@ -226,8 +231,8 @@ sum(remove_dot);
 % clear DotData DotMasks 
 % clear ConnInt ConnInt_T DotConn  LayerJoin R1 Rz Rs  
 % clear W Nuclabeld  Cell_bnd dL bw1 
-% clear dotC New_dotC test_dotC
-% clear Cents Iin_z LoZ MD conn_map mask masked_inds 
+% clear dotC New_dotC test_dotC  Cents
+% clear Iin_z LoZ MD conn_map mask masked_inds 
 
 % figure(1); clf; plot(testL,'w.');
 % sum(stacked_dots)

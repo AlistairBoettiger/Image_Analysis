@@ -51,7 +51,7 @@ mRNA_channels =  2; % 1; % total mRNA channels
 
 Data = cell(10,mRNA_channels); 
 %%
-for e= 1:100
+for e= 3:100
 %%
     tic 
     disp('loading data...');

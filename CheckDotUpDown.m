@@ -8,7 +8,7 @@
 % avoids multiple dot counting and avoids fusion of dots in Z.
 
 
-function New_dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,hs,ws,plotdata,getpreciseZ,consec_layers,ovlap)
+function dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,hs,ws,plotdata,getpreciseZ,consec_layers,ovlap)
 %% Updates
 % Rewritten 03/07/11 to convert more things to uint16 / uint8 to save
 % memory (even fragment of single stack is several gigs of active mem). 
@@ -109,7 +109,10 @@ end
 toc
 
 %%
-% plotdata = 1; getpreciseZ = 1;
+
+clear DotMasks DotData R1 Rz Rs LoZ Inds;
+
+%%
 
 tic
 disp('clustering disks...');
@@ -177,7 +180,7 @@ end
 if plotdata == 1
     cent = cell2mat(Cent); 
 end
-% clear DotConn;
+clear ConnInt ConnInt_T DotConn LayerJoin  mask
 toc
 %%
 
@@ -238,9 +241,11 @@ sum(remove_dot);
           % Tstacked = Tstacked + 1, and then we enounter that the other of
           % the pair and again say Tstacked = Tstacked + 1;  
 
-New_dotC = dotC(~remove_dot,:);
+%New_dotC = dotC(~remove_dot,:);
+dotC = dotC(~remove_dot,:);
+N_dots = length(dotC); 
 %N_dots = NDots - sum(remove_dot) % sum(stacked_dots)
-N_dots = length(New_dotC); 
+%N_dots = length(New_dotC); 
 disp(['Counted ',num2str(N_dots),' spheres']); 
 
 if plotdata ==1

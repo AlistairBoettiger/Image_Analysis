@@ -6,7 +6,11 @@
 
 
 %% 
-% Adapted from count_all_dots (which is adapted from im_nucdots_exon.
+% Adapted from count_all_dots (which is adapted from im_nucdots_exon)
+%% Modified:
+% modified 3/12/11 to improve method
+% modified 03/13/11 to reuse more variable names more and reduce creating
+% mulitple large arrays. 
 
 function [cent,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
 %%     
@@ -15,21 +19,17 @@ function [cent,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
  
    bw = im2bw(I,min_int);  % if we're gonna do this, do it first.   
    I(bw==0) =0;
+   clear bw; 
   % figure(2); clf; imagesc(I);
 
    % Faster method to apply filter -- use straight Gaussians. 
   outE = imfilter(single(I),Ex,'replicate'); 
   outI = imfilter(single(I),Ix,'replicate'); 
-  outims = outE - outI;
+  Iin = makeuint(outE - outI,16);
   
 %   figure(10); clf; subplot(2,1,1); imagesc(outE); shading flat;
 %   subplot(2,1,2); imagesc(outI); shading flat;
- % figure(11); clf; imagesc(outims); shading flat;  colorbar; 
-   
-
-
-  Iin = makeuint(outims,16); 
-  %  figure(11); clf; imagesc(Iin); shading flat;  colorbar; 
+ % figure(11); clf; imagesc(Iin); shading flat;  colorbar; 
   
   
   % Max dots selection of threshold.  
@@ -51,20 +51,23 @@ function [cent,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
     thresh = linspace(0,1,N);
     for t=1:N
         bw = im2bw(Iin(xp1:xp2,yp1:yp2),thresh(t)); 
-        [L,count(t)] = bwlabel(bw); 
+        [jnk,count(t)] = bwlabel(bw); 
     end
   %  figure(1); clf; plot(thresh,count);
     [jnk,im] = max(count);
     imthresh = thresh(im);
-
+    bw2 = im2bw(Iin,imthresh);
 
 %       bw2 = im2bw(Iin,graythresh(Iin));  %  figure(10); clf; imagesc(bw2); 
  
-      bw2 = im2bw(Iin,imthresh);
+      
+   Iin = Iin.*uint16(bw2);  
+% figure(10); clf; imagesc(bw2); shading flat;colormap hot;
+%  figure(10); clf; imagesc(Iin); shading flat;colormap hot;
+
    
-   % figure(10); clf; imagesc(bw2); shading flat;colormap hot;
-  IO = makeuint(outims.*single(bw2),16); 
-%  figure(10); clf; imagesc(IO); shading flat;colormap hot;
+   %Iin = makeuint(outims.*single(bw2),16); 
+  
 
 % ----------------------------------------------------------------- %
 % % BUG BAIT!! 
@@ -78,30 +81,24 @@ function [cent,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
 %  singles in the range [0,1].
 % ----------------------------------------------------------------- %  
   
- % figure(10); clf; imagesc(IO); shading flat; colormap hot;
- M = max(IO(:)); 
- L = watershed(double(M-IO));  %  figure(2); clf; imagesc(L); shading flat;
- IO(L==0) = 0;
- %Iw = IO; Iw(L==0)=0; 
- 
- % figure(2); clf; imagesc(Iw); shading flat; colormap hot;
 
+ M = max(Iin(:)); 
+ L = watershed(double(M-Iin));  %  figure(2); clf; imagesc(L); shading flat;
+ Iin(L==0) = 0;
+ 
 % %  OLD WaterShedding;  
 %   % figure(2); clf; imshow(bw2);
 %   D = -bwdist(~bw2);  
 %   L = watershed(D);
 %   BW = bw2; BW(L==0)=0; 
 %    figure(2); clf; imshow(BW);
-  
-
-  bw2 = logical(IO); % do threholding first;
-  
-  
-  % Old threshold last;  
+   
+    % Old threshold last;  
   % bw2 = bw3 & bw2; % Must be above threshold and shape selected by LALI
   % filter and watershedding
   
   
+   bw2 = logical(Iin); 
    bw2 = bwareaopen(bw2,min_size);% remove objects less than n pixels in size 
   % figure(10); clf; imshow(bw2);       
   % save([fdata,'/','test2']);
@@ -109,7 +106,7 @@ function [cent,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
 % mRNA transcript locating counting
        labeled = bwlabel(bw2,8); % count and label RNAs (8-> diagnols count as touch)   
 % labeled =uint16(labeled); 
-       R1 = regionprops(labeled,IO,'WeightedCentroid'); % compute mRNA centroids      
+       R1 = regionprops(labeled,Iin,'WeightedCentroid'); % compute mRNA centroids      
        cent = reshape([R1.WeightedCentroid],2,length(R1))';
        
       %  R1 = regionprops(labeled,IO,'Area');
