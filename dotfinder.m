@@ -8,7 +8,7 @@
 %% 
 % Adapted from count_all_dots (which is adapted from im_nucdots_exon.
 
-function [cent,bw2,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
+function [cent,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
 %%     
  % figure(1); clf; imagesc(I);
  %  I = Iin_z( :,:,mRNAchn );%  Im{1,z}{mRNAchn}( xp1:xp2,yp1:yp2 );

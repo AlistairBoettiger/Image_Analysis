@@ -40,7 +40,7 @@ mRNA_channels =  2; % 1; % total mRNA channels
     sigmaI = 4; % IMPORTANT
     min_int  = 0.03;    %  5    ;% .05 % not necessary Fix at Zero
     FiltSize = 30;% 
-    min_size = 15;% 
+    min_size = 30;% 
    
     % Build the Gaussian Filter   
     Ex = fspecial('gaussian',FiltSize,sigmaE); % excitatory gaussian
@@ -106,9 +106,7 @@ for e= 1:100
                     disp(['stack depth = ',num2str(Zs)]);
                     break
                 end            
-                  [cent1,bw1,dL] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
-                  DotData{z} = cent1;
-                  DotMasks{z} = dL;
+                  [DotData{z},DotMasks{z}] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
             end     
             toc;
             
@@ -119,6 +117,8 @@ for e= 1:100
         %%
 
          dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,hs,ws,plotZdata,getpreciseZ,consec_layers,ovlap);
+         
+
         % Project all layers
          
         if show_projected == 1
@@ -129,11 +129,11 @@ for e= 1:100
             colormap hot; hold on;
             plot(  dotC(:,1),dotC(:,2),'w+','MarkerSize',14 );
             plot(  Cents(:,1),Cents(:,2),'yo','MarkerSize',4);
-            saveas(Iout,[folder,fname,'_',emb,'b_chn',num2str(mRNAchn),'.fig']); 
+            saveas(Iout,[folder,fname,'_',emb,'c_chn',num2str(mRNAchn),'.fig']); 
         end
         %%
         
-    
+    clear Imax Cents DotData DotMasks Iin_z 
         
         %%
         
@@ -203,10 +203,12 @@ for e= 1:100
                 colordef white; 
 %                 figure(5); clf; hist(mRNA_cnt,bins); set(gcf,'color','w');
 %                 title(['mRNA per cell. mean = ',num2str(m_cnt,4),' std=',num2str(s_cnt,4)]); 
-                histfig  = figure(4); clf; hist(mRNA_sadj,bins);set(gcf,'color','w');
+                histfig  = figure(25); clf; 
+                hist(mRNA_sadj,bins);
+                set(gcf,'color','w');
                 title(['Cell size adjusted mRNA per cell. mean = ',...
                 num2str(m_den,4),' std=',num2str(s_den,4)]); 
-            saveas(Iout,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'_hist.jpg'],'jpg'); 
+            saveas(histfig,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'_hist.jpg'],'jpg'); 
             % write to disk? 
          end
 
@@ -224,7 +226,7 @@ for e= 1:100
              saveas(Fig_regvar,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'rvar.fig']); 
         end
     
-        
+     clear imdata Plot_mRNA M C W    
         %
      %% Export data
      Data{e,mRNAchn}.nucarea = nuc_area;
@@ -236,6 +238,8 @@ for e= 1:100
     % Data{e,mRNAchn}.DotMasks = DotMasks;
     % Data{e,mRNAchn}.imdata = imdata;
      
+     clear nuc_area dotC mRNA_cnt mRNA_sadj
+    
      toc
     end % end loop over mNRA channels
        %  clean up;
