@@ -9,10 +9,9 @@ clear all;
 tot_time = tic;
 % Input options 
 folder = '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/Enhancer_Modeling/Data/'; 
-
-rawfolder = '/Volumes/Data/Lab Data/Raw_Data/02-17-11/'; % '/Volumes/Data/Lab Data/Raw_Data/02-06-11/';
-stackfolder = 'MP05_22C/'; %  'MP10_22C_sna_y_c/';
-fname = 'MP05_22C_sna_y';  % 'MP10_22C_sna_y_c';
+rawfolder = '/Volumes/Data/Lab Data/Raw_Data/02-06-11/'; % '/Volumes/Data/Lab Data/Raw_Data/02-17-11/'; % 
+stackfolder =  'MP10_22C_sna_y_c/'; % 'MP05_22C/'; % 
+fname = 'MP10_22C_sna_y_c';  % 'MP05_22C_sna_y';  % 
 mRNA_channels =  2; % 1; % total mRNA channels
 
 % Focus on subset of image: 
@@ -38,9 +37,9 @@ mRNA_channels =  2; % 1; % total mRNA channels
 %---- Dot Finding Parameters ----- %
     sigmaE = 3.5;%  IMPORTANT
     sigmaI = 4; % IMPORTANT
-    min_int  = 0.02;    %  5    ;% .05 % not necessary Fix at Zero
+    min_int  = 0.03;    %  5    ;% .05 % not necessary Fix at Zero
     FiltSize = 30;% 
-    min_size = 20;% 
+    min_size = 30;% 
    
     % Build the Gaussian Filter   
     Ex = fspecial('gaussian',FiltSize,sigmaE); % excitatory gaussian
@@ -129,7 +128,7 @@ for e= 1:100
             colormap hot; hold on;
             plot(  dotC(:,1),dotC(:,2),'w+','MarkerSize',14 );
             plot(  Cents(:,1),Cents(:,2),'yo','MarkerSize',4);
-            saveas(Iout,[folder,fname,'_',emb,'b_chn',num2str(mRNAchn),'.fig']); 
+            saveas(Iout,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'.fig']); 
         end
         %%
         
@@ -154,7 +153,7 @@ for e= 1:100
           Nmin = single(NucLabel); 
           Nmin(Nmin==0)=NaN; 
           Nstart = min(Nmin(:)); 
-          Nucs_list = unique(NucLabel);
+          Nucs_list = nonzeros(unique(NucLabel));
           Nnucs = length(Nucs_list);
           
 %           M = NucLabel;
@@ -203,10 +202,12 @@ for e= 1:100
                 colordef white; 
 %                 figure(5); clf; hist(mRNA_cnt,bins); set(gcf,'color','w');
 %                 title(['mRNA per cell. mean = ',num2str(m_cnt,4),' std=',num2str(s_cnt,4)]); 
-                histfig  = figure(4); clf; hist(mRNA_sadj,bins);set(gcf,'color','w');
+                histfig  = figure(25); clf; 
+                hist(mRNA_sadj,bins);
+                set(gcf,'color','w');
                 title(['Cell size adjusted mRNA per cell. mean = ',...
                 num2str(m_den,4),' std=',num2str(s_den,4)]); 
-            saveas(Iout,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'_hist.jpg'],'jpg'); 
+            saveas(histfig,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'_hist.jpg'],'jpg'); 
             % write to disk? 
          end
 
@@ -214,7 +215,7 @@ for e= 1:100
             mRNA_map = figure(3); clf;  colordef black;
             imagesc(Plot_mRNA); colormap('hot'); colorbar; 
             set(gcf,'color','k');  
-            saveas(mRNA_map,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'rvar.fig']); 
+            saveas(mRNA_map,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'rvar.jpg'],'jpg'); 
          end
          
          
@@ -253,7 +254,7 @@ end % end loop over embryos
             Nmin imdata imdata2 NucLabeled Plot_mRNA M C ...
             nuc_area dotC mRNA_cnt mRNA_den mRNA_sadj;
         
-      save([folder,fname,'_slidedata_5te'], 'Data'); 
+      save([folder,fname,'_slidedata'], 'Data'); 
       
       toc(tot_time)
       disp('All slide data saved'); 

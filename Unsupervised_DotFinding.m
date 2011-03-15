@@ -9,10 +9,9 @@ clear all;
 tot_time = tic;
 % Input options 
 folder = '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/Enhancer_Modeling/Data/'; 
-
-rawfolder = '/Volumes/Data/Lab Data/Raw_Data/02-17-11/'; % '/Volumes/Data/Lab Data/Raw_Data/02-06-11/';
-stackfolder = 'MP05_22C/'; %  'MP10_22C_sna_y_c/';
-fname = 'MP05_22C_sna_y';  % 'MP10_22C_sna_y_c';
+rawfolder = '/Volumes/Data/Lab Data/Raw_Data/02-06-11/'; % '/Volumes/Data/Lab Data/Raw_Data/02-17-11/'; % 
+stackfolder =  'MP10_22C_sna_y_c/'; % 'MP05_22C/'; % 
+fname = 'MP10_22C_sna_y_c';  % 'MP05_22C_sna_y';  % 
 mRNA_channels =  2; % 1; % total mRNA channels
 
 % Focus on subset of image: 
@@ -51,7 +50,7 @@ mRNA_channels =  2; % 1; % total mRNA channels
 
 Data = cell(10,mRNA_channels); 
 %%
-for e= 3:100
+for e= 1:100
 %%
     tic 
     disp('loading data...');
@@ -129,7 +128,7 @@ for e= 3:100
             colormap hot; hold on;
             plot(  dotC(:,1),dotC(:,2),'w+','MarkerSize',14 );
             plot(  Cents(:,1),Cents(:,2),'yo','MarkerSize',4);
-            saveas(Iout,[folder,fname,'_',emb,'c_chn',num2str(mRNAchn),'.fig']); 
+            saveas(Iout,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'.fig']); 
         end
         %%
         
@@ -216,7 +215,7 @@ for e= 3:100
             mRNA_map = figure(3); clf;  colordef black;
             imagesc(Plot_mRNA); colormap('hot'); colorbar; 
             set(gcf,'color','k');  
-            saveas(mRNA_map,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'rvar.fig']); 
+            saveas(mRNA_map,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'rvar.jpg'],'jpg'); 
          end
          
          
@@ -255,7 +254,7 @@ end % end loop over embryos
             Nmin imdata imdata2 NucLabeled Plot_mRNA M C ...
             nuc_area dotC mRNA_cnt mRNA_den mRNA_sadj;
         
-      save([folder,fname,'_slidedata_5te'], 'Data'); 
+      save([folder,fname,'_slidedata'], 'Data'); 
       
       toc(tot_time)
       disp('All slide data saved'); 
