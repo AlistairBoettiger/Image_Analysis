@@ -20,11 +20,10 @@ function dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,hs,ws,plotdata
 % use linear indexing of all dots
 tic 
 disp('connecting dots in Z...') 
-%plotdata = 1; 
-% h = hs; w = ws; mRNAchn = 1; ovlap = 4;
+%  plotdata = 1;  h = hs; w = ws; mRNAchn = 1; ovlap = 2;
   % I = Im{1,z}{mRNAchn}( xp1:xp2,yp1:yp2 );
   
-
+ comp_onVoff = 0;
 
 
 
@@ -125,7 +124,14 @@ disp('clustering disks...');
 
 stp = 1000;  
 Nsects = floor(2*NDots/stp);  
-masked_inds = double(zeros(2*NDots,Zs)); 
+masked_inds = single(zeros(2*NDots,Zs)); 
+
+if comp_onVoff == 1
+    % Array to record intensities of all true dots. Used to compare intensity
+    % of kept dots to removed dots
+    masked_ints = single(zeros(2*NDots,Zs)); 
+end
+    
 %cent = [];
 Cent = cell(1,Nsects); 
 
@@ -172,15 +178,20 @@ for k=1:Nsects
         end
     end
 
-    % This is very expensive for big images
+    % bwareaopen is very expensive for big images
        mask = bwareaopen(mask,consec_layers); % figure(3); clf; imagesc(mask);
-       masked_inds(1+(k-1)*stp:min(k*stp,2*NDots),:) = mask.*DotConn(1+(k-1)*stp:min(k*stp,2*NDots),:);
+       masked_inds(1+(k-1)*stp:min(k*stp,2*NDots),:) =  mask.*DotConn(1+(k-1)*stp:min(k*stp,2*NDots),:)  ;
+     
+       
+       if comp_onVoff == 1 % For comparison of Dot intensities
+        masked_ints(1+(k-1)*stp:min(k*stp,2*NDots),:) =  mask.*single(ConnInt(1+(k-1)*stp:min(k*stp,2*NDots),:) );
+       end
 end
 
 if plotdata == 1
     cent = cell2mat(Cent); 
 end
-clear ConnInt ConnInt_T DotConn LayerJoin  mask
+clear  ConnInt_T DotConn LayerJoin  mask  ConnInt
 toc
 %%
 
@@ -253,3 +264,11 @@ if plotdata ==1
     figure(4); clf; imagesc(masked_inds); colormap hot;
     hold on; plot(test_dotC(:,3),linspace(1,2*NDots-1,NDots),'co');
 end
+
+if comp_onVoff == 1
+    figure(7); clf;  subplot(2,1,1);
+    hist(log(nonzeros(masked_ints(~remove_dot,:)))); title('intensities of kept dots');
+    subplot(2,1,2);
+    hist(log(nonzeros(masked_ints(logical(remove_dot),:)))); title('intensities of removed dots');
+end
+

@@ -48,7 +48,7 @@ for i=1:Zs  % i = 21
                    disp(['offset error found in chn ', num2str(c), ' layer ',num2str(i),...
                        '  std=',num2str(isnoise,5), '  now=',num2str(fixed,5)] );
                    
-                   if fixed > nmax
+                   if fixed > 1.5nmax
                        if TIF.BitsPerSample(1) == 16
                           IMG.data{c} = uint16(zeros(h,w));
                        else

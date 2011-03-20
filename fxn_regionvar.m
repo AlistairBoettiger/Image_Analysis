@@ -18,7 +18,7 @@ function [on_cnts,off_cnts]= fxn_regionvar(NucLabeled,cell_sadj1,mRNA_sadj1,t1,s
 %%
 
 % NucLabeled = NucLabel; 
-% cell_sadj1 = Plot_mRNA;
+% cell_sadj1 = PlotmRNA;
 % mRNA_sadj1 = mRNAsadj;
 % t1 =t; 
 
@@ -39,8 +39,8 @@ end
 
 
 % Parameters that might want to be user controlled. 
-minObjSize = 90;
-strel_close = 8;
+minObjSize = 200;
+strel_close = 18;
 
 
 [h,w] = size(NucLabeled); 
@@ -86,7 +86,7 @@ temp = bw1.*NucLabeled;
 temp2 = hist(temp(:),1:max(NucLabeled(:)));
 % figure(2); clf; bar(1:max(NucLabeled(:)),temp2);
 
-inReg = find(temp2>1E4); 
+inReg = find(temp2>1E2); 
 % [b,m] = unique(bw1.*NucLabeled);
 % inReg  = b(m>2E6);
 % inReg(inReg==0) = [];

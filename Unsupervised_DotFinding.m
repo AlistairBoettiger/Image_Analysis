@@ -8,11 +8,16 @@ clear all;
 
 tot_time = tic;
 % Input options 
+old_lab = 0; 
 folder = '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/Enhancer_Modeling/Data/'; 
-rawfolder = '/Volumes/Data/Lab Data/Raw_Data/02-06-11/'; % '/Volumes/Data/Lab Data/Raw_Data/02-17-11/'; % 
-stackfolder =  'MP10_22C_sna_y_c/'; % 'MP05_22C/'; % 
-fname = 'MP10_22C_sna_y_c';  % 'MP05_22C_sna_y';  % 
+rawfolder = '/Volumes/Data/Lab Data/Raw_Data/02-17-11/'; %  '/Volumes/Data/Lab Data/Raw_Data/02-06-11/'; %
+stackfolder = 'MP09_22C/'; % 'MGa2x/'; % 'MP05_22C/'; % 'MP10_22C/'; %'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
+fname = 'MP09_22C_hb_y_d'; Es = 11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP05_22C_sna_y_c'; Es =7;  % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
 mRNA_channels =  2; % 1; % total mRNA channels
+
+
+% MP10_22C_sna_y_c and MP05_22C all done at 3.5, 4, 0.03, 30, 30
+% MGa2x and MGa1x all done at 2.5, 3, 0.03, 30, 30
 
 % Focus on subset of image: 
      m =   1/2048;  %  .7; % .5; .7; %   1/2048; % 
@@ -35,8 +40,8 @@ mRNA_channels =  2; % 1; % total mRNA channels
    spread = 1.3; % over/under
 
 %---- Dot Finding Parameters ----- %
-    sigmaE = 3.5;%  IMPORTANT
-    sigmaI = 4; % IMPORTANT
+    sigmaE = 2.5;%  IMPORTANT
+    sigmaI = 3; % IMPORTANT
     min_int  = 0.03;    %  5    ;% .05 % not necessary Fix at Zero
     FiltSize = 30;% 
     min_size = 30;% 
@@ -50,7 +55,7 @@ mRNA_channels =  2; % 1; % total mRNA channels
 
 Data = cell(10,mRNA_channels); 
 %%
-for e= 1:100
+for e= 1:Es
 %%
     tic 
     disp('loading data...');
@@ -70,7 +75,7 @@ for e= 1:100
             %     Cell_bnd = image map of cell boundaries 
     catch me
         disp(me.message)
-        break
+         continue
     end
        
 %     filename = [rawfolder,'/',fname];
@@ -121,7 +126,12 @@ for e= 1:100
         % Project all layers
          
         if show_projected == 1
-            Imax = imread([rawfolder,stackfolder,fname,'_',emb,'_max.tif']); 
+            if old_lab == 1;
+                Imax = imread([rawfolder,stackfolder,fname,'_',emb,'max.tif']); 
+            else
+            Imax = imread([rawfolder,stackfolder,'max_',fname,'_',emb,'.tif']); 
+            end
+            
             Imax_dots = Imax(xp1:xp2,yp1:yp2,mRNAchn);  
             Iout = figure(2);  clf;  imagesc(Imax_dots);
             colordef black; set(gcf,'color','k'); 

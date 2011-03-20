@@ -326,7 +326,7 @@ function setup(hObject,eventdata,handles)
         set(handles.in6label,'String',' ');
         set(handles.in6,'String', pars{6});
         set(handles.VarButtonName,'String','Manual Reg Select');
-   dir = {'Step 8: Save Data'};
+   dir = {'Step 3: Save Data'};
   set(handles.directions,'String',dir); 
   end
   
@@ -420,7 +420,8 @@ disp('loading image...');
     handles.embn = get(handles.embin,'String'); % embryo number
     handles.emb = str2double(handles.embn);
     
-    fname =  [handles.fin,'/',handles.fname,'_',handles.embn,'_max.tif']; 
+    % fname =  [handles.fin,'/',handles.fname,'_',handles.embn,'_max.tif']; 
+    fname =  [handles.fin,'/','max_',handles.fname,'_',handles.embn,'.tif']; 
     handles.Im =  imread(fname);
     h = size(handles.Im,1);
     

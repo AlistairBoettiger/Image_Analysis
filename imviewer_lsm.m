@@ -39,7 +39,8 @@ function varargout = imviewer_lsm(varargin)
 %      IMVIEWER_LSM, by itself, launches the GUI
 %
 %      IMVIEWER_LSM('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in IMVIEWER_LSM.M with the given input arguments.
+%      function named CALLBACK in IMVIEWER_LSM.M with the given input
+%      arguments.
 %
 %      IMVIEWER_LSM('Property','Value',...) creates a new IMVIEWER_LSM or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
@@ -115,6 +116,7 @@ step = handles.step;
 if step == 0;
     disp('running...'); tic
     dispfl = str2double(get(handles.in1,'String')); 
+    handles.dispfl = dispfl;
     handles.nmax = str2double(get(handles.in2,'String'));
     handles.output = hObject; % update handles object with new step number
     guidata(hObject, handles);  % update GUI data with new handles
@@ -211,7 +213,7 @@ function [handles] = projectNsave(hObject, eventdata, handles);
         imwrite(Im_layer,[fout,'/',fname,'_z', num2str(i),'.tif'],'tif');
      end
     
-
+clear handles.Im; 
 % Can't write a 2 channel tif, need to convert to a 3 channel version.  
             if channels == 2
                 Imax(:,:,3) = eval([inttype,'(zeros(h,w,1))']); 
@@ -426,7 +428,7 @@ end
     [h,w] = size(handles.Im{1,1}{1});
     
 
-    if dispfl == 1; 
+    if handles.dispfl == 1; 
         try
         % display image stack at 512x512 resolution
             m = 512/h; 
