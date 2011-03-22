@@ -40,7 +40,7 @@ end
 
 % Parameters that might want to be user controlled. 
 minObjSize = 200;
-strel_close = 18;
+strel_close = 14;
 
 
 [h,w] = size(NucLabeled); 
