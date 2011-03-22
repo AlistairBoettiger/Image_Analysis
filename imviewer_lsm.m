@@ -85,6 +85,7 @@ function imviewer_lsm_OpeningFcn(hObject, eventdata, handles, varargin)
   % Some initial setup 
       % Folder to save .mat data files in for normal script function.  
      handles.fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
+     handles.dispfl = 0; 
      
      handles.first = [1,1,1,1];
      handles.last = [0,0,0,0];
@@ -115,12 +116,12 @@ step = handles.step;
 % Step 0: Load Data into script
 if step == 0;
     disp('running...'); tic
-    dispfl = str2double(get(handles.in1,'String')); 
-    handles.dispfl = dispfl;
+    %dispfl = str2double(get(handles.in1,'String')); 
+    %handles.dispfl = dispfl;
     handles.nmax = str2double(get(handles.in2,'String'));
     handles.output = hObject; % update handles object with new step number
     guidata(hObject, handles);  % update GUI data with new handles
-    [handles] = imload(hObject, eventdata, handles,dispfl); % load new embryo
+    [handles] = imload(hObject, eventdata, handles); % load new embryo
     guidata(hObject, handles);  
     %    save([handles.fdata,'/','test']);
     %    load([handles.fdata,'/','test']);
@@ -254,7 +255,7 @@ function AutoCycle_Callback(hObject, eventdata, handles)
         disp(['running embryo ',embin,'...']); tic
         handles.output = hObject; % update handles object with new step number
         guidata(hObject, handles);  % update GUI data with new handles
-        [handles] = imload(hObject, eventdata, handles,0); % load new embryo
+        [handles] = imload(hObject, eventdata, handles); % load new embryo
         guidata(hObject, handles);  
 
         handles.output = hObject; % update handles object with new step number
@@ -408,7 +409,7 @@ function LoadNext_Callback(hObject, eventdata, handles)
 
 
         %========== change source images ================%
-function [handles] = imload(hObject, eventdata, handles,dispfl)
+function [handles] = imload(hObject, eventdata, handles)
 handles.fin = get(handles.source,'String'); % folder
 handles.ename = get(handles.froot,'String'); % embryo name
 handles.emb = str2double(get(handles.embin,'String')); % embryo number
@@ -428,7 +429,7 @@ end
     [h,w] = size(handles.Im{1,1}{1});
     
 
-    if handles.dispfl == 1; 
+    if h ==1 % handles.dispfl == 1; 
         try
         % display image stack at 512x512 resolution
             m = 512/h; 

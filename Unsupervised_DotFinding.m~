@@ -11,8 +11,8 @@ tot_time = tic;
 old_lab = 0; 
 folder = '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/Enhancer_Modeling/Data/'; 
 rawfolder = '/Volumes/Data/Lab Data/Raw_Data/02-17-11/'; %  '/Volumes/Data/Lab Data/Raw_Data/02-06-11/'; %
-stackfolder = 'MGa2x/'; % 'MP05_22C/'; % 'MP10_22C/'; %'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
-fname = 'MP09% 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP05_22C_sna_y_c'; Es =7;  % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
+stackfolder = 'MP01_22C/'; % 'MP09_22C/'; % 'MGa2x/'; % 'MP05_22C/'; % 'MP10_22C/'; %'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
+fname = 'MP09_22C_hb_y_e'; Es = 13; % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP05_22C_sna_y_c'; Es =7;  % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
 mRNA_channels =  2; % 1; % total mRNA channels
 
 
@@ -64,18 +64,26 @@ for e= 1:Es
     else
         emb = num2str(e);
     end
-   
-    try load([folder,fname,'_',emb,'_nucdata.mat']); 
-            %
+    
+    
+    
+    try load([rawfolder,stackfolder,fname,'_',emb,'_nucdata.mat']);
+    
+    catch err
+        disp(err.message)
+        try load([folder,fname,'_',emb,'_nucdata.mat']);
+            
             % Loads the following variables.
             %     NucLabeled = downscaled labeled map 
             %     nuc_cents = nuclei centroids
             %     Nucs = downsized raw nuclei image % NOT SAVED
             %     conn_map = connectivity matrix
             %     Cell_bnd = image map of cell boundaries 
-    catch me
-        disp(me.message)
-         continue
+        catch me
+            disp(me.message)
+            disp('trying next embryo...'); 
+             continue
+        end
     end
        
 %     filename = [rawfolder,'/',fname];
@@ -129,7 +137,7 @@ for e= 1:Es
             if old_lab == 1;
                 Imax = imread([rawfolder,stackfolder,fname,'_',emb,'max.tif']); 
             else
-            Imax = imread([rawfolder,stackfolder,'max_',fname,'_',emb,'.tif']); 
+                Imax = imread([rawfolder,stackfolder,'max_',fname,'_',emb,'.tif']); 
             end
             
             Imax_dots = Imax(xp1:xp2,yp1:yp2,mRNAchn);  
