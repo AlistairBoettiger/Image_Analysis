@@ -3,7 +3,8 @@
 %                                               Last Modified: 03/20/11
 
 %% Updates
-% Updatd 03/20/11
+% Update 03/something to make 3D isosurfaces 
+% Updated 03/20/11 to add movie 
 
 
 clear all;
@@ -275,4 +276,8 @@ end
 %      movie(M,1);
 %      
      save([datafolder,fname,'_movie'],'M'); 
+%%
+load([datafolder,fname,'_movie'],'M'); 
+figure(1); clf;
+movie(M,1);
 

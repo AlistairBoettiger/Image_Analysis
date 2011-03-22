@@ -275,5 +275,9 @@ end
 %      axis off;
 %      movie(M,1);
 %      
-     save([datafolder,fname,'_movie'],'M'); 
+ %    save([datafolder,fname,'_movie'],'M'); 
+%%
+% load([datafolder,fname,'_movie'],'M'); 
+% figure(1); clf;
+% movie(M,1);
 
