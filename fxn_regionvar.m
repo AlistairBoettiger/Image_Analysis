@@ -14,7 +14,7 @@
 
 
 
-function [on_cnts,off_cnts]= fxn_regionvar(NucLabeled,cell_sadj1,mRNA_sadj1,t1,spread,Nnucs,Nuc_list)
+function [on_cnts,off_cnts]= fxn_regionvar(NucLabeled,cell_sadj1,mRNA_sadj1,t1,spread,Nnucs,minObjSize,strel_close,Nuc_list)
 %%
 
 % NucLabeled = NucLabel; 
@@ -27,8 +27,12 @@ function [on_cnts,off_cnts]= fxn_regionvar(NucLabeled,cell_sadj1,mRNA_sadj1,t1,s
 % end
 
 
-if nargin == 6
+if nargin < 7
     Nuc_list = 1:Nnucs;
+    minObjSize = 300;
+    strel_close = 14; 
+elseif nargin < 9
+        Nuc_list = 1:Nnucs;
 end
 
 % get around error that indexed the non-nuclei (NucLabeled==0)
@@ -38,9 +42,6 @@ end
 
 
 
-% Parameters that might want to be user controlled. 
-minObjSize = 200;
-strel_close = 14;
 
 
 [h,w] = size(NucLabeled); 

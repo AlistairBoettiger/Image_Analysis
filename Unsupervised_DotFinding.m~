@@ -10,17 +10,19 @@ tot_time = tic;
 % Input options 
 old_lab = 0; 
 folder = '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/Enhancer_Modeling/Data/'; 
-rawfolder = '/Volumes/Data/Lab Data/Raw_Data/02-17-11/'; %  '/Volumes/Data/Lab Data/Raw_Data/02-06-11/'; %
-stackfolder = 'MP01_22C/'; % 'MP09_22C/'; % 'MGa2x/'; % 'MP05_22C/'; % 'MP10_22C/'; %'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
-fname = 'MP09_22C_hb_y_e'; Es = 13; % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP05_22C_sna_y_c'; Es =7;  % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
+rawfolder = '/Volumes/Data/Lab Data/Raw_Data/02-17-11/'; %%  '/Volumes/Data/Lab Data/Raw_Data/02-06-11/'; %
+stackfolder = 'MP10_22C/'; %'YW_ths_sog/'; % 'MP10_22C/'; % 'MGa1x/'; % 'MP01_22C/'; % 'MP09_22C/'; % 'MGa2x/'; % 'MP05_22C/'; %'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
+fname = 'MP10_22C_sna_y_d'; Es = 12; % 'MP10_22C_sna_y_d3'; Es = 1;  %'YW_ths_sog'; Es = 12;  % 'MGa1x_LacZ_b'; Es = 12; % 'MP01_22C_hb_y'; Es = 13; % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP05_22C_sna_y_c'; Es =7;  % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
 mRNA_channels =  2; % 1; % total mRNA channels
 
+
+ver = '_v3'
 
 % MP10_22C_sna_y_c and MP05_22C all done at 3.5, 4, 0.03, 30, 30
 % MGa2x and MGa1x all done at 2.5, 3, 0.03, 30, 30
 
 % Focus on subset of image: 
-     m =   1/2048;  %  .7; % .5; .7; %   1/2048; % 
+     m = .7;%  1/2048;  %  .7; % .5; .7; %   1/2048; % 
 
     Zs = 50; % Upper limit on number of Z sections   length(Im);
     h = 2048; w=2048;
@@ -40,9 +42,9 @@ mRNA_channels =  2; % 1; % total mRNA channels
    spread = 1.3; % over/under
 
 %---- Dot Finding Parameters ----- %
-    sigmaE = 2.5;%  IMPORTANT
+    sigmaE = 2.2;%  IMPORTANT
     sigmaI = 3; % IMPORTANT
-    min_int  = 0.03;    %  5    ;% .05 % not necessary Fix at Zero
+    min_int  = 0.02;    %  5    ;% .05 % not necessary Fix at Zero
     FiltSize = 30;% 
     min_size = 30;% 
    
@@ -104,6 +106,13 @@ for e= 1:Es
     % thresh = .1; 
     
     for mRNAchn = 1:mRNA_channels % mRNAchn =2
+        
+%         if mRNAchn == 1;
+%                consec_layers = 2;
+%         else
+%             consec_layers = 1;
+%         end
+        
             DotData = cell(1,Zs);    
             DotMasks = cell(1,Zs); 
             im_folder = cell(1,Zs);
@@ -134,9 +143,10 @@ for e= 1:Es
         % Project all layers
          
         if show_projected == 1
-            if old_lab == 1;
-                Imax = imread([rawfolder,stackfolder,fname,'_',emb,'max.tif']); 
-            else
+            try
+                Imax = imread([rawfolder,stackfolder,fname,'_',emb,'_max.tif']); 
+            catch err
+                disp(err.message); 
                 Imax = imread([rawfolder,stackfolder,'max_',fname,'_',emb,'.tif']); 
             end
             
@@ -146,7 +156,7 @@ for e= 1:Es
             colormap hot; hold on;
             plot(  dotC(:,1),dotC(:,2),'w+','MarkerSize',14 );
             plot(  Cents(:,1),Cents(:,2),'yo','MarkerSize',4);
-            saveas(Iout,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'.fig']); 
+            saveas(Iout,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),ver,'.fig']); 
         end
         %%
         
@@ -225,7 +235,7 @@ for e= 1:Es
                 set(gcf,'color','w');
                 title(['Cell size adjusted mRNA per cell. mean = ',...
                 num2str(m_den,4),' std=',num2str(s_den,4)]); 
-            saveas(histfig,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'_hist.jpg'],'jpg'); 
+            saveas(histfig,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'_hist',ver,'.jpg'],'jpg'); 
             % write to disk? 
          end
 
@@ -233,14 +243,14 @@ for e= 1:Es
             mRNA_map = figure(3); clf;  colordef black;
             imagesc(Plot_mRNA); colormap('hot'); colorbar; 
             set(gcf,'color','k');  
-            saveas(mRNA_map,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'rvar.jpg'],'jpg'); 
+            saveas(mRNA_map,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'rvar',ver,'.jpg'],'jpg'); 
          end
          
          
         if t ~= 0 && showim == 1 
             Fig_regvar = figure(40); clf; % subplot(1,2,mRNAchn);
             [on_cnts,off_cnts]= fxn_regionvar(NucLabel,Plot_mRNA,mRNA_sadj,t,spread,Nnucs,Nucs_list);
-             saveas(Fig_regvar,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'rvar.fig']); 
+             saveas(Fig_regvar,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'rvar',ver,'.fig']); 
         end
     
      clear imdata Plot_mRNA M C W    
@@ -272,7 +282,7 @@ end % end loop over embryos
             Nmin imdata imdata2 NucLabeled Plot_mRNA M C ...
             nuc_area dotC mRNA_cnt mRNA_den mRNA_sadj;
         
-      save([folder,fname,'_slidedata'], 'Data'); 
+      save([folder,fname,'_slidedata',ver], 'Data'); 
       
       toc(tot_time)
       disp('All slide data saved'); 
