@@ -16,11 +16,11 @@ folder = '/Volumes/Data/Lab Data/Raw_Data/02-17-11/';
 datafolder =  '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/Enhancer_Modeling/Data/';  
 % fname = 'MP05_22C_sna_y'; emb = '02';
 % fname = 'MP09_22C_hb_y_d'; emb = '01';
-%fname = 'MGa2x_LacZ_sna'; emb = '03';
+fname = 'MGa2x_LacZ_sna'; emb = '05';  yp1 = 200; yp2 = 300; xp1 = 250; xp2 = 350;
 %fname = 'MGa_LacZ'; emb = '02';
 % fname = 'MGa2x_LacZ_sna_b'; emb = '09';
-fname = 'MP05_22C_sna_y_c'; emb = '05';   yp1 = 100; yp2 = 400; xp1 = 50; xp2 = 350;
-stackfolder ='MP05_22C/'; % 'MGa2x/'; % 'MGa1x/';% 
+% fname = 'MP05_22C_sna_y_c'; emb = '05';   yp1 = 100; yp2 = 400; xp1 = 50; xp2 = 350;
+stackfolder ='MGa2x/'; % 'MP05_22C/'; %  'MGa1x/';% 
 
 
 stackdisks = 0;
@@ -43,26 +43,30 @@ stackdisks = 0;
    [hs,ws] = size(Imax(xp1:xp2,yp1:yp2,1));
 
 %%
-filename = [folder,'/',fname];
-Im = lsm_read_mod([filename,'.mat'],str2double(emb),1.5E4); 
+% filename = [folder,'/',fname];
+% Im = lsm_read_mod([filename,'.mat'],str2double(emb),1.5E4); 
+
+Zs = length(Im);
 
 %% Find dots 
 %(since it's a small patch this is faster/easier than loading the data).  
 
+tic
+disp('finding dots...');
+
 % filtering parameters;  
-    sigmaE = 2.5;%  IMPORTANT
-    sigmaI = 3; % IMPORTANT
+    sigmaE = 3;% .25  IMPORTANT
+    sigmaI = 4; % 3   IMPORTANT
     min_int  = 0.05;    %  5    ;% .05 % not necessary Fix at Zero
     FiltSize = 30;% 
     min_size = 40;% 
     Ex = fspecial('gaussian',FiltSize,sigmaE); % excitatory gaussian
     Ix = fspecial('gaussian',FiltSize,sigmaI); % inhibitory gaussian
   
+Zs = 40;
 
 
 
-
-Zs = length(Im);
 
 % [hs,ws] = size(Il1); 
 %Isect = uint16(zeros(hs,ws,Zs));
@@ -70,16 +74,19 @@ Zs = length(Im);
 Isect1 = zeros(hs,ws,Zs);
 Isect2 = zeros(hs,ws,Zs);
 Inuc = zeros(hs,ws,Zs);
-im_folder = cell(Zs,1); 
+DotData = cell(1,Zs);    
+DotMasks = cell(1,Zs); 
+im_folder = cell(1,Zs);
 
 for z = 1:Zs % z = 20        
       % Dot finding for channel 1
           im_folder{z} = [folder,stackfolder,fname,'_',emb,'_z',num2str(z),'.tif'];
           Iin_z = imread(im_folder{z}); 
-          [cent1,bw1] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,1),Ex,Ix,min_int,min_size);
-          bw1 = logical(bw1); 
+               
+          [DotData{z},DotMasks{z}] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,1),Ex,Ix,min_int,min_size);
+          bw1 = logical(DotMasks{z}); 
           bnd1 = imdilate(bw1,strel('disk',2)) -bw1;         
-         % figure(2); clf; imshow(bnd2);
+         % figure(2); clf; imshow(bnd1);
           mask = double(2*bw1)+bnd1;   
           mask(mask==0)=NaN; 
           mask(mask==1) = 0;       
@@ -88,29 +95,32 @@ for z = 1:Zs % z = 20
           Isect1(:,:,z) = 255*double(Iin_z(xp1:xp2,yp1:yp2,1))/2^16.*mask;
           % figure(2); clf; imagesc(  Isect1(:,:,z));
          
-          % Dot finding for channel 2
-
-             
-          [cent2,bw2] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,2),Ex,Ix,min_int,min_size);
-           bw2 = logical(bw2);
-           bnd2 = imdilate(bw2,strel('disk',2)) -bw2;
-         % figure(2); clf; imshow(bnd2);
-          mask = double(2*bw2)+bnd2;   
-          mask(mask==0)=NaN; 
-          mask(mask==1) = 0;       
-          % figure(2); clf; imagesc(mask);          
-         Isect2(:,:,z) = 255*double(Iin_z(xp1:xp2,yp1:yp2,2))/2^16.*mask;
+%          % Dot finding for channel 2            
+%           [cent2,bw2] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,2),Ex,Ix,min_int,min_size);
+%            bw2 = logical(bw2);
+%            bnd2 = imdilate(bw2,strel('disk',2)) -bw2;
+%          % figure(2); clf; imshow(bnd2);
+%           mask = double(2*bw2)+bnd2;   
+%           mask(mask==0)=NaN; 
+%           mask(mask==1) = 0;       
+%           % figure(2); clf; imagesc(mask);          
+%          Isect2(:,:,z) = 255*double(Iin_z(xp1:xp2,yp1:yp2,2))/2^16.*mask;
 
           
     % Nuclear finding            
-    In = Im{1,z}{3}( xp1:xp2,yp1:yp2 ); 
+    In =  Iin_z(xp1:xp2,yp1:yp2,3); % Im{1,z}{3}( xp1:xp2,yp1:yp2 ); 
     nucnoise = double(im2bw(In,.15)); 
     nucnoise(nucnoise==0) = NaN; 
     Inuc(:,:,z) = 255*double(In)/2^16.*nucnoise;
-   % figure(2); clf; imagesc(Inuc(:,:,z));
-    
+   % figure(2); clf; imagesc(Inuc(:,:,z))   
     
 end
+
+
+%%
+mRNAchn = 1; plotZdata = 1; getpreciseZ = 1; consec_layers = 2; ovlap = 2; 
+  dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,hs,ws,plotZdata,getpreciseZ,consec_layers,ovlap);
+
 
 %%
 clear Im Iin_z cent2 bw1 bw2 mask
@@ -275,9 +285,9 @@ end
 %      axis off;
 %      movie(M,1);
 %      
-     save([datafolder,fname,'_movie'],'M'); 
+ %    save([datafolder,fname,'_movie'],'M'); 
 %%
-load([datafolder,fname,'_movie'],'M'); 
-figure(1); clf;
-movie(M,1);
+% load([datafolder,fname,'_movie'],'M'); 
+% figure(1); clf;
+% movie(M,1);
 

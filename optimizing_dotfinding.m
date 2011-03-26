@@ -64,8 +64,10 @@ disp(['Coordinates:  ', num2str(xp1), ' : ', num2str(xp2), ',   ' num2str(yp1), 
     Ix = fspecial('gaussian',FiltSize,sigmaI); % inhibitory gaussian
    
 Filt = Ex -Ix;
-% figure(1); clf; imagesc(Filt); colorbar;   
+ figure(1); clf; imagesc(Filt); colorbar;  colormap jet; 
+set(gcf,'color','k');  set(gca,'FontSize',14); 
 
+ 
 %% Quick view around layer z
 
 if dispdata == 1

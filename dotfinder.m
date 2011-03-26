@@ -15,12 +15,18 @@
 function [cent,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
 %%     
  % figure(1); clf; imagesc(I);
- %  I = Iin_z( :,:,mRNAchn );%  Im{1,z}{mRNAchn}( xp1:xp2,yp1:yp2 );
- 
+ %  I = Iin_z( :,:,mRNAchn );    %  Im{1,z}{mRNAchn}( xp1:xp2,yp1:yp2 );
+%  
+%  xp1 = 640; yp1 = 640; xp2 = 840; yp2 = 840; 
+%  xp1 = 340; yp1 = 340; xp2 = 540; yp2 = 540; 
+%   z = 20;  Iin_z = imread(im_folder{z}); I = Iin_z(xp1:xp2,yp1:yp2,1);
+%  figure(9); clf; imagesc(3*I); ; colormap hot; set(gcf,'color','k');  colorbar; 
+  
+  
    bw = im2bw(I,min_int);  % if we're gonna do this, do it first.   
    I(bw==0) =0;
    clear bw; 
-  % figure(2); clf; imagesc(I);
+  % figure(2); clf; imagesc(I); colormap hot; set(gcf,'color','k');  colorbar; 
 
    % Faster method to apply filter -- use straight Gaussians. 
   outE = imfilter(single(I),Ex,'replicate'); 
@@ -29,8 +35,8 @@ function [cent,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
   
 %   figure(10); clf; subplot(2,1,1); imagesc(outE); shading flat;
 %   subplot(2,1,2); imagesc(outI); shading flat;
- % figure(11); clf; imagesc(Iin); shading flat;  colorbar; 
-  
+ % figure(8); clf; imagesc(1.2*Iin); shading flat;  colorbar; colormap hsv; set(gcf,'color','k');     
+    
   
   % Max dots selection of threshold.  
   % Makes 2048 x 2048 twice as long (700+ seconds compared to 350s). 
@@ -53,16 +59,15 @@ function [cent,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
         bw = im2bw(Iin(xp1:xp2,yp1:yp2),thresh(t)); 
         [jnk,count(t)] = bwlabel(bw); 
     end
-  %  figure(1); clf; plot(thresh,count);
+  %  figure(1); clf; plot(thresh,count,'linewidth',2); set(gcf,'color','k'); xlabel('theta'); ylabel('Number of objects');  
     [jnk,im] = max(count);
     imthresh = thresh(im);
     bw2 = im2bw(Iin,imthresh);
 
-%       bw2 = im2bw(Iin,graythresh(Iin));  %  figure(10); clf; imagesc(bw2); 
- 
+%       bw2 = im2bw(Iin,graythresh(Iin));
       
    Iin = Iin.*uint16(bw2);  
-% figure(10); clf; imagesc(bw2); shading flat;colormap hot;
+% figure(10); clf; imagesc(bw2); shading flat; colormap hot; set(gcf,'color','k');  
 %  figure(10); clf; imagesc(Iin); shading flat;colormap hot;
 
    
@@ -81,9 +86,9 @@ function [cent,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
 %  singles in the range [0,1].
 % ----------------------------------------------------------------- %  
   
-
+ %figure(10); clf; imagesc(Iin); shading flat; colormap hot; set(gcf,'color','k');    
  M = max(Iin(:)); 
- L = watershed(double(M-Iin));  %  figure(2); clf; imagesc(L); shading flat;
+ L = watershed(double(M-Iin));  %  figure(2); clf; imagesc(L); colormap lines; shading flat;
  Iin(L==0) = 0;
  
 % %  OLD WaterShedding;  
@@ -100,14 +105,21 @@ function [cent,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
   
    bw2 = logical(Iin); 
    bw2 = bwareaopen(bw2,min_size);% remove objects less than n pixels in size 
-  % figure(10); clf; imshow(bw2);       
+  % figure(10); clf; imagesc(bw2); shading flat; colormap hot; set(gcf,'color','k');       
   % save([fdata,'/','test2']);
   
 % mRNA transcript locating counting
-       labeled = bwlabel(bw2,8); % count and label RNAs (8-> diagnols count as touch)   
+       labeled = bwlabel(bw2,8); % count and label RNAs (8-> diagnols count as touch)  
+    %    figure(2); clf; imagesc(labeled); colormap lines; shading flat;
 % labeled =uint16(labeled); 
        R1 = regionprops(labeled,Iin,'WeightedCentroid'); % compute mRNA centroids      
        cent = reshape([R1.WeightedCentroid],2,length(R1))';
+       
+%        figure(10); clf; imagesc(uint16(bw2).*Iin); hold on;
+%        plot(cent(:,1),cent(:,2),'bo');
+%        figure(2); clf; imagesc(3*I); hold on; 
+%         shading flat; colormap hot; set(gcf,'color','k'); 
+%        plot(cent(:,1),cent(:,2),'bo');
        
       %  R1 = regionprops(labeled,IO,'Area');
       %  figure(1); clf; hist([R1.Area],100); colordef white;  
