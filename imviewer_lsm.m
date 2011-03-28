@@ -266,6 +266,7 @@ function AutoCycle_Callback(hObject, eventdata, handles)
         guidata(hObject, handles); 
 
         emb = emb + 1;    
+        clear handles.Im; 
         toc
      end
          

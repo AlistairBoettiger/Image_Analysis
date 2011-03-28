@@ -10,13 +10,13 @@ tot_time = tic;
 % Input options 
 old_lab = 0; 
 folder = '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/Enhancer_Modeling/Data/'; 
-rawfolder = '/Volumes/Data/Lab Data/Raw_Data/02-17-11/'; %%  '/Volumes/Data/Lab Data/Raw_Data/02-06-11/'; %
-stackfolder = 'MP10_22C/'; %'YW_ths_sog/'; % 'MP10_22C/'; % 'MGa1x/'; % 'MP01_22C/'; % 'MP09_22C/'; % 'MGa2x/'; % 'MP05_22C/'; %'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
-fname = 'MP10_22C_sna_y_d'; Es = 9; % 'MP10_22C_sna_y_d3'; Es = 1;  %'YW_ths_sog'; Es = 12;  % 'MGa1x_LacZ_b'; Es = 12; % 'MP01_22C_hb_y'; Es = 13; % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP05_22C_sna_y_c'; Es =7;  % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
+rawfolder = '/Volumes/Data/Lab Data/Raw_Data/02-17-11/'; %%   %
+stackfolder = 'MP10_22C/'; %'MP05_22C/'; %'YW_ths_sog/'; % 'MP10_22C/'; % 'MGa1x/'; % 'MP01_22C/'; % 'MP09_22C/'; % 'MGa2x/'; % 'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
+fname = 'MP10_22C_sna_y_e'; Es = 12; %  'MP05_22C_sna_y_c'; Es =7; %  'MP10_22C_sna_y_d3'; Es = 1;  %'YW_ths_sog'; Es = 12;  % 'MGa1x_LacZ_b'; Es = 12; % 'MP01_22C_hb_y'; Es = 13; % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
 mRNA_channels =  2; % 1; % total mRNA channels
 
 
-ver = '_v3'
+ver = '';
 
 % MP10_22C_sna_y_c and MP05_22C all done at 3.5, 4, 0.03, 30, 30
 % MGa2x and MGa1x all done at 2.5, 3, 0.03, 30, 30
