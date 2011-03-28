@@ -161,18 +161,18 @@ function [handles] = projectNsave(hObject, eventdata, handles);
     
    % Determine the number of channels in the image data
     try 
-        test = handles.Im{1,1}{4};
+        test = handles.Im{1,1}{4}(1,1);
         channels = 4;
     catch chn
         try 
-             test = handles.Im{1,1}{3};
+             test = handles.Im{1,1}{3}(1,1);
              channels = 3;
         catch chn
             try
-                 test = handles.Im{1,1}{2};
+                 test = handles.Im{1,1}{2}(1,1);
                  channels = 2;  
             catch chn
-                 test = handles.Im{1,1}{1};
+                 test = handles.Im{1,1}{1}(1,1);
                  channels = 1;  
             end
         end
@@ -215,12 +215,14 @@ function [handles] = projectNsave(hObject, eventdata, handles);
      end
     
 clear handles.Im; 
+clear Im_layer;
 % Can't write a 2 channel tif, need to convert to a 3 channel version.  
             if channels == 2
                 Imax(:,:,3) = eval([inttype,'(zeros(h,w,1))']); 
             end
     imwrite(Imax,[fout,'/','max_',fname,'.tif'],'tif');
     guidata(hObject, handles);  % update GUI data with new handles
+    clear Imax; 
     toc
 
 
