@@ -15,12 +15,12 @@ clear all;
 folder = '/Volumes/Data/Lab Data/Raw_Data/02-17-11/';
 datafolder =  '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/Enhancer_Modeling/Data/';  
 % fname = 'MP05_22C_sna_y'; emb = '02';
-% fname = 'MP09_22C_hb_y_d'; emb = '01';
-fname = 'MGa2x_LacZ_sna'; emb = '05';  yp1 = 200; yp2 = 300; xp1 = 250; xp2 = 350;
+ fname = 'MP09_22C_hb_y_e'; emb = '05'; yp1 = 41; yp2 = yp1+300; xp1 = 101; xp2 = xp1+300;  
+%fname = 'MGa2x_LacZ_sna'; emb = '05';  yp1 = 200; yp2 = 300; xp1 = 250; xp2 = 350;
 %fname = 'MGa_LacZ'; emb = '02';
 % fname = 'MGa2x_LacZ_sna_b'; emb = '09';
 % fname = 'MP05_22C_sna_y_c'; emb = '05';   yp1 = 100; yp2 = 400; xp1 = 50; xp2 = 350;
-stackfolder ='MGa2x/'; % 'MP05_22C/'; %  'MGa1x/';% 
+ stackfolder ='MP09_22C/'; % 'MGa2x/'; % 'MP05_22C/'; %  'MGa1x/';% 
 
 
 stackdisks = 0;
@@ -46,7 +46,7 @@ stackdisks = 0;
 % filename = [folder,'/',fname];
 % Im = lsm_read_mod([filename,'.mat'],str2double(emb),1.5E4); 
 
-Zs = length(Im);
+Zs = 46;% length(Im);
 
 %% Find dots 
 %(since it's a small patch this is faster/easier than loading the data).  
@@ -118,7 +118,7 @@ end
 
 
 %%
-mRNAchn = 1; plotZdata = 1; getpreciseZ = 1; consec_layers = 2; ovlap = 2; 
+mRNAchn = 1; plotZdata = 0; getpreciseZ = 0; consec_layers = 2; ovlap = 2; 
   dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,hs,ws,plotZdata,getpreciseZ,consec_layers,ovlap);
 
 
@@ -201,12 +201,12 @@ clear Data;
 d2 = d(d(:,2)>xp1 & d(:,2)<xp2 & d(:,1)>yp1 & d(:,1)<yp2,:); 
 
 %%  3D-isosurfaces view 
-stp = 3;
+stp = 2;
 
 x = (1:stp:ws)*50;
 y = (1:stp:hs)*50;
  z = Zs*380-380*(1:Zs);
-%z = 380*(1:Zs);
+% z = 380*(1:Zs);
 
 [X,Y,Z] = meshgrid(x,y,z);
 
@@ -215,7 +215,7 @@ data(isnan(data)) = 0;
 data = smooth3(data,'box',5);
 
 figure(4); clf;
- patch(isosurface(Y,X,Z,data,65),'FaceColor','blue','EdgeColor','none');
+ patch(isosurface(Y,X,Z,data,25),'FaceColor','blue','EdgeColor','none');
 %isonormals(data,h); % alpha .7;
 % patch(isocaps(X,Y,Z,data,50),'FaceColor','interp','EdgeColor','none');
 %camlight left;
@@ -252,7 +252,7 @@ V2(inds2) = 2;
 
 figure(4); hold on;
 patch(isosurface(X,Y,Z,V1,1),'FaceColor','red','EdgeColor','none');
- patch(isosurface(X,Y,Z,V2,1),'FaceColor','green','EdgeColor','none');
+ % patch(isosurface(X,Y,Z,V2,1),'FaceColor','green','EdgeColor','none');
 camlight left;
 light('Position',[1000,1.5E4 8000],'Style','local');
  lighting phong; % view(112,34); 
@@ -264,22 +264,22 @@ view(194,80);
 % scatter3(points1(:,1),points1(:,2),points1(:,3),'r.');
 
 set(gcf,'color','k'); axis off; 
-%% Make movie.
-view(0,90);
-
-clear data Imax Isect1 Isect2 nucnoise d X Y Z V1 V2 
-
- figure(4); 
-    oh=findobj(gcf,'type','patch');
-for i = 1:36
-    if i<24
-        rotate(oh,[1 0 0],-4);
-    else
-        rotate(oh,[0 1 0],10);
-    end
-    M(i) = getframe(gcf);
-end
-   
+% %% Make movie.
+% view(0,90);
+% 
+% clear data Imax Isect1 Isect2 nucnoise d X Y Z V1 V2 
+% 
+%  figure(4); 
+%     oh=findobj(gcf,'type','patch');
+% for i = 1:36
+%     if i<24
+%         rotate(oh,[1 0 0],-4);
+%     else
+%         rotate(oh,[0 1 0],10);
+%     end
+%     M(i) = getframe(gcf);
+% end
+%    
 
 % figure(11); clf;
 %      axis off;
