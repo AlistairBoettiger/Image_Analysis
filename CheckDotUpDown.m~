@@ -81,10 +81,12 @@ for Z = 1:Zs % The primary layer Z = 10
          R1(inds1) = maxdots; % convert indices to raster map   
         % figure(3); clf; imagesc(R1d);  colorbar; colormap jet;
          st1_dot_num = sum(dotsinlayer(1:Z-1)); % starting dot number for the layer under study     
-        Iw = imread(im_folder{z}); 
+       clear Iw; 
+         Iw = imread(im_folder{z}); 
         Iw = Iw(:,:,mRNAchn);
          
-    for z=1:Zs % compare primary layer to all other layers  z = Z+1                  
+    for z=1:Zs % compare primary layer to all other layers  z = Z+1 
+        clear Loz;
          Loz = R1 + Rs{z}; 
        %  Loz = R1 + DotMasks{z}; (only makes a small difference to use overlap box rather than within found dot.  
          
@@ -109,7 +111,7 @@ toc
 
 %%
 
-clear DotMasks DotData R1 Rz Rs LoZ Inds;
+clear DotMasks DotData R1 Rz Rs LoZ Inds Iw;
 
 %%
 

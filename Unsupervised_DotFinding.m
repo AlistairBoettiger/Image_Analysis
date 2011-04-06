@@ -12,11 +12,11 @@ old_lab = 0;
 folder = '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/Enhancer_Modeling/Data/'; 
 rawfolder = '/Volumes/Data/Lab Data/Raw_Data/02-17-11/'; %%   %
 stackfolder = 'MP01_22C/'; % 'MGa1x/'; % 'MP10_22C/'; %'MP05_22C/'; %'YW_ths_sog/'; % 'MP10_22C/'; %  % 'MP09_22C/'; % 'MGa2x/'; % 'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
-fname = 'MP01_22C_hb_y'; Es = 13; % 'MGa1x_LacZ_b'; Es = 12; %  'MP10_22C_sna_y_e'; Es = 12; %  'MP05_22C_sna_y_c'; Es =7; %  'MP10_22C_sna_y_d3'; Es = 1;  %'YW_ths_sog'; Es = 12;  % % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
+fname = 'MP01_22C_hb_y_c'; Es = 10; % 'MP01_22C_hb_y'; Es = 13; % 'MGa1x_LacZ_b'; Es = 12; %  'MP10_22C_sna_y_e'; Es = 12; %  'MP05_22C_sna_y_c'; Es =7; %  'MP10_22C_sna_y_d3'; Es = 1;  %'YW_ths_sog'; Es = 12;  % % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
 mRNA_channels =  2; % 1; % total mRNA channels
 
 
-ver = '_v2';
+ver = '';% '_v2';
 
 % MP10_22C_sna_y_c and MP05_22C all done at 3.5, 4, 0.03, 30, 30
 % MGa2x and MGa1x all done at 2.5, 3, 0.03, 30, 30
@@ -55,9 +55,9 @@ ver = '_v2';
 %---------------------------------%
 
 
-Data = cell(10,mRNA_channels); 
+%Data = cell(10,mRNA_channels); 
 %%
-for e= 1:Es
+for e= 8:Es
 %%
     tic 
     disp('loading data...');
@@ -254,26 +254,30 @@ for e= 1:Es
              saveas(Fig_regvar,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'rvar',ver,'.fig']); 
         end
     
-     clear imdata Plot_mRNA M C W    
+     clear imdata M C W  mRNA_map Fig_regvar histfig Iout  
         %
      %% Export data
-     Data{e,mRNAchn}.nucarea = nuc_area;
-     Data{e,mRNAchn}.dotC = dotC;
-     Data{e,mRNAchn}.mRNAcnt = mRNA_cnt;
-    % Data{e,mRNAchn}.mRNAden = mRNA_den;
-     Data{e,mRNAchn}.mRNAsadj = mRNA_sadj;
-    % Data{e,mRNAchn}.DotData = DotData; % break the camel; 
-    % Data{e,mRNAchn}.DotMasks = DotMasks;
-    % Data{e,mRNAchn}.imdata = imdata;
+%      Data{e,mRNAchn}.nucarea = nuc_area;
+%      Data{e,mRNAchn}.dotC = dotC;
+%      Data{e,mRNAchn}.mRNAcnt = mRNA_cnt;
+%      Data{e,mRNAchn}.Plot_mRNA = Plot_mRNA;
+%      Data{e,mRNAchn}.mRNAsadj = mRNA_sadj;
+%     % Data{e,mRNAchn}.DotData = DotData; % break the camel; 
+%     % Data{e,mRNAchn}.DotMasks = DotMasks;
+%     % Data{e,mRNAchn}.imdata = imdata;
+%      % Data{e,mRNAchn}.mRNAden = mRNA_den;
      
-     clear nuc_area dotC mRNA_cnt mRNA_sadj
+       save([folder,fname,'_',emb,'_data',ver],...
+           'nuc_area','dotC','mRNA_cnt','Plot_mRNA','mRNA_sadj'); 
+     
+     clear nuc_area dotC mRNA_cnt mRNA_sadj Plot_mRNA 
     
      toc
     end % end loop over mNRA channels
        %  clean up;
         clear Iin_z DotData DotMasks I_max cent1 bw dL Cents ...
-            Nmin imdata imdata2 NucLabeled Plot_mRNA M C ...
-            nuc_area dotC mRNA_cnt mRNA_den mRNA_sadj;
+            Nmin imdata imdata2 NucLabel NucLabeled Plot_mRNA M C ...
+            nuc_area dotC mRNA_cnt mRNA_den mRNA_sadj inds conn_map;
             
     
 end % end loop over embryos 
@@ -283,7 +287,7 @@ end % end loop over embryos
             Nmin imdata imdata2 NucLabeled Plot_mRNA M C ...
             nuc_area dotC mRNA_cnt mRNA_den mRNA_sadj;
         
-      save([folder,fname,'_slidedata',ver], 'Data'); 
+      %save([folder,fname,'_slidedata',ver], 'Data'); 
       
       toc(tot_time)
       disp('All slide data saved'); 
