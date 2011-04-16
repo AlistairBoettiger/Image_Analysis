@@ -1,0 +1,104 @@
+%%                         view3Dchromatin.m
+% Alistair Boettiger                            Date Begun: 02/14/11
+%                                               Last Modified: 03/20/11
+
+%% Updates
+
+
+
+clear all;
+
+% folder = '/Volumes/Data/Lab Data/Raw_Data/02-06-11/';
+% fname = 'MP10_22C_sna_y_c'; emb = '01';
+
+ folder = '/Volumes/Data/Lab Data/Raw_Data/02-17-11/';
+ datafolder =  '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/Enhancer_Modeling/Data/';  
+ stackfolder = 'CadN/'; % 'MP09_22C/'; % 
+ %fname ='MP09_22C_hb_y_a'; emb = '01' ;  xp1 = 600; yp1 = 660; xp2 = xp1+100;  yp2 = yp1+100; 
+ fname =  'CadN';  emb = '06';     xp1 = 1275; yp1 = 1050; xp2 = xp1+100;  yp2 = yp1+100;  
+
+    stackdisks = 0;
+
+   Imax = imread([folder,stackfolder,'max_',fname,'_',emb,'.tif']); 
+   figure(10); clf; imagesc(Imax);
+
+   [h,w] = size(Imax);
+   
+%%
+%xp1 = 600; yp1 = 660; xp2 = xp1+100;  yp2 = yp1+100; 
+ xp1 = 1850; yp1 = 990; xp2 = xp1+100;  yp2 = yp1+100; 
+   figure(10); clf; imagesc(Imax(xp1:xp2,yp1:yp2,:)); 
+     disp(['Coordinates:  ', num2str(xp1), ' : ', num2str(xp2), ',   ' num2str(yp1), ' : ', num2str(yp2) ] );   
+   [hs,ws] = size(Imax(xp1:xp2,yp1:yp2,1));
+
+
+
+
+
+%% Load data into stacks
+tic
+disp('loading data...');
+Zs = 50;
+
+im_folder = cell(Zs,1); 
+Isect1 = zeros(hs,ws,Zs);
+Isect2 = zeros(hs,ws,Zs);
+Inuc = zeros(hs,ws,Zs);
+
+for z = 1:Zs % z = 20     
+    try
+          im_folder{z} = [folder,stackfolder,fname,'_',emb,'_z',num2str(z),'.tif'];
+          Iin_z = imread(im_folder{z});                
+    catch
+        break
+    end
+          
+    % Nuclear finding            
+    In =  Iin_z(xp1:xp2,yp1:yp2,3); % Im{1,z}{3}( xp1:xp2,yp1:yp2 ); 
+    nucnoise = double(im2bw(In,.15)); 
+    nucnoise(nucnoise==0) = NaN; 
+    Inuc(:,:,z) = 255*double(In)/2^16.*nucnoise;
+   % figure(2); clf; imagesc(Inuc(:,:,z))   
+   
+   Isect1(:,:,z) =  Iin_z(xp1:xp2,yp1:yp2,1); 
+   Isect2(:,:,z) = Iin_z(xp1:xp2,yp1:yp2,2);
+    
+end
+
+toc
+
+
+%%  3D-isosurfaces view 
+stp = 1;
+
+Zmax = 30; 
+
+x = (1:stp:ws)*50;
+y = (1:stp:hs)*50;
+ z = Zs*380-380*(1:Zmax);
+% z = 380*(1:Zs);
+
+[X,Y,Z] = meshgrid(x,y,z);
+
+data = Inuc(1:stp:end,1:stp:end,1:Zmax);
+data(isnan(data)) = 0;
+data = smooth3(data,'box',5);
+
+%%
+
+figure(4); clf;
+% patch(isosurface(Y,X,Z,data,35),'FaceColor','blue','EdgeColor','none'); hold on;  alpha 1;
+% patch(isosurface(Y,X,Z,Isect1(1:stp:end,1:stp:end,1:Zmax),9550),'FaceColor','red','EdgeColor','none'); alpha .5
+% patch(isosurface(Y,X,Z,Isect2(1:stp:end,1:stp:end,1:Zmax),2550),'FaceColor','green','EdgeColor','none');  
+
+patch(isosurface(Y,X,Z,data,40),'FaceColor','blue','EdgeColor','none'); hold on;  alpha .5;
+patch(isosurface(Y,X,Z,Isect1(1:stp:end,1:stp:end,1:Zmax),21000),'FaceColor','red','EdgeColor','none'); alpha .5
+patch(isosurface(Y,X,Z,Isect2(1:stp:end,1:stp:end,1:Zmax),11000),'FaceColor','green','EdgeColor','none');  
+
+ camlight(5,30);
+light('Position',[1000,1.5E4 8000],'Style','local');
+ lighting phong; % view(112,34); 
+view(-111,38);
+set(gcf,'color','k'); set(gca,'color','k');
+
+
