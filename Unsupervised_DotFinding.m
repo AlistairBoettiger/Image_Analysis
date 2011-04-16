@@ -11,8 +11,8 @@ tot_time = tic;
 old_lab = 0; 
 folder = '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/Enhancer_Modeling/Data/'; 
 rawfolder = '/Volumes/Data/Lab Data/Raw_Data/02-17-11/'; %%   %
-stackfolder = 'MP01_22C/'; % 'MGa1x/'; % 'MP10_22C/'; %'MP05_22C/'; %'YW_ths_sog/'; % 'MP10_22C/'; %  % 'MP09_22C/'; % 'MGa2x/'; % 'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
-fname = 'MP01_22C_hb_y_c'; Es = 10; % 'MP01_22C_hb_y'; Es = 13; % 'MGa1x_LacZ_b'; Es = 12; %  'MP10_22C_sna_y_e'; Es = 12; %  'MP05_22C_sna_y_c'; Es =7; %  'MP10_22C_sna_y_d3'; Es = 1;  %'YW_ths_sog'; Es = 12;  % % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
+stackfolder = 'MP02_22C/'; %'MP01_22C/'; % 'MGa1x/'; % 'MP10_22C/'; %'MP05_22C/'; %'YW_ths_sog/'; % 'MP10_22C/'; %  % 'MP09_22C/'; % 'MGa2x/'; % 'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
+fname = 'MP02_22C_hb_y_b'; Es = 10; % 'MP02_22C_hb_y'; Es = 9; % % 'MP01_22C_hb_y_f'; Es = 12; % 'MP01_22C_hb_y_c'; Es = 10; % 'MP01_22C_hb_y'; Es = 13; % 'MGa1x_LacZ_b'; Es = 12; %  'MP10_22C_sna_y_e'; Es = 12; %  'MP05_22C_sna_y_c'; Es =7; %  'MP10_22C_sna_y_d3'; Es = 1;  %'YW_ths_sog'; Es = 12;  % % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
 mRNA_channels =  2; % 1; % total mRNA channels
 
 
@@ -57,7 +57,7 @@ ver = '';% '_v2';
 
 %Data = cell(10,mRNA_channels); 
 %%
-for e= 8:Es
+for e= 1:Es
 %%
     tic 
     disp('loading data...');
@@ -267,7 +267,7 @@ for e= 8:Es
 %     % Data{e,mRNAchn}.imdata = imdata;
 %      % Data{e,mRNAchn}.mRNAden = mRNA_den;
      
-       save([folder,fname,'_',emb,'_data',ver],...
+       save([folder,fname,'_',emb,'_',num2str(mRNAchn),'_data',ver],...
            'nuc_area','dotC','mRNA_cnt','Plot_mRNA','mRNA_sadj'); 
      
      clear nuc_area dotC mRNA_cnt mRNA_sadj Plot_mRNA 
