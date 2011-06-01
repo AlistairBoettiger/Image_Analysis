@@ -230,13 +230,14 @@ function [handles] = projectNsave(hObject, eventdata, handles)
                          ' layer ',num2str(i),'  skipping this image...'] );
                end 
            end
-              % Insert into multicolor single layer
-             Im_layer(:,:,c) = IMG.data{c};
+            
+            
            
              % Compute max project
             % not enough memory to do one shot max project, need to do this
             % progressively.  Fortunately max doesn't care (unlike ave). 
             if i>first(c) && i<last(c)+1
+                 Im_layer(:,:,c) = IMG.data{c};    % Insert into multicolor single layer, only if it's in the selected range.  
                 Imax(:,:,c) = max( cat(3,Imax(:,:,c),Im_layer(:,:,c)),[],3);       
             end
             if channels == 2
@@ -568,7 +569,7 @@ function oname_Callback(hObject, eventdata, handles)
 
 
 % --- Executes during object creation, after setting all properties.
-function oname_label_CreateFcn(hObject, eventdata, handles)
+function oname_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to oname_label (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called

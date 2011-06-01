@@ -144,18 +144,23 @@ function [handles] = projectNsave(hObject, eventdata, handles)
     fout = get(handles.fout,'String');  % save folder
     oname = get(handles.oname,'String'); % output file name
     
-    nmax = get(handles.in1,'String'); % max noise parameter
+    nmax = str2double(get(handles.in1,'String')); % max noise parameter
     firstc =  get(handles.in2,'String'); % first frame for max project
     lastc = get(handles.in3,'String'); % last frame for max project
     handles.first = eval(firstc{:});
     handles.last = eval(lastc{:}); 
     
     
-    
-    N = str2double(get(handles.embin,'String'));  % embryo number
+    emb = get(handles.embin,'String');
+    N = str2double(emb);  % embryo number
 
     first = handles.first;
     last = handles.last;
+    
+    if N == 1 % only need to do this once.  
+        jacquestiffread([fsource,'/',froot,'.lsm']);
+    end
+    
      % froot = 's02_MP01_Hz_22C'; fsource = '/Volumes/Data/Lab Data/Raw_Data/2011-05-22/';
 
     
@@ -174,23 +179,22 @@ function [handles] = projectNsave(hObject, eventdata, handles)
     h = Datas.Stack1.Image1.IMG.height;
     Zs = Datas.LSM_info.DimensionZ;
 
-   
+   last(last == 0) = Zs; % zero is interpreted as last image
     
     
     Imax = zeros(h,w,channels,inttype);
- 
     
      
+   tic
+   disp('writing data...'); 
    
     for i=1:Zs
-
-    % shorthand    
+       % shorthand    
     TIF = Datas.([ 'Stack' num2str(N)]).(['Image' num2str(i)]).TIF;
     IMG = Datas.([ 'Stack' num2str(N)]).(['Image' num2str(i)]).IMG;
     TIF.file=filetemp;
     Im_layer = zeros(h,w,channels,inttype); %   eval([inttype,'(zeros(h,w,channels));']);
-
-    
+   
        offset = 0; 
         %read the image channels
         for c = 1:channels % c=3
@@ -204,7 +208,7 @@ function [handles] = projectNsave(hObject, eventdata, handles)
             sdata =  IMG.data{c}( floor(h/2*.9):floor(h/2*1.1), floor(w/2*.9):floor(w/2*1.1)  ); 
             isnoise = std(double(sdata(:)));
             
-             save([handles.fdata,'/','test']);
+%             save([handles.fdata,'/','test']);
 %      load([handles.fdata,'/','test']);
             
            if isnoise > nmax
@@ -225,14 +229,14 @@ function [handles] = projectNsave(hObject, eventdata, handles)
                          ' layer ',num2str(i),'  skipping this image...'] );
                end 
            end
-              % Insert into multicolor single layer
-             Im_layer(:,:,c) = IMG.data{c};
+            
+            
            
              % Compute max project
-            
             % not enough memory to do one shot max project, need to do this
             % progressively.  Fortunately max doesn't care (unlike ave). 
             if i>first(c) && i<last(c)+1
+                 Im_layer(:,:,c) = IMG.data{c};    % Insert into multicolor single layer, only if it's in the selected range.  
                 Imax(:,:,c) = max( cat(3,Imax(:,:,c),Im_layer(:,:,c)),[],3);       
             end
             if channels == 2
@@ -241,7 +245,7 @@ function [handles] = projectNsave(hObject, eventdata, handles)
                 Im_layer(:,:,3) = zeros(h,w,1,inttype); % eval([inttype,'(zeros(h,w,1));']); 
             end
         end
-        imwrite(Im_layer,[fout,'/',oname,'_z', num2str(i),'.tif'],'tif');
+        imwrite(Im_layer,[fout,'/',oname,'_',emb,'_z', num2str(i),'.tif'],'tif');
      end
     
 clear handles.Im; 
@@ -250,7 +254,8 @@ clear Im_layer;
             if channels == 2
                 Imax(:,:,3) = eval([inttype,'(zeros(h,w,1))']); 
             end
-    imwrite(Imax,[fout,'/','max_',fname,'.tif'],'tif');
+    imwrite(Imax,[fout,'/','max_',oname,'_',emb,'.tif'],'tif');
+    disp(['data written for embryo', emb]); 
     guidata(hObject, handles);  % update GUI data with new handles
     clear Imax; 
     toc
@@ -285,11 +290,7 @@ function AutoCycle_Callback(hObject, eventdata, handles)
             set(handles.embin,'String',embin); 
 
         disp(['running embryo ',embin,'...']); tic
-        handles.output = hObject; % update handles object with new step number
-        guidata(hObject, handles);  % update GUI data with new handles
-        [handles] = imload(hObject, eventdata, handles); % load new embryo
-        guidata(hObject, handles);  
-
+ 
         handles.output = hObject; % update handles object with new step number
         guidata(hObject, handles);  % update GUI data with new handles
         [handles] = projectNsave(hObject, eventdata, handles); % load new embryo
