@@ -117,7 +117,7 @@ step = handles.step;
 
 % Step 1: Max Project nuclear channel at 1024  1024 resoultion
 if step == 1; 
-    disp('running step 1...'); tic
+    disp('running step 1...'); 
   
     handles.fname = get(handles.in1,'String'); 
     firstc =  get(handles.in2,'String'); 
@@ -275,7 +275,7 @@ function AutoCycle_Callback(hObject, eventdata, handles)
     emb = str2double(get(handles.embin,'String'));  
     handles.folderout = get(handles.fout,'String');   % where to save images
 
-     tic 
+     Ttot = tic 
      
      err = 0; 
     try  
@@ -290,21 +290,20 @@ function AutoCycle_Callback(hObject, eventdata, handles)
             handles.fname = [froot,'_',embin];  % needed for savename. 
             set(handles.embin,'String',embin); 
 
-        disp(['running embryo ',embin,'...']); tic
+        disp(['running embryo ',embin,'...']);
  
         handles.output = hObject; % update handles object with new step number
         guidata(hObject, handles);  % update GUI data with new handles
         [handles] = projectNsave(hObject, eventdata, handles); % load new embryo
         guidata(hObject, handles); 
 
-        emb = emb + 1;    
-        clear handles.Im; 
-        toc
+        emb = emb + 1;          
      end
          
     catch error
        disp(error.message); 
-       disp('Export finished.' ); toc; 
+       disp('Export finished.' ); tout = toc(Ttot); 
+       disp([num2str(tout/60,3),' minutes']); 
    end
      
     
@@ -317,13 +316,16 @@ function AutoCycle_Callback(hObject, eventdata, handles)
 
 function setup(hObject,eventdata,handles)
   if handles.step == 1; 
-       load([handles.fdata,'/','imviewer_lsm_pars1']); 
+       %load([handles.fdata,'/','imviewer_lsm_pars1']); 
+       load(['imviewer_lsm_pars1']);
        
      froot = get(handles.froot,'String');
      emb = get(handles.embin,'String');
      fname = [froot,'_',emb];  
        
        % pars = {'1.2E4','[1,1,1,1]','[0,0,0,0]',' ',' ',' '}; save([handles.fdata,'imviewer_lsm_pars1'], 'pars' );
+       
+       % pars = {'1.2E4','[1,1,1,1]','[0,0,0,0]',' ',' ',' '};   save(['imviewer_lsm_pars1'], 'pars' );
         set(handles.in1label,'String','Max noise');
         set(handles.in1,'String', pars(1));
         set(handles.in2label,'String','starting frames');
@@ -369,59 +371,16 @@ function savePars_Callback(hObject, eventdata, handles)
      stp_label = get(handles.stepnum,'String');     
      savelabel = ['imviewer_lsm_pars',stp_label];  
      % labeled as nucdot_parsi.mat where "i" is the step number 
-     save([handles.fdata, savelabel], 'pars');        % export values
-     disp([handles.fdata, savelabel]);
+    % save([handles.fdata, savelabel], 'pars');        % export values
+    % disp([handles.fdata, savelabel]);
+    save([savelabel], 'pars'); 
+    disp([savelabel]);
      pars 
 
 %      save([handles.fdata,'/','test']);
 %      load([handles.fdata,'/','test']);
      
 guidata(hObject, handles); % update GUI data with new labels
-
-% ----------------------STEP CONTROLS----------------------- %
-% interfaces to main analysis code 
-% --- Executes on button press in nextstep.
-function nextstep_Callback(hObject, eventdata, handles)
-handles.step = handles.step + 1; % forward 1 step
- set(handles.stepnum,'String', handles.step); % change step label in GUI
-    handles.output = hObject; % update handles object with new step number
-    guidata(hObject, handles);  % update GUI data with new handles
-    setup(hObject, eventdata, handles); % set up labels and default values for new step
-    guidata(hObject, handles); % update GUI data with new labels
-
-% --- Executes on button press in back.
-function back_Callback(hObject, eventdata, handles)
-handles.step = handles.step-1; % go back a step
- set(handles.stepnum,'String',handles.step); % Change step label in GUI
-    handles.output = hObject; % update handles object with new step number
-    guidata(hObject, handles); % update GUI data with new handles
-    setup(hObject, eventdata, handles); % set up labels and default values for new step
-    guidata(hObject, handles); % update GUI data with new labels
-% -------------------------------------------------------- %
-
-
-% --- Executes on button press in LoadNext.
-function LoadNext_Callback(hObject, eventdata, handles)
-    embn = handles.emb + 1;  % update embryo number
-    if embn<10
-        emb = ['0',num2str(embn)];
-    else
-        emb = num2str(embn);
-    end
-    set(handles.embin,'String',emb); % update emb number field in GUI 
-    handles.emb = emb; % update emb number in handles structure
-   [handles] = imload(hObject, eventdata, handles); % load new embryo
-   guidata(hObject, handles); % save for access by other functions
-
-% Reset step to step 1; 
-    handles.step = 1; % forward 1 step
-    set(handles.stepnum,'String', handles.step); % change step label in GUI
-    handles.output = hObject; % update handles object with new step number
-    guidata(hObject, handles);  % update GUI data with new handles
-    setup(hObject, eventdata, handles); % set up labels and default values for new step
-    guidata(hObject, handles); % update GUI data with new labels
-
-
 
 
 % ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ %
@@ -540,10 +499,6 @@ end
 
 % --------------------------------------------------------------------
 function Untitled_1_Callback(hObject, eventdata, handles)
-% hObject    handle to Untitled_1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
 
 
 function fout_Callback(hObject, eventdata, handles)
@@ -553,29 +508,12 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-% --- Executes on button press in pushbutton14.
 function pushbutton14_Callback(hObject, eventdata, handles)
 
 
-
 function oname_Callback(hObject, eventdata, handles)
-% hObject    handle to oname_label (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of oname_label as text
-%        str2double(get(hObject,'String')) returns contents of oname_label as a double
-
-
-% --- Executes during object creation, after setting all properties.
 function oname_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to oname_label (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
