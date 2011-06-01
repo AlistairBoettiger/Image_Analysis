@@ -51,7 +51,7 @@ function varargout = imviewer_lsm(varargin)
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
 % Edit the above text to modify the response to help imviewer_lsm
-% Last Modified by GUIDE v2.5 12-Feb-2011 19:35:13
+% Last Modified by GUIDE v2.5 01-Jun-2011 11:37:38
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -90,7 +90,7 @@ function imviewer_lsm_OpeningFcn(hObject, eventdata, handles, varargin)
      handles.first = [1,1,1,1];
      handles.last = [0,0,0,0];
      handles.nmax = 1.5E4; 
-     handles.step = 0;  % starting step is step 0 
+     handles.step = 1;  % starting step is step 0 
      set(handles.stepnum,'String',handles.step); % change step label in GUI
      handles.output = hObject; % update handles object with new step number
      guidata(hObject, handles);  % update GUI data with new handles
@@ -113,20 +113,7 @@ guidata(hObject, handles);
 function run_Callback(hObject, eventdata, handles)
 step = handles.step;
 
-% Step 0: Load Data into script
-if step == 0;
-    disp('running...'); tic
-    %dispfl = str2double(get(handles.in1,'String')); 
-    %handles.dispfl = dispfl;
-    handles.nmax = str2double(get(handles.in2,'String'));
-    handles.output = hObject; % update handles object with new step number
-    guidata(hObject, handles);  % update GUI data with new handles
-    [handles] = imload(hObject, eventdata, handles); % load new embryo
-    guidata(hObject, handles);  
-    %    save([handles.fdata,'/','test']);
-    %    load([handles.fdata,'/','test']);
-    toc
-end
+
 
 % Step 1: Max Project nuclear channel at 1024  1024 resoultion
 if step == 1; 
@@ -149,56 +136,104 @@ end
 
 
 
-function [handles] = projectNsave(hObject, eventdata, handles);    
-    fname =handles.fname;
-    fout = handles.folderout;
+function [handles] = projectNsave(hObject, eventdata, handles)    
+   
+    global TIF;
+    fsource = get(handles.source,'String'); % source folder containing data
+    froot = get(handles.froot,'String');  % .lsm file name
+    fout = get(handles.fout,'String');  % save folder
+    oname = get(handles.oname,'String'); % output file name
+    
+    nmax = str2double(get(handles.in1,'String')); % max noise parameter
+    firstc =  get(handles.in2,'String'); % first frame for max project
+    lastc = get(handles.in3,'String'); % last frame for max project
+    handles.first = eval(firstc{:});
+    handles.last = eval(lastc{:}); 
+    
+    
+    emb = get(handles.embin,'String');
+    N = str2double(emb);  % embryo number
+
     first = handles.first;
     last = handles.last;
-       
-    % find if data is uint16 or something else; 
-     inttype =  class(handles.Im{1,1}{1}); 
-     disp(['data is ',inttype]); 
     
-   % Determine the number of channels in the image data
-    try 
-        test = handles.Im{1,1}{4}(1,1);
-        channels = 4;
-    catch chn
-        try 
-             test = handles.Im{1,1}{3}(1,1);
-             channels = 3;
-        catch chn
-            try
-                 test = handles.Im{1,1}{2}(1,1);
-                 channels = 2;  
-            catch chn
-                 test = handles.Im{1,1}{1}(1,1);
-                 channels = 1;  
-            end
-        end
+    if N == 1 % only need to do this once.  
+        jacquestiffread([fsource,'/',froot,'.lsm']);
     end
-    clear test 
-    disp(['Data contains ', num2str(channels),' channels']); 
+    
+     % froot = 's02_MP01_Hz_22C'; fsource = '/Volumes/Data/Lab Data/Raw_Data/2011-05-22/';
 
     
+    load([fsource,'/',froot,'.mat'])  
+    filetemp= fopen(Datas.filename,'r','l');
     
-    [h,w] = size(handles.Im{1,1}{1});
-    
-    % interpret last slice of zero as all slices in stack.  
-    Zs = length(handles.Im);
-    for c=1:channels
-        if last(c) == 0 
-            last(c) = Zs; 
-        end
-    end
        
+    % find if data is uint16 or something else; 
+     inttype =  ['uint',num2str(Datas.Stack1.Image1.IMG.bits)];
+     disp(['data is ',inttype]); 
+     
+     channels =  Datas.Stack1.Image1.TIF.SamplesPerPixel;  
+     disp(['Data contains ', num2str(channels),' channels']); 
     
-   Imax = eval([inttype,'(zeros(h,w,channels));']);
+    w = Datas.Stack1.Image1.IMG.width;
+    h = Datas.Stack1.Image1.IMG.height;
+    Zs = Datas.LSM_info.DimensionZ;
+
+   last(last == 0) = Zs;
+    
+    
+    Imax = zeros(h,w,channels,inttype);
+ 
+    
+     
+   tic
+   disp('writing data...'); 
+   
     for i=1:Zs
-        Im_layer = eval([inttype,'(zeros(h,w,channels));']);
-        for c=1:channels
-            Im_layer(:,:,c) = handles.Im{1,i}{c};
+       % shorthand    
+    TIF = Datas.([ 'Stack' num2str(N)]).(['Image' num2str(i)]).TIF;
+    IMG = Datas.([ 'Stack' num2str(N)]).(['Image' num2str(i)]).IMG;
+    TIF.file=filetemp;
+    Im_layer = zeros(h,w,channels,inttype); %   eval([inttype,'(zeros(h,w,channels));']);
+   
+       offset = 0; 
+        %read the image channels
+        for c = 1:channels % c=3
+            TIF.StripCnt = c;
+            IMG.data{c} = read_planeT(offset, IMG.width, IMG.height, c,TIF); 
+
+            % check for screwed up offset
+            [h,w] = size(IMG.data{c});
+            % look in middle of data set and see if it's noise or
+            % signal
+            sdata =  IMG.data{c}( floor(h/2*.9):floor(h/2*1.1), floor(w/2*.9):floor(w/2*1.1)  ); 
+            isnoise = std(double(sdata(:)));
             
+%             save([handles.fdata,'/','test']);
+%      load([handles.fdata,'/','test']);
+            
+           if isnoise > nmax
+               offset = 1;
+               IMG.data{c} = read_planeT(offset, IMG.width, IMG.height,c,TIF); 
+               sdata =  IMG.data{c}( floor(h/2*.9):floor(h/2*1.1), floor(w/2*.9):floor(w/2*1.1)  ); 
+               fixed = std(double(sdata(:)));
+               disp(['offset error found in chn ', num2str(c), ' layer ',num2str(i),...
+                   '  std=',num2str(isnoise,5), '  now=',num2str(fixed,5)] );
+
+               if fixed >  nmax  % 
+                   if TIF.BitsPerSample(1) == 16
+                      IMG.data{c} = uint16(zeros(h,w));
+                   else
+                      IMG.data{c} = uint8(zeros(h,w));
+                   end
+                     disp(['Fix failed for in chn ', num2str(c),...
+                         ' layer ',num2str(i),'  skipping this image...'] );
+               end 
+           end
+              % Insert into multicolor single layer
+             Im_layer(:,:,c) = IMG.data{c};
+           
+             % Compute max project
             % not enough memory to do one shot max project, need to do this
             % progressively.  Fortunately max doesn't care (unlike ave). 
             if i>first(c) && i<last(c)+1
@@ -206,12 +241,11 @@ function [handles] = projectNsave(hObject, eventdata, handles);
             end
             if channels == 2
                 
- %     save([handles.fdata,'/','test']);
-%      load([handles.fdata,'/','test']);
-                Im_layer(:,:,3) = eval([inttype,'(zeros(h,w,1));']); 
+
+                Im_layer(:,:,3) = zeros(h,w,1,inttype); % eval([inttype,'(zeros(h,w,1));']); 
             end
         end
-        imwrite(Im_layer,[fout,'/',fname,'_z', num2str(i),'.tif'],'tif');
+        imwrite(Im_layer,[fout,'/',oname,'_',emb,'_z', num2str(i),'.tif'],'tif');
      end
     
 clear handles.Im; 
@@ -220,7 +254,8 @@ clear Im_layer;
             if channels == 2
                 Imax(:,:,3) = eval([inttype,'(zeros(h,w,1))']); 
             end
-    imwrite(Imax,[fout,'/','max_',fname,'.tif'],'tif');
+    imwrite(Imax,[fout,'/','max_',oname,'_',emb,'.tif'],'tif');
+    disp(['data written for embryo', emb]); 
     guidata(hObject, handles);  % update GUI data with new handles
     clear Imax; 
     toc
@@ -255,11 +290,7 @@ function AutoCycle_Callback(hObject, eventdata, handles)
             set(handles.embin,'String',embin); 
 
         disp(['running embryo ',embin,'...']); tic
-        handles.output = hObject; % update handles object with new step number
-        guidata(hObject, handles);  % update GUI data with new handles
-        [handles] = imload(hObject, eventdata, handles); % load new embryo
-        guidata(hObject, handles);  
-
+ 
         handles.output = hObject; % update handles object with new step number
         guidata(hObject, handles);  % update GUI data with new handles
         [handles] = projectNsave(hObject, eventdata, handles); % load new embryo
@@ -284,26 +315,6 @@ function AutoCycle_Callback(hObject, eventdata, handles)
 % defalut label parameters
 
 function setup(hObject,eventdata,handles)
- if handles.step == 0; 
-       load([handles.fdata, 'imviewer_lsm_pars0']); 
-       % pars = {'1','1.5E4',' ',' ',' ',' '}; save([handles.fdata,'imviewer_lsm_pars0'], 'pars' );
-        set(handles.in1label,'String','Display first/last');
-        set(handles.in1,'String', pars(1));
-        set(handles.in2label,'String','noise max');
-        set(handles.in2,'String', pars(2));
-       set(handles.in3label,'String',' ');
-        set(handles.in3,'String', pars(3));
-        set(handles.in4label,'String',' ');
-        set(handles.in4,'String', pars(4));
-        set(handles.in5label,'String',' ');
-        set(handles.in5,'String', pars(5));
-        set(handles.in6label,'String',' ');
-        set(handles.in6,'String', pars(6));
-        dir = {
-       'Load lsm file and display all layers in stack in 3 color';
-       'red will be channel 1, green chn 2, blue chn 3'} ;
-        set(handles.directions,'String',dir); 
- end
   if handles.step == 1; 
        load([handles.fdata,'/','imviewer_lsm_pars1']); 
        
@@ -311,18 +322,18 @@ function setup(hObject,eventdata,handles)
      emb = get(handles.embin,'String');
      fname = [froot,'_',emb];  
        
-       % pars = {' ','[1,1,1,1]','[0,0,0,0]',' ',' ',' '}; save([handles.fdata,'imviewer_lsm_pars1'], 'pars' );
-        set(handles.in1label,'String','save name');
-        set(handles.in1,'String', fname);
+       % pars = {'1.2E4','[1,1,1,1]','[0,0,0,0]',' ',' ',' '}; save([handles.fdata,'imviewer_lsm_pars1'], 'pars' );
+        set(handles.in1label,'String','Max noise');
+        set(handles.in1,'String', pars(1));
         set(handles.in2label,'String','starting frames');
         set(handles.in2,'String', pars(2));
        set(handles.in3label,'String','end frames');
         set(handles.in3,'String', pars(3));
-        set(handles.in4label,'String','Nuclear Blur');
+        set(handles.in4label,'String',' ');
         set(handles.in4,'String', pars(4));
-        set(handles.in5label,'String','Working Size');
+        set(handles.in5label,'String',' ');
         set(handles.in5,'String', pars(5));
-        set(handles.in6label,'String','First,Last Layer');
+        set(handles.in6label,'String',' ');
         set(handles.in6,'String', pars(6));
         %    set(handles.VarButtonName,'String',''); 
         dir = {'Step 1: Export layer data as tifs and max project between chosen';
@@ -411,73 +422,6 @@ function LoadNext_Callback(hObject, eventdata, handles)
 
 
 
-        %========== change source images ================%
-function [handles] = imload(hObject, eventdata, handles)
-handles.fin = get(handles.source,'String'); % folder
-handles.ename = get(handles.froot,'String'); % embryo name
-handles.emb = str2double(get(handles.embin,'String')); % embryo number
-
-filename = [handles.fin,'/',handles.ename];
-% load images
-
-if handles.emb == 1 % only need to do this once.  
-    jacquestiffread([filename,'.lsm']);
-end
-   %  handles.Im = loadlsm([filename,'.mat'],handles.emb);  % old version
-   
-   
-    handles.Im = lsm_read_mod([filename,'.mat'],handles.emb,handles.nmax); 
-    
-    Zs = length(handles.Im);
-    [h,w] = size(handles.Im{1,1}{1});
-    
-
-    if h ==1 % handles.dispfl == 1; 
-        try
-        % display image stack at 512x512 resolution
-            m = 512/h; 
-            for j=1:Zs
-                    I = uint16(zeros(512,512,3));
-                    I(:,:,1) = imresize(handles.Im{1,j}{1},m);
-                    I(:,:,2) = imresize(handles.Im{1,j}{2},m);
-                    I(:,:,3) = imresize(handles.Im{1,j}{3},m);
-                    figure(10); clf; imshow(I); pause(.001); 
-            end
-        catch error
-            disp(error.message);
-            disp('Only 2 data channels found'); 
-        end          
-    
-  %      display first and last in stack
-          figure(1); clf; set(gcf,'color','k'); colordef black;
-            subplot(1,2,1); imshow(handles.Im{1,1}{1}); title('First slice, chn 1');
-            subplot(1,2,2); imshow(handles.Im{1,Zs}{1});  title('Last slice, chn 1');
-
-            figure(2); clf; set(gcf,'color','k'); colordef black;
-            subplot(1,2,1); imshow(handles.Im{1,1}{2}); title('First slice, chn 2');
-            subplot(1,2,2); imshow(handles.Im{1,Zs}{2}); title('Last slice, chn 2');
-
-        try
-            figure(3); clf; set(gcf,'color','k'); colordef black;
-            subplot(1,2,1); imshow(handles.Im{1,1}{3}); title('First slice, chn 3');
-            subplot(1,2,2); imshow(handles.Im{1,Zs}{3}); title('Last slice, chn 3');  
-            
-        catch error
-            disp(error.message);
-            disp('Only 2 data channels found'); 
-        end          
-    end
- 
-    
-    
-    
-    
-    handles.output = hObject; 
-    guidata(hObject,handles);% pause(.1);
-    disp('image loaded'); 
-        %====================================================%
-
-
 
 % ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ %
 
@@ -487,8 +431,11 @@ end
 % file name, or image number are changed.  
 
 function froot_Callback(hObject, eventdata, handles)
- handles.step = 0;  % starting step is step 0 
+ handles.step = 1;  % starting step is step 0 
      set(handles.stepnum,'String',handles.step); % change step label in GUI
+     froot = get(handles.froot,'String');
+     set(handles.oname,'String',froot);  % automatically set export name equal input name 
+     
     handles.output = hObject; % update handles object with new step number
     guidata(hObject, handles);  % update GUI data with new handles
      setup(hObject, eventdata, handles); % set up labels and default values for new step
@@ -496,7 +443,7 @@ function froot_Callback(hObject, eventdata, handles)
 
 
 function embin_Callback(hObject, eventdata, handles)
- handles.step = 0;  % starting step is step 0 
+ handles.step = 1;  % starting step is step 0 
      set(handles.stepnum,'String',handles.step); % change step label in GUI
     handles.output = hObject; % update handles object with new step number
     guidata(hObject, handles);  % update GUI data with new handles
@@ -506,7 +453,7 @@ function embin_Callback(hObject, eventdata, handles)
 
 
 function source_Callback(hObject, eventdata, handles)
- handles.step = 0;  % starting step is step 0 
+ handles.step = 1;  % starting step is step 0 
      set(handles.stepnum,'String',handles.step); % change step label in GUI
     handles.output = hObject; % update handles object with new step number
     guidata(hObject, handles);  % update GUI data with new handles
@@ -608,3 +555,26 @@ end
 
 % --- Executes on button press in pushbutton14.
 function pushbutton14_Callback(hObject, eventdata, handles)
+
+
+
+function oname_Callback(hObject, eventdata, handles)
+% hObject    handle to oname_label (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of oname_label as text
+%        str2double(get(hObject,'String')) returns contents of oname_label as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function oname_label_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to oname_label (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
