@@ -57,4 +57,7 @@ If you haven't copied the .mat files  called _pars#.mat for the respective GUI, 
 *All these GUIs write and read the current set of parameters from a .mat file on the hard-drive.  This allows you to find an optimal parameter set for processing your data and have that easily become the program default.
 
 
+05/31/11
+Added AlistairMobile to repository.
+
 
