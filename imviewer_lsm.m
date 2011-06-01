@@ -2,7 +2,7 @@
 %%                  imviewer_lsm.m  Multi Channel
 % Alistair Boettiger                                  Date Begund: 02/12/11
 % Levine Lab, UC Berkeley                        Version Complete: 02/12/11 
-% Functionally complete                             Last Modified: 03/10/11
+% Functionally complete                             Last Modified: 06/01/11
 % 
 % 
 %% Attribution:
@@ -32,7 +32,8 @@
 % 03/10/11: changed export name to max_fname from fname_max.
 % it's easier to work with filenames with the number at the end, not in the
 % middle.  
-
+% 06/01/11 overhauled to run in a single step, keep parameters in local
+% directory, only import one layer at a time.  
 
 function varargout = imviewer_lsm(varargin)
 % IMVIEWER_LSM M-file for imviewer_lsm.fig
@@ -236,7 +237,7 @@ function [handles] = projectNsave(hObject, eventdata, handles)
              % Compute max project
             % not enough memory to do one shot max project, need to do this
             % progressively.  Fortunately max doesn't care (unlike ave). 
-            if i>first(c) && i<last(c)+1
+            if i>first(c)-1 && i<last(c)+1
                  Im_layer(:,:,c) = IMG.data{c};    % Insert into multicolor single layer, only if it's in the selected range.  
                 Imax(:,:,c) = max( cat(3,Imax(:,:,c),Im_layer(:,:,c)),[],3);       
             end
@@ -245,12 +246,13 @@ function [handles] = projectNsave(hObject, eventdata, handles)
 
                 Im_layer(:,:,3) = zeros(h,w,1,inttype); % eval([inttype,'(zeros(h,w,1));']); 
             end
-        end
+        end  % close loop over colors
         imwrite(Im_layer,[fout,'/',oname,'_',emb,'_z', num2str(i),'.tif'],'tif');
-     end
+     
+    clear Im_layer TIF IMG;
+    end
     
-clear handles.Im; 
-clear Im_layer;
+
 % Can't write a 2 channel tif, need to convert to a 3 channel version.  
             if channels == 2
                 Imax(:,:,3) = eval([inttype,'(zeros(h,w,1))']); 
@@ -259,6 +261,8 @@ clear Im_layer;
     disp(['data written for embryo', emb]); 
     guidata(hObject, handles);  % update GUI data with new handles
     clear Imax; 
+    
+    fclose(filetemp);
     toc
 
 
@@ -275,10 +279,10 @@ function AutoCycle_Callback(hObject, eventdata, handles)
     emb = str2double(get(handles.embin,'String'));  
     handles.folderout = get(handles.fout,'String');   % where to save images
 
-     Ttot = tic 
+     Ttot = tic ;
      
      err = 0; 
-    try  
+   % try  
      while err == 0;
          handles.emb = emb; % needed for imload to get the right embyro 
 
@@ -300,11 +304,11 @@ function AutoCycle_Callback(hObject, eventdata, handles)
         emb = emb + 1;          
      end
          
-    catch error
-       disp(error.message); 
-       disp('Export finished.' ); tout = toc(Ttot); 
-       disp([num2str(tout/60,3),' minutes']); 
-   end
+  %  catch error
+%        disp(error.message); 
+%        disp('Export finished.' ); tout = toc(Ttot); 
+%        disp([num2str(tout/60,3),' minutes']); 
+ %  end
      
     
 
@@ -317,12 +321,11 @@ function AutoCycle_Callback(hObject, eventdata, handles)
 function setup(hObject,eventdata,handles)
   if handles.step == 1; 
        %load([handles.fdata,'/','imviewer_lsm_pars1']); 
-       load(['imviewer_lsm_pars1']);
+       load('imviewer_lsm_pars1');
        
      froot = get(handles.froot,'String');
      emb = get(handles.embin,'String');
-     fname = [froot,'_',emb];  
-       
+            
        % pars = {'1.2E4','[1,1,1,1]','[0,0,0,0]',' ',' ',' '}; save([handles.fdata,'imviewer_lsm_pars1'], 'pars' );
        
        % pars = {'1.2E4','[1,1,1,1]','[0,0,0,0]',' ',' ',' '};   save(['imviewer_lsm_pars1'], 'pars' );
@@ -373,8 +376,8 @@ function savePars_Callback(hObject, eventdata, handles)
      % labeled as nucdot_parsi.mat where "i" is the step number 
     % save([handles.fdata, savelabel], 'pars');        % export values
     % disp([handles.fdata, savelabel]);
-    save([savelabel], 'pars'); 
-    disp([savelabel]);
+    save(savelabel, 'pars'); 
+    disp(savelabel);
      pars 
 
 %      save([handles.fdata,'/','test']);
