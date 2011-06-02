@@ -86,17 +86,14 @@ function imviewer_lsm_OpeningFcn(hObject, eventdata, handles, varargin)
   % Some initial setup 
       % Folder to save .mat data files in for normal script function.  
      handles.fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
-     handles.dispfl = 0; 
+ 
      
-     handles.first = [1,1,1,1];
-     handles.last = [0,0,0,0];
-     handles.nmax = 1.5E4; 
      handles.step = 1;  % starting step is step 0 
      set(handles.stepnum,'String',handles.step); % change step label in GUI
      handles.output = hObject; % update handles object with new step number
      guidata(hObject, handles);  % update GUI data with new handles
      setup(hObject, eventdata, handles); % set up labels and default values for new step
-     guidata(hObject, handles); % update GUI data with new labels        
+     
     
 % Update handles structure
 guidata(hObject, handles);
@@ -114,8 +111,6 @@ guidata(hObject, handles);
 function run_Callback(hObject, eventdata, handles)
 step = handles.step;
 
-
-
 % Step 1: Max Project nuclear channel at 1024  1024 resoultion
 if step == 1; 
     disp('running step 1...'); 
@@ -131,8 +126,7 @@ if step == 1;
     handles.output = hObject; % update handles object with new step number
     guidata(hObject, handles);  % update GUI data with new handles
     [handles] = projectNsave(hObject, eventdata, handles); % load new embryo
-    guidata(hObject, handles); 
-  
+    guidata(hObject, handles);  
 end
 
 
@@ -150,8 +144,7 @@ function [handles] = projectNsave(hObject, eventdata, handles)
     lastc = get(handles.in3,'String'); % last frame for max project
     handles.first = eval(firstc{:});
     handles.last = eval(lastc{:}); 
-    
-    
+        
     emb = get(handles.embin,'String');
     N = str2double(emb);  % embryo number
 
@@ -191,6 +184,7 @@ function [handles] = projectNsave(hObject, eventdata, handles)
    disp('writing data...'); 
    
     for i=1:Zs
+      %  disp(['embryo ', num2str(N), '   stack-position', num2str(i) ]);
        % shorthand    
     TIF = Datas.([ 'Stack' num2str(N)]).(['Image' num2str(i)]).TIF;
     IMG = Datas.([ 'Stack' num2str(N)]).(['Image' num2str(i)]).IMG;
@@ -213,7 +207,7 @@ function [handles] = projectNsave(hObject, eventdata, handles)
 %             save([handles.fdata,'/','test']);
 %      load([handles.fdata,'/','test']);
             
-           if isnoise > nmax
+           if isnoise > nmax  && c<3
                offset = 1;
                IMG.data{c} = read_planeT(offset, IMG.width, IMG.height,c,TIF); 
                sdata =  IMG.data{c}( floor(h/2*.9):floor(h/2*1.1), floor(w/2*.9):floor(w/2*1.1)  ); 
@@ -230,39 +224,44 @@ function [handles] = projectNsave(hObject, eventdata, handles)
                      disp(['Fix failed for in chn ', num2str(c),...
                          ' layer ',num2str(i),'  skipping this image...'] );
                end 
-           end
-            
-            
+           end          
            
              % Compute max project
             % not enough memory to do one shot max project, need to do this
             % progressively.  Fortunately max doesn't care (unlike ave). 
             if i>first(c)-1 && i<last(c)+1
                  Im_layer(:,:,c) = IMG.data{c};    % Insert into multicolor single layer, only if it's in the selected range.  
+                 
+%                  figure(1); clf; imagesc(imresize(Im_layer(:,:,1),.2)); colorbar;
+%                  title(['embryo ', num2str(N), '   stack-position', num2str(i) ]); 
+%                  pause(.1);
+                 
                 Imax(:,:,c) = max( cat(3,Imax(:,:,c),Im_layer(:,:,c)),[],3);       
             end
             if channels == 2
                 
 
-                Im_layer(:,:,3) = zeros(h,w,1,inttype); % eval([inttype,'(zeros(h,w,1));']); 
+                Im_layer(:,:,3) = Im_layer(:,:,2);
+                Im_layer(:,:,2) = zeros(h,w,1,inttype); % eval([inttype,'(zeros(h,w,1));']); 
             end
         end  % close loop over colors
         imwrite(Im_layer,[fout,'/',oname,'_',emb,'_z', num2str(i),'.tif'],'tif');
      
-    clear Im_layer TIF IMG;
+    clear Im_layer %  TIF IMG;
     end
     
 
 % Can't write a 2 channel tif, need to convert to a 3 channel version.  
             if channels == 2
-                Imax(:,:,3) = eval([inttype,'(zeros(h,w,1))']); 
+                Imax(:,:,3) = Imax(:,:,2); 
+                Imax(:,:,2) = eval([inttype,'(zeros(h,w,1))']); 
             end
     imwrite(Imax,[fout,'/','max_',oname,'_',emb,'.tif'],'tif');
     disp(['data written for embryo', emb]); 
     guidata(hObject, handles);  % update GUI data with new handles
     clear Imax; 
     
-    fclose(filetemp);
+   %  fclose(filetemp);
     toc
 
 
@@ -282,7 +281,7 @@ function AutoCycle_Callback(hObject, eventdata, handles)
      Ttot = tic ;
      
      err = 0; 
-   % try  
+    try  
      while err == 0;
          handles.emb = emb; % needed for imload to get the right embyro 
 
@@ -304,11 +303,11 @@ function AutoCycle_Callback(hObject, eventdata, handles)
         emb = emb + 1;          
      end
          
-  %  catch error
-%        disp(error.message); 
-%        disp('Export finished.' ); tout = toc(Ttot); 
-%        disp([num2str(tout/60,3),' minutes']); 
- %  end
+    catch error
+        disp(error.message); 
+        disp('Export finished.' ); tout = toc(Ttot); 
+        disp([num2str(tout/60,3),' minutes']); 
+   end
      
     
 
