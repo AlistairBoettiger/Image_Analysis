@@ -22,12 +22,17 @@ max_size = 200; % Biggest linear dimension at which to attempt 3D projection;
 tic; 
 disp('loading data...');
 
-folder = '/Volumes/Data/Lab Data/Raw_Data/02-17-11/';
-fname = 'MP05_22C_sna_y'; emb = '02';
+%folder = '/Volumes/Data/Lab Data/Raw_Data/02-17-11/';
+%fname = 'MP05_22C_sna_y'; emb = '02';
 %fname = 'MP09_22C_hb_y_d'; emb = '01';
 
+folder = '/Volumes/Data/Lab Data/Raw_Data/2011-05-22/';
+stackfolder = 's12_cntrl_2label/';
+rawfolder =  folder; % '/Volumes/Data/Lab Data/Raw_Data/2011-05-22/s12_cntrl_2label/';
+fname = 's12_cntrl_2label'; emb ='01';
+
 filename = [folder,'/',fname];
-handles.Im = lsm_read_mod([filename,'.mat'],str2double(emb),1.5E4); 
+handles.Im = lsm_read_mod([filename,'.mat'],str2double(emb),1.9E4); 
 handles.mRNAchn1 = 1;
 
 toc
@@ -40,7 +45,7 @@ toc
 %% Set-up
 
 % zoom in on specific region
- m =  1/2048;  % .7; %   1/2048;   % .9; % .85;
+ m =  .9; % 1/2048;  % .7; %   1/2048;   % .9; % .85;
 Zs = length(handles.Im);
 [h,w] = size(handles.Im{1,1}{1}); 
 
@@ -110,8 +115,8 @@ end
 
 [hs,ws] = size( handles.Im{1,1}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 )); 
 
-[rawfolder,stackfolder,fname,'_',emb,'_z',num2str(z),'.tif'];
-          Iin_z = imread(im_folder{z}); 
+%im_folder{z} = [rawfolder,stackfolder,fname,'_',emb,'_z',num2str(z),'.tif'];
+%          Iin_z = imread(im_folder{z}); 
 
 
 if hs< max_size
