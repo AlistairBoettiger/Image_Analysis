@@ -60,4 +60,7 @@ If you haven't copied the .mat files  called _pars#.mat for the respective GUI, 
 05/31/11
 Added AlistairMobile to repository.
 
+06/02/11
+Jacques co-editor of repository
+
 
