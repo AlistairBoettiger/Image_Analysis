@@ -130,9 +130,12 @@ end
 
 plotdata = 0 ;% don't show 
 
- DotData = cell(1,Zs);    
- DotMasks = cell(1,Zs); 
+ DotData1 = cell(1,Zs);    
+ DotMasks1 = cell(1,Zs); 
  im_folder = cell(1,Zs);
+ 
+  DotData2 = cell(1,Zs);    
+ DotMasks2 = cell(1,Zs); 
  
  tic; disp('finding dots...'); 
 for z = 1:Zs % z = 20        
@@ -140,29 +143,42 @@ for z = 1:Zs % z = 20
           im_folder{z} = [rawfolder,stackfolder,fname,'_',emb,'_z',num2str(z),'.tif'];
           Iin_z = imread(im_folder{z}); 
             
-         [cent1,bw1,dL] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
+          mRNAchn = 1;
+          
+         % [cent,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
+          
+         [cent1,L] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
           % figure(2); clf; imagesc(  I1);
-          DotData{z} = cent1;
-          DotMasks{z} = dL; 
+          DotData1{z} = cent1;
+          DotMasks1{z} = dL; 
         
           % figure(2); clf; imagesc(Alldots(:,:,z)); 
           
-          if hs< max_size
-              Alldots(:,:,z) =   Iin_z; % 2 
-              bnd1 = imdilate(bw1,strel('disk',2)) -bw1;         
-             % figure(2); clf; imshow(bnd2);
-              mask = double(2*bw1)+bnd1;   
-              mask(mask==0)=NaN; 
-              mask(mask==1) = 0; 
-              Isect1(:,:,z) = double(I1).*double(mask);
-             %  figure(2); clf; imagesc(mask);   
-              % figure(2); clf; imagesc(Isect1(:,:,z) );   colormap hot;
-          end
+%           if hs< max_size
+%               Alldots(:,:,z) =   Iin_z; % 2 
+%               bnd1 = imdilate(bw1,strel('disk',2)) -bw1;         
+%              % figure(2); clf; imshow(bnd2);
+%               mask = double(2*bw1)+bnd1;   
+%               mask(mask==0)=NaN; 
+%               mask(mask==1) = 0; 
+%               Isect1(:,:,z) = double(I1).*double(mask);
+%              %  figure(2); clf; imagesc(mask);   
+%               % figure(2); clf; imagesc(Isect1(:,:,z) );   colormap hot;
+%           end
+          
+       mRNAchn = 2;
+        [cent2,L] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
+          % figure(2); clf; imagesc(  I1);
+          DotData2{z} = cent2;
+          DotMasks2{z} = dL; 
+          
 end
 toc;
 %%
 
-        NewDotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,hs,ws,plotZdata,getpreciseZ,consec_layers,ovlap);
+        NewDotC1 = CheckDotUpDown(DotData1,DotMasks1,im_folder,1,hs,ws,plotZdata,getpreciseZ,consec_layers,ovlap);
+        NewDotC2 = CheckDotUpDown(DotData2,DotMasks2,im_folder,2,hs,ws,plotZdata,getpreciseZ,consec_layers,ovlap);
+  
         % Project all layers
          
         if show_projected == 1
