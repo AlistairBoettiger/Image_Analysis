@@ -141,15 +141,27 @@ function [handles] = projectNsave(hObject, eventdata, handles)
     
     nmax = str2double(get(handles.in1,'String')); % max noise parameter
     firstc =  get(handles.in2,'String'); % first frame for max project
-    lastc = get(handles.in3,'String'); % last frame for max project
+    lastc = get(handles.in3,'String'); % last frame for max project  
+    emb = get(handles.embin,'String');
+    str_chns = get(handles.in4,'String'); 
+    emb_out = get(handles.in5,'String');
+    
+    if emb_out{:} == ' ';
+        emb_out = emb;
+    else
+        emb_out = emb_out{:};
+    end
+    
     handles.first = eval(firstc{:});
     handles.last = eval(lastc{:}); 
-        
-    emb = get(handles.embin,'String');
-    N = str2double(emb);  % embryo number
-
+     
     first = handles.first;
     last = handles.last;
+    
+    
+    N = str2double(emb);  % embryo number
+
+   
     
     if N == 1 % only need to do this once.  
         jacquestiffread([fsource,'/',froot,'.lsm']);
@@ -169,6 +181,15 @@ function [handles] = projectNsave(hObject, eventdata, handles)
      channels =  Datas.Stack1.Image1.TIF.SamplesPerPixel;  
      disp(['Data contains ', num2str(channels),' channels']); 
     
+      
+    if str_chns{:} == ' '
+        chns = 1:channels;
+    else
+        chns = eval(str_chns{:});
+    end
+     
+     
+     
     w = Datas.Stack1.Image1.IMG.width;
     h = Datas.Stack1.Image1.IMG.height;
     Zs = Datas.LSM_info.DimensionZ;
@@ -191,9 +212,11 @@ function [handles] = projectNsave(hObject, eventdata, handles)
     TIF.file=filetemp;
     Im_layer = zeros(h,w,channels,inttype); %   eval([inttype,'(zeros(h,w,channels));']);
    
-       offset = 0; 
+   
         %read the image channels
-        for c = 1:channels % c=3
+        for cc = 1:channels % c=3
+            offset = 0;    
+            c = chns(cc);
             TIF.StripCnt = c;
             IMG.data{c} = read_planeT(offset, IMG.width, IMG.height, c,TIF); 
 
@@ -207,7 +230,7 @@ function [handles] = projectNsave(hObject, eventdata, handles)
 %             save([handles.fdata,'/','test']);
 %      load([handles.fdata,'/','test']);
             
-           if isnoise > nmax  && c<3
+           if isnoise > nmax %  && c<3
                offset = 1;
                IMG.data{c} = read_planeT(offset, IMG.width, IMG.height,c,TIF); 
                sdata =  IMG.data{c}( floor(h/2*.9):floor(h/2*1.1), floor(w/2*.9):floor(w/2*1.1)  ); 
@@ -230,22 +253,20 @@ function [handles] = projectNsave(hObject, eventdata, handles)
             % not enough memory to do one shot max project, need to do this
             % progressively.  Fortunately max doesn't care (unlike ave). 
             if i>first(c)-1 && i<last(c)+1
-                 Im_layer(:,:,c) = IMG.data{c};    % Insert into multicolor single layer, only if it's in the selected range.  
+                 Im_layer(:,:,cc) = IMG.data{c};    % Insert into multicolor single layer, only if it's in the selected range.  
                  
 %                  figure(1); clf; imagesc(imresize(Im_layer(:,:,1),.2)); colorbar;
 %                  title(['embryo ', num2str(N), '   stack-position', num2str(i) ]); 
 %                  pause(.1);
                  
-                Imax(:,:,c) = max( cat(3,Imax(:,:,c),Im_layer(:,:,c)),[],3);       
+                Imax(:,:,cc) = max( cat(3,Imax(:,:,cc),Im_layer(:,:,cc)),[],3);       
             end
             if channels == 2
-                
-
                 Im_layer(:,:,3) = Im_layer(:,:,2);
                 Im_layer(:,:,2) = zeros(h,w,1,inttype); % eval([inttype,'(zeros(h,w,1));']); 
             end
         end  % close loop over colors
-        imwrite(Im_layer,[fout,'/',oname,'_',emb,'_z', num2str(i),'.tif'],'tif');
+        imwrite(Im_layer,[fout,'/',oname,'_',emb_out,'_z', num2str(i),'.tif'],'tif');
      
     clear Im_layer %  TIF IMG;
     end
@@ -256,7 +277,7 @@ function [handles] = projectNsave(hObject, eventdata, handles)
                 Imax(:,:,3) = Imax(:,:,2); 
                 Imax(:,:,2) = eval([inttype,'(zeros(h,w,1))']); 
             end
-    imwrite(Imax,[fout,'/','max_',oname,'_',emb,'.tif'],'tif');
+    imwrite(Imax,[fout,'/','max_',oname,'_',emb_out,'.tif'],'tif');
     disp(['data written for embryo', emb]); 
     guidata(hObject, handles);  % update GUI data with new handles
     clear Imax; 
@@ -334,15 +355,16 @@ function setup(hObject,eventdata,handles)
         set(handles.in2,'String', pars(2));
        set(handles.in3label,'String','end frames');
         set(handles.in3,'String', pars(3));
-        set(handles.in4label,'String',' ');
+        set(handles.in4label,'String','channel order');
         set(handles.in4,'String', pars(4));
-        set(handles.in5label,'String',' ');
+        set(handles.in5label,'String','Alt. emb #');
         set(handles.in5,'String', pars(5));
         set(handles.in6label,'String',' ');
         set(handles.in6,'String', pars(6));
         %    set(handles.VarButtonName,'String',''); 
         dir = {'Step 1: Export layer data as tifs and max project between chosen';
-            'starting and ending frames.  Use 0 for last frame to use all data.'} ;
+            'starting and ending frames.  Use 0 for last frame to use all data.';
+            'Optional: change channel order e.g. [3,1,2]'} ;
         set(handles.directions,'String',dir); 
  end
  
