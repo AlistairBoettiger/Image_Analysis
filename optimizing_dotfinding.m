@@ -158,8 +158,7 @@ toc;
 %%
 
         NewDotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,hs,ws,plotZdata,getpreciseZ,consec_layers,ovlap);
-        % Project all layers
-         
+        % Project all layers          
         if show_projected == 1
             Imax = imread([rawfolder,stackfolder,fname,'_',emb,'_max.tif']); 
             Imax_dots = Imax(xp1:xp2,yp1:yp2,mRNAchn);  
