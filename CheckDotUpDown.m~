@@ -8,7 +8,7 @@
 % avoids multiple dot counting and avoids fusion of dots in Z.
 
 
-function dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,hs,ws,plotdata,getpreciseZ,consec_layers,ovlap)
+function dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,plotdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2)
 %% Updates
 % Rewritten 03/07/11 to convert more things to uint16 / uint8 to save
 % memory (even fragment of single stack is several gigs of active mem). 
@@ -21,11 +21,12 @@ function dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,hs,ws,plotdata
 tic 
 disp('connecting dots in Z...') 
 %  plotdata = 1;  h = hs; w = ws; mRNAchn = 1; ovlap = 2;
+% DotData = DotData2; DotMasks  = DotMasks2;
   % I = Im{1,z}{mRNAchn}( xp1:xp2,yp1:yp2 );
   
  comp_onVoff = 0;
-
-
+hs = yp2 - yp1+1; 
+ws = xp2 - xp1+1;
 
 % create list of 3d corrdinates of all dots.  Also assigns all dots a
 % unique linear index.
@@ -40,6 +41,9 @@ for z = 1:Zs
 end
 dotC = [cell2mat(DotData'), cell2mat(dotzpos)];  
 
+
+
+NDots = length(dotC); % total number of dots;
 maxdots = uint16(max(dotsinlayer) +100);
 totaldots = length(dotC);
 disp(['Max dots per layer = ',num2str(maxdots)]); 
@@ -49,8 +53,37 @@ disp(['Total dots = ',num2str(totaldots)]);
         % in 2 different data structures.  Could build this guy to start
         % with.  
 
+%%        
+figure(10); clf;  plot3(dotC(:,1),dotC(:,2),dotC(:,3),'w.');
+for n=1:NDots
+    z = dotC(n,3); 
+  figure(10); hold on;
+  plot3(dotC(n,1),dotC(n,2),dotC(n,3),'color',[0,1,0],'Marker','.','MarkerSize',10);
+end
+      
+ hold on; 
+  for n = 1:NDots  % n = 300
+      z = dotC(n,3); 
+      clear Iw;  
+      Iw = imread(im_folder{z}); 
+       % figure(4); clf; imagesc(3*Iw(:,:,mRNAchn));
+        Iw = Iw(xp1:xp2,yp1:yp2,mRNAchn);
+%         figure(4); clf; imagesc(Iw); hold on; 
+%         plot(round(dotC(n,1)),round(dotC(n,2)),'w+');
+        
+       cl = double(3*Iw( round(dotC(n,2)),round(dotC(n,1)),:)/255)
+       figure(10); hold on;
+      plot3(dotC(n,1),dotC(n,2),dotC(n,3),'color',cl.*[0,1,1]);
+     % pause(.001); 
+  end
+%%  
+%  figure(11); clf; plot(DotData{20}(:,1),DotData{20}(:,2),'w.');
+%  hold on; plot(DotData{21}(:,1),DotData{21}(:,2),'c.');
+% hold on; plot(DotData{22}(:,1),DotData{22}(:,2),'b.');
+        
+        
 
-NDots = length(dotC); % total number of dots;
+
 DotConn = single(zeros(2*NDots,Zs)); % empty connectivity matrix for all dots;  as a uint16 restricts this to 65,536 dots per image.  
 ConnInt = uint16(zeros(2*NDots,Zs)); 
 LayerJoin = false(2*NDots,Zs); 
@@ -79,18 +112,23 @@ for Z = 1:Zs % The primary layer Z = 10
          inds1(inds1>ws*hs) = ws*hs;  
          R1 = uint16(zeros(hs,ws));   
          R1(inds1) = maxdots; % convert indices to raster map   
-        % figure(3); clf; imagesc(R1d);  colorbar; colormap jet;
+        % figure(3); clf; imagesc(R1);  colorbar; colormap jet;
+        
          st1_dot_num = sum(dotsinlayer(1:Z-1)); % starting dot number for the layer under study     
        clear Iw; 
          Iw = imread(im_folder{z}); 
-        Iw = Iw(:,:,mRNAchn);
+        Iw = Iw(:,:,mRNAchn);  % doesn't scale down as written. 
          
-    for z=1:Zs % compare primary layer to all other layers  z = Z+1 
+    for z=1:Zs % compare primary layer to all other layers  z = Z-1 
         clear Loz;
          Loz = R1 + Rs{z}; 
+         % figure(3); clf; imagesc(Rs{z});  colorbar; colormap jet;
        %  Loz = R1 + DotMasks{z}; (only makes a small difference to use overlap box rather than within found dot.  
          
-        % figure(3); clf; imagesc(Loz);  colorbar; colormap jet;
+%          figure(3); clf; imagesc(Loz);  colorbar; colormap jet;
+%         hold on; plot(DotData{Z}(:,1),DotData{Z}(:,2),'w.');
+%         hold on; plot(DotData{z}(:,1),DotData{z}(:,2),'c.');
+        
         % figure(3); clf; imagesc(DotMasks{z}); 
          Loz(Loz<maxdots+1) = 0; % remove non-overlapping dots;
          Loz = Loz - maxdots; % LoZ is already positive, so we don't need to worry about negative values.  

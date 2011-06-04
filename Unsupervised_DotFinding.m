@@ -138,7 +138,7 @@ for e= 1:Es
             
         %%
 
-         dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,hs,ws,plotZdata,getpreciseZ,consec_layers,ovlap);
+         dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,plotZdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2);
          
 
         % Project all layers

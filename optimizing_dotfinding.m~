@@ -14,9 +14,12 @@
 clear all;
 
 
-dispdata = 0; % display dots around a chosen z section for visual cross-check.  
+dispdata = 1; % display dots around a chosen z section for visual cross-check.  
 max_size = 200; % Biggest linear dimension at which to attempt 3D projection; 
 
+
+
+    
 
 
 tic; 
@@ -27,12 +30,18 @@ disp('loading data...');
 %fname = 'MP09_22C_hb_y_d'; emb = '01';
 
 folder = '/Volumes/Data/Lab Data/Raw_Data/2011-05-22/';
-stackfolder = 's12_cntrl_2label/';
+
 rawfolder =  folder; % '/Volumes/Data/Lab Data/Raw_Data/2011-05-22/s12_cntrl_2label/';
-fname = 's12_cntrl_2label'; emb ='01';
+% stackfolder = 's12_cntrl_2label/';
+% fname = 's12_cntrl_2label'; emb ='01';
+
+stackfolder = 's14_comp_cntrl/';
+fname = 's14_comp_cntrl_1'; emb ='01';
 
 filename = [folder,'/',fname];
 handles.Im = lsm_read_mod([filename,'.mat'],str2double(emb),1.9E4); 
+
+fname = 's14_comp_cntrl';
 handles.mRNAchn1 = 1;
 
 toc
@@ -55,14 +64,11 @@ xp2 = floor(h/2*(2-m))+1;
 yp1 = floor(w/2*m)+1;
 yp2 = floor(w/2*(2-m))+1;
 
+xp1 = 1000; xp2 = xp1+200;
+yp1 = 1700; yp2 = yp1+200;
+
 disp(['Coordinates:  ', num2str(xp1), ' : ', num2str(xp2), ',   ' num2str(yp1), ' : ', num2str(yp2) ] );
 
-    sigmaE = 3;%  IMPORTANT
-    sigmaI = 4; % IMPORTANT
-    min_int  = 0.02;% .05 % not necessary Fix at Zero
-    FiltSize = 30;% 
-    min_size = 10;% 
-    
    
     % Build the Gaussian Filter   
     Ex = fspecial('gaussian',FiltSize,sigmaE); % excitatory gaussian
@@ -78,7 +84,7 @@ set(gcf,'color','k');  set(gca,'FontSize',14);
 if dispdata == 1
 tic
 z = 20;
- disp('running sample filter on layer', num2str(z),'...'); 
+ disp(['running sample filter on layer', num2str(z),'...']); 
  
      I0 = handles.Im{1,z-1}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 );
      D0 = dotfinder(I0,Ex,Ix,min_int,min_size);
@@ -113,6 +119,14 @@ end
      
 %% Find all dots    
 
+
+    sigmaE = 3;%  IMPORTANT
+    sigmaI = 4; % IMPORTANT
+    min_int  = 0.04;% .05 % not necessary Fix at Zero
+    FiltSize = 30;% 
+    min_size = 10;% 
+
+
 [hs,ws] = size( handles.Im{1,1}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 )); 
 
 %im_folder{z} = [rawfolder,stackfolder,fname,'_',emb,'_z',num2str(z),'.tif'];
@@ -131,11 +145,11 @@ end
 plotdata = 0 ;% don't show 
 
  DotData1 = cell(1,Zs);    
- DotMasks1 = cell(1,Zs); 
+  DotMasks1 = cell(1,Zs); 
  im_folder = cell(1,Zs);
  
   DotData2 = cell(1,Zs);    
- DotMasks2 = cell(1,Zs); 
+  DotMasks2 = cell(1,Zs); 
  
  tic; disp('finding dots...'); 
 for z = 1:Zs % z = 20        
@@ -147,10 +161,7 @@ for z = 1:Zs % z = 20
           
          % [cent,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
           
-         [cent1,L] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
-          % figure(2); clf; imagesc(  I1);
-          DotData1{z} = cent1;
-          DotMasks1{z} = dL; 
+         [DotData1{z},DotMasks1{z}] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
         
           % figure(2); clf; imagesc(Alldots(:,:,z)); 
           
@@ -167,30 +178,65 @@ for z = 1:Zs % z = 20
 %           end
           
        mRNAchn = 2;
-        [cent2,L] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
-          % figure(2); clf; imagesc(  I1);
-          DotData2{z} = cent2;
-          DotMasks2{z} = dL; 
+        [DotData2{z},DotMasks2{z}] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
+ 
           
 end
 toc;
 %%
 
-        NewDotC1 = CheckDotUpDown(DotData1,DotMasks1,im_folder,1,hs,ws,plotZdata,getpreciseZ,consec_layers,ovlap);
-        NewDotC2 = CheckDotUpDown(DotData2,DotMasks2,im_folder,2,hs,ws,plotZdata,getpreciseZ,consec_layers,ovlap);
+   consec_layers = 2;
+   ovlap = 5; 
+   
+   show_projected = 1; % show max-project with all dots and linked dots.  
+   plotZdata = 1 ;% show z-map of data
+   getpreciseZ = 0;
+
+ck_dots = tic;
+        NewDotC1 = CheckDotUpDown(DotData1,DotMasks1,im_folder,1,plotZdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2);
+        NewDotC2 = CheckDotUpDown(DotData2,DotMasks2,im_folder,2,plotZdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2);
+ toc(ck_dots) 
+        %% Project all layers
   
-        % Project all layers
-         
+        D1 = cell2mat(DotData1');
+        D2 = cell2mat(DotData2');
+        
         if show_projected == 1
-            Imax = imread([rawfolder,stackfolder,fname,'_',emb,'_max.tif']); 
-            Imax_dots = Imax(xp1:xp2,yp1:yp2,mRNAchn);  
+            Imax = imread([rawfolder,stackfolder,'max_',fname,'_',emb,'.tif']); 
+            Imax_dots = 3*Imax(xp1:xp2,yp1:yp2,1:3);  
+            Imax_dots(:,:,3) = .1*Imax_dots(:,:,3);
             Iout = figure(2);  clf;  imagesc(Imax_dots);
             colordef black; set(gcf,'color','k'); 
-            colormap hot; hold on;
-            plot(  dotC(:,1),dotC(:,2),'w+','MarkerSize',14 );
-            plot(  Cents(:,1),Cents(:,2),'yo','MarkerSize',4);
-            saveas(Iout,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'.fig']); 
+            %colormap hot;
+            hold on;
+            plot(  NewDotC1(:,1),NewDotC1(:,2),'mo','MarkerSize',14 );
+            plot(  NewDotC2(:,1),NewDotC2(:,2),'co','MarkerSize',14 ); 
+            plot(  D1(:,1),D1(:,2),'m+','MarkerSize',14);
+             plot(  D2(:,1),D2(:,2),'c+','MarkerSize',14);
+           % saveas(Iout,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'.fig']); 
+           
+           figure(3); clf; subplot(2,1,1);
+           Imax_r = Imax_dots; Imax_r(:,:,2) = 0*Imax_r(:,:,2);
+           imagesc(Imax_r); hold on;           
+            plot(  NewDotC1(:,1),NewDotC1(:,2),'m+','MarkerSize',5 );
+            
+            subplot(2,1,2); 
+            Imax_g = Imax_dots; Imax_g(:,:,1) = 0*Imax_g(:,:,1);
+           imagesc(Imax_g); hold on;
+            plot(  NewDotC2(:,1),NewDotC2(:,2),'go','MarkerSize',5 ); 
+           
         end
+        
+        figure(2); 
+        for z=1:Zs
+            text(DotData2{z}(:,1),DotData2{z}(:,2),[num2str(z)],'color','w','FontSize',8);
+            text(DotData1{z}(:,1),DotData1{z}(:,2),[num2str(z)],'color','m','FontSize',8);
+        end
+        
+        
+                
+            plot(  NewDotC2(:,1),NewDotC2(:,2),'co','MarkerSize',14 ); 
+        
 
 %% Project all layers
 
@@ -263,4 +309,3 @@ if hs<max_size
 end
 %%  Can we extract the intensities inside the sphere and rplot just the
 % sphere with the intensity of the original dot?  
-
