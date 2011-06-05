@@ -14,7 +14,7 @@
 clear all;
 
 
-dispdata = 1; % display dots around a chosen z section for visual cross-check.  
+dispdata = 0; % display dots around a chosen z section for visual cross-check.  
 max_size = 200; % Biggest linear dimension at which to attempt 3D projection; 
 
 
@@ -32,16 +32,17 @@ disp('loading data...');
 folder = '/Volumes/Data/Lab Data/Raw_Data/2011-05-22/';
 
 rawfolder =  folder; % '/Volumes/Data/Lab Data/Raw_Data/2011-05-22/s12_cntrl_2label/';
-% stackfolder = 's12_cntrl_2label/';
-% fname = 's12_cntrl_2label'; emb ='01';
+ stackfolder = 's12_cntrl_2label/';
+ fname = 's12_cntrl_2label_2'; emb ='01';
 
-stackfolder = 's14_comp_cntrl/';
-fname = 's14_comp_cntrl_1'; emb ='01';
+% stackfolder = 's14_comp_cntrl/';
+% fname = 's14_comp_cntrl_1'; emb ='01';
 
 filename = [folder,'/',fname];
 handles.Im = lsm_read_mod([filename,'.mat'],str2double(emb),1.9E4); 
 
-fname = 's14_comp_cntrl';
+% fname = 's14_comp_cntrl';
+ fname = 's12_cntrl_2label'; emb ='02';
 handles.mRNAchn1 = 1;
 
 toc
@@ -49,6 +50,22 @@ toc
 %fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
 %save([fdata,'opt_data'],'handles');
 %load([fdata,'opt_data']); 
+
+
+
+
+%---- Dot Finding Parameters ----- %
+    sigmaE = 3;%  IMPORTANT
+    sigmaI = 4; % IMPORTANT
+    min_int  = 0.04;    %  5    ;% .05 % not necessary Fix at Zero
+    FiltSize = 30;% 
+    min_size = 30;% 
+   
+    % Build the Gaussian Filter   
+    Ex = fspecial('gaussian',FiltSize,sigmaE); % excitatory gaussian
+    Ix = fspecial('gaussian',FiltSize,sigmaI); % inhibitory gaussian
+    Filt = Ex -Ix;
+%---------------------------------%
 
 
 %% Set-up
@@ -117,14 +134,7 @@ z = 20;
      toc
 end
      
-%% Find all dots    
-
-
-    sigmaE = 3;%  IMPORTANT
-    sigmaI = 4; % IMPORTANT
-    min_int  = 0.04;% .05 % not necessary Fix at Zero
-    FiltSize = 30;% 
-    min_size = 10;% 
+%% Find all dots
 
 
 [hs,ws] = size( handles.Im{1,1}{handles.mRNAchn1}( xp1:xp2,yp1:yp2 )); 
@@ -141,7 +151,7 @@ if hs< max_size
     Alldots = uint16(zeros(hs,ws,Zs)); 
 end
 
-
+ min_int = .035; 
 plotdata = 0 ;% don't show 
 
  DotData1 = cell(1,Zs);    
@@ -157,7 +167,7 @@ for z = 1:Zs % z = 20
           im_folder{z} = [rawfolder,stackfolder,fname,'_',emb,'_z',num2str(z),'.tif'];
           Iin_z = imread(im_folder{z}); 
             
-          mRNAchn = 1;
+          mRNAchn = 1; 
           
          % [cent,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
           
@@ -177,7 +187,7 @@ for z = 1:Zs % z = 20
 %               % figure(2); clf; imagesc(Isect1(:,:,z) );   colormap hot;
 %           end
           
-       mRNAchn = 2;
+       mRNAchn = 2; 
         [DotData2{z},DotMasks2{z}] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
  
           
@@ -186,7 +196,7 @@ toc;
 %%
 
    consec_layers = 2;
-   ovlap = 5; 
+   ovlap = 3; 
    
    show_projected = 1; % show max-project with all dots and linked dots.  
    plotZdata = 1 ;% show z-map of data
@@ -214,6 +224,11 @@ ck_dots = tic;
             plot(  D1(:,1),D1(:,2),'m+','MarkerSize',14);
              plot(  D2(:,1),D2(:,2),'c+','MarkerSize',14);
            % saveas(Iout,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'.fig']); 
+           
+           figure(4); clf;  imagesc(Imax_dots);
+            hold on; set(gcf,'color','k');
+            plot(  NewDotC1(:,1),NewDotC1(:,2),'mo','MarkerSize',5);
+            plot(  NewDotC2(:,1),NewDotC2(:,2),'co','MarkerSize',5 ); 
            
            figure(3); clf; subplot(2,1,1);
            Imax_r = Imax_dots; Imax_r(:,:,2) = 0*Imax_r(:,:,2);
