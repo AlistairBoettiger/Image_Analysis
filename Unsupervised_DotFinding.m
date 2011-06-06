@@ -24,15 +24,31 @@ ver = '';% '_v2';
 
 % Focus on subset of image: 
      m = 1/2048;  % .9;%    .7; % .5; .7; %   1/2048; % 
-
     Zs = 50; % Upper limit on number of Z sections   length(Im);
     h = 2048; w=2048;
-    % [h,w] = size(Im{1,1}{1}); 
+    
+%    xp1= floor(h/2*m)+1; xp2 = floor(h/2*(2-m))+1;  yp1 = floor(w/2*m)+1;  yp2 = floor(w/2*(2-m))+1;
+%    hs = yp2-yp1+1;     ws = xp2-xp1+1;
+
+hs = 200; ws = 200; 
+xp1 = 1801; yp1 = 1301; xp2 = xp1 + ws -1; yp2 = yp1 + hs - 1; 
+
+emb = '01';
+Imax = imread([rawfolder,stackfolder,'max_',fname,'_',emb,'.tif']); 
+Imax_dots = Imax(xp1:xp2,yp1:yp2,1:3);  
+figure(2); clf;  imagesc(Imax_dots);
+    
+    
+
+    disp(['Coordinates:  ', num2str(xp1), ' : ', num2str(xp2), ',   ' num2str(yp1), ' : ', num2str(yp2) ] );
+    
+    
+    
 
    getpreciseZ = 0;
    consec_layers = 2;
-   ovlap = 2; 
-   thresh = .25;
+   ovlap = 3; 
+
 
    show_projected = 1; % show max-project with all dots and linked dots.  
    plotZdata = 0 ;% show z-map of data
@@ -94,13 +110,7 @@ for e= 1:Es
     
 
 
-    xp1= floor(h/2*m)+1; 
-    xp2 = floor(h/2*(2-m))+1;
-    yp1 = floor(w/2*m)+1;
-    yp2 = floor(w/2*(2-m))+1;
-    hs = yp2-yp1+1; 
-    ws = xp2-xp1+1;
-    disp(['Coordinates:  ', num2str(xp1), ' : ', num2str(xp2), ',   ' num2str(yp1), ' : ', num2str(yp2) ] );
+
    
     toc
     
@@ -109,9 +119,9 @@ for e= 1:Es
     for mRNAchn = 1:mRNA_channels % mRNAchn =2
         
          if mRNAchn == 1;
-                  min_int  = 0.04;  % just for speed 
+                  min_int  = 0.05;  % just for speed 
          else
-               min_int  = 0.02; % 
+               min_int  = 0.05; % 
          end
         
             DotData = cell(1,Zs);    
@@ -138,7 +148,8 @@ for e= 1:Es
             
         %%
 
-         dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,plotZdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2);
+        intype = class(Iin_z);
+         dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,plotZdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2,intype);
          
 
         % Project all layers

@@ -8,7 +8,7 @@
 % avoids multiple dot counting and avoids fusion of dots in Z.
 
 
-function dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,plotdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2)
+function dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,plotdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2,intype)
 %% Updates
 % Rewritten 03/07/11 to convert more things to uint16 / uint8 to save
 % memory (even fragment of single stack is several gigs of active mem). 
@@ -21,7 +21,7 @@ function dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,plotdata,getpr
 tic 
 
      
-intype = 'uint8';
+% intype = 'uint8';
 
 disp('connecting dots in Z...') 
 %  plotdata = 1;  h = hs; w = ws; mRNAchn = 1; ovlap = 2;
