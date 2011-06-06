@@ -30,6 +30,7 @@ disp('loading data...');
 %fname = 'MP09_22C_hb_y_d'; emb = '01';
 
 folder = '/Volumes/Data/Lab Data/Raw_Data/2011-05-22/';
+<<<<<<< HEAD
 
 rawfolder =  folder; % '/Volumes/Data/Lab Data/Raw_Data/2011-05-22/s12_cntrl_2label/';
   stackfolder = 's12_cntrl_2label/';
@@ -43,6 +44,14 @@ handles.Im = lsm_read_mod([filename,'.mat'],str2double(emb),1.9E4);
 
 % fname = 's14_comp_cntrl'; xp1 = 1700; yp1 = 1500;
  fname = 's12_cntrl_2label'; emb ='02';  xp1 = 50; yp1 = 900;
+=======
+stackfolder = 's12_cntrl_2label/';
+rawfolder =  folder; % '/Volumes/Data/Lab Data/Raw_Data/2011-05-22/s12_cntrl_2label/';
+fname = 's12_cntrl_2label'; emb ='01';
+
+filename = [folder,'/',fname];
+handles.Im = lsm_read_mod([filename,'.mat'],str2double(emb),1.9E4); 
+>>>>>>> master
 handles.mRNAchn1 = 1;
 
 toc
@@ -99,8 +108,13 @@ disp(['Coordinates:  ', num2str(xp1), ' : ', num2str(xp2), ',   ' num2str(yp1), 
     Ix = fspecial('gaussian',FiltSize,sigmaI); % inhibitory gaussian
    
 Filt = Ex -Ix;
+<<<<<<< HEAD
 % figure(1); clf; imagesc(Filt); colorbar;  colormap jet; 
 % set(gcf,'color','k');  set(gca,'FontSize',14); 
+=======
+ figure(1); clf; imagesc(Filt); colorbar;  colormap jet; 
+set(gcf,'color','k');  set(gca,'FontSize',14); 
+>>>>>>> master
 
  
 %% Quick view around layer z
@@ -162,11 +176,19 @@ end
 plotdata = 0 ;% don't show 
 
  DotData1 = cell(1,Zs);    
+<<<<<<< HEAD
   DotMasks1 = cell(1,Zs); 
  im_folder = cell(1,Zs);
  
   DotData2 = cell(1,Zs);    
   DotMasks2 = cell(1,Zs); 
+=======
+ DotMasks1 = cell(1,Zs); 
+ im_folder = cell(1,Zs);
+ 
+  DotData2 = cell(1,Zs);    
+ DotMasks2 = cell(1,Zs); 
+>>>>>>> master
  
  tic; disp('finding dots...'); 
 for z = 1:Zs % z = 20        
@@ -174,11 +196,22 @@ for z = 1:Zs % z = 20
           im_folder{z} = [rawfolder,stackfolder,fname,'_',emb,'_z',num2str(z),'.tif'];
           Iin_z = imread(im_folder{z}); 
             
+<<<<<<< HEAD
           mRNAchn = 1;   min_int =.06;  % .05; % 
           
          % [cent,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
           
          [DotData1{z},DotMasks1{z}] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
+=======
+          mRNAchn = 1;
+          
+         % [cent,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
+          
+         [cent1,L] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
+          % figure(2); clf; imagesc(  I1);
+          DotData1{z} = cent1;
+          DotMasks1{z} = dL; 
+>>>>>>> master
         
           % figure(2); clf; imagesc(Alldots(:,:,z)); 
           
@@ -194,14 +227,23 @@ for z = 1:Zs % z = 20
 %               % figure(2); clf; imagesc(Isect1(:,:,z) );   colormap hot;
 %           end
           
+<<<<<<< HEAD
        mRNAchn = 2;    min_int = .06;   % .05;    %
         [DotData2{z},DotMasks2{z}] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
  
+=======
+       mRNAchn = 2;
+        [cent2,L] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
+          % figure(2); clf; imagesc(  I1);
+          DotData2{z} = cent2;
+          DotMasks2{z} = dL; 
+>>>>>>> master
           
 end
 toc;
 %%
 
+<<<<<<< HEAD
    consec_layers = 2;
    ovlap = 4; 
    intype = class(Iin_z);
@@ -219,6 +261,13 @@ ck_dots = tic;
         D1 = cell2mat(DotData1');
         D2 = cell2mat(DotData2');
         
+=======
+        NewDotC1 = CheckDotUpDown(DotData1,DotMasks1,im_folder,1,hs,ws,plotZdata,getpreciseZ,consec_layers,ovlap);
+        NewDotC2 = CheckDotUpDown(DotData2,DotMasks2,im_folder,2,hs,ws,plotZdata,getpreciseZ,consec_layers,ovlap);
+  
+        % Project all layers
+         
+>>>>>>> master
         if show_projected == 1
             Imax = imread([rawfolder,stackfolder,'max_',fname,'_',emb,'.tif']); 
             Imax_dots = 3*Imax(xp1:xp2,yp1:yp2,1:3);  

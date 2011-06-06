@@ -31,6 +31,7 @@ disp('loading data...');
 
 folder = '/Volumes/Data/Lab Data/Raw_Data/2011-05-22/';
 
+
 rawfolder =  folder; % '/Volumes/Data/Lab Data/Raw_Data/2011-05-22/s12_cntrl_2label/';
   stackfolder = 's12_cntrl_2label/';
   fname = 's12_cntrl_2label_2'; emb ='01';
@@ -43,6 +44,7 @@ handles.Im = lsm_read_mod([filename,'.mat'],str2double(emb),1.9E4);
 
 % fname = 's14_comp_cntrl'; xp1 = 1700; yp1 = 1500;
  fname = 's12_cntrl_2label'; emb ='02';  xp1 = 50; yp1 = 900;
+
 handles.mRNAchn1 = 1;
 
 toc
@@ -167,18 +169,18 @@ plotdata = 0 ;% don't show
  
   DotData2 = cell(1,Zs);    
   DotMasks2 = cell(1,Zs); 
+
  
  tic; disp('finding dots...'); 
 for z = 1:Zs % z = 20        
       % Dot finding for channel 1
           im_folder{z} = [rawfolder,stackfolder,fname,'_',emb,'_z',num2str(z),'.tif'];
           Iin_z = imread(im_folder{z}); 
-            
           mRNAchn = 1;   min_int =.06;  % .05; % 
           
-         % [cent,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
-          
+         
          [DotData1{z},DotMasks1{z}] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
+
         
           % figure(2); clf; imagesc(Alldots(:,:,z)); 
           
@@ -219,6 +221,7 @@ ck_dots = tic;
         D1 = cell2mat(DotData1');
         D2 = cell2mat(DotData2');
         
+
         if show_projected == 1
             Imax = imread([rawfolder,stackfolder,'max_',fname,'_',emb,'.tif']); 
             Imax_dots = 3*Imax(xp1:xp2,yp1:yp2,1:3);  
