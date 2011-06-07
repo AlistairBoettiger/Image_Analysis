@@ -47,7 +47,7 @@ clear DotData;
 
 
 NDots = length(dotC); % total number of dots;
-maxdots = max(dotsinlayer) +100, 'uint16');
+maxdots = cast(max(dotsinlayer) +100, 'uint16');
 disp(['Max dots per layer = ',num2str(maxdots)]); 
 disp(['Total dots = ',num2str(NDots)]); 
 
@@ -104,7 +104,7 @@ end
 for Z = 1:Zs % The primary layer Z = 16
          inds1 = Inds{Z};
          R1 = zeros(hs,ws,'uint16');   
-         R1(inds1) = maxdots; % convert indices to raster map   
+        %  R1(inds1) = maxdots; % convert indices to raster map   
         % figure(3); clf; imagesc(R1);  colorbar; colormap jet;
         
          st1_dot_num = sum(dotsinlayer(1:Z-1)); % starting dot number for the layer under study     
@@ -112,8 +112,9 @@ for Z = 1:Zs % The primary layer Z = 16
         % figure(3); clf; imagesc(Iw);
          
     for z=1:Zs % compare primary layer to all other layers  z = Z+1 
-        clear Loz;
-         Loz = R1 + Rs{z}; 
+%          Loz = R1;
+%          Loz(inds1) = Rs{z}(inds1); 
+         % Loz = R1 + Rs{z}(inds); 
          % figure(3); clf; imagesc(Rs{z});  colorbar; colormap jet;
          
 %           figure(3); clf; imagesc(Loz);  colorbar; colormap jet;
@@ -121,13 +122,13 @@ for Z = 1:Zs % The primary layer Z = 16
 %          hold on; plot(DotData{z}(:,1),DotData{z}(:,2),'c.');
         
         % figure(3); clf; imagesc(DotMasks{z}); 
-         Loz(Loz<maxdots+1) = 0; % remove non-overlapping dots;
-         Loz = Loz - maxdots; % LoZ is already positive, so we don't need to worry about negative values.  
+       %  Loz(Loz<maxdots+1) = 0; % remove non-overlapping dots;
+        % Loz = Loz - maxdots; % LoZ is already positive, so we don't need to worry about negative values.  
         %  figure(2); clf;  imagesc(Loz); colorbar; colormap jet;
 
       % Need to get linear index to stick correctly in array of all dots.  
          stz_dot_num = sum(dotsinlayer(1:z-1));  % starting dot number for the comparison layer     
-         inds_zin1 = Loz(inds1); % dot-indicies of layer Z overlapping layer z.       
+         inds_zin1 = Rs{z}(inds1);% dot-indicies of layer Z overlapping layer z.       
          indsT = single(inds_zin1) + stz_dot_num; % convert layer specific dot-indices to total overall dot-indices 
          indsT(indsT == stz_dot_num) = 0; % makes sure missing indices are still 'missing' and not last of previous layer.   
          
