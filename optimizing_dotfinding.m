@@ -19,9 +19,6 @@ max_size = 200; % Biggest linear dimension at which to attempt 3D projection;
 
 
 
-    
-
-
 tic; 
 disp('loading data...');
 
@@ -92,6 +89,7 @@ xp2 = xp1+200;
     Imax_dots = Imax(xp1:xp2,yp1:yp2,1:3);  
     figure(1); clf; imagesc(Imax(:,:,1:3));
     figure(2); clf; imagesc(Imax_dots);
+   
     
 disp(['Coordinates:  ', num2str(xp1), ' : ', num2str(xp2), ',   ' num2str(yp1), ' : ', num2str(yp2) ] );
 
@@ -228,9 +226,8 @@ ck_dots = tic;
         D2 = cell2mat(DotData2');
         
 
-        if show_projected == 1
-            Imax = imread([rawfolder,stackfolder,'max_',fname,'_',emb,'.tif']); 
-            Imax_dots = 3*Imax(xp1:xp2,yp1:yp2,1:3);  
+               Imax = imread([rawfolder,stackfolder,'max_',fname,'_',emb,'.tif']); 
+            Imax_dots = 1.5*Imax(xp1:xp2,yp1:yp2,1:3);  
             Imax_dots(:,:,3) = .1*Imax_dots(:,:,3);
             figure(2);  clf;  imagesc(Imax_dots);
             colordef black; set(gcf,'color','k'); 
@@ -258,8 +255,7 @@ ck_dots = tic;
            imagesc(Imax_g); hold on;
             plot(  NewDotC2(:,1),NewDotC2(:,2),'go','MarkerSize',5 ); 
            
-        end
-        
+
 %         figure(2); 
 %         for z=1:Zs
 %             text(DotData2{z}(:,1),DotData2{z}(:,2),[num2str(z)],'color','w','FontSize',8);
@@ -268,6 +264,14 @@ ck_dots = tic;
 %         
         
         
+ 
+           figure(2); clf; set(gcf,'color','k');
+           Imax_r = Imax_dots; Imax_r(:,:,2) = 0*Imax_r(:,:,2);
+           imagesc(Imax_r); 
+           
+            Imax_g = Imax_dots; Imax_g(:,:,1) = 0*Imax_g(:,:,1);
+           imagesc(Imax_g); hold on;
+
            minS = 8;
            
             d2 = 10*zeros(1,length(NewDotC2));

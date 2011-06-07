@@ -47,7 +47,7 @@ clear DotData;
 
 
 NDots = length(dotC); % total number of dots;
-maxdots = eval([intype,'(max(dotsinlayer) +100)']);
+maxdots = cast(max(dotsinlayer) +100, 'uint16');
 disp(['Max dots per layer = ',num2str(maxdots)]); 
 disp(['Total dots = ',num2str(NDots)]); 
 
@@ -94,7 +94,7 @@ LayerJoin = false(2*NDots,Zs);
 % pre-calc
 Rs = cell(Zs,1);
 for z=1:Zs
-         Rz = zeros(hs,ws,intype);   
+         Rz = zeros(hs,ws,'uint16'); % this is uint16 just for data size maintance.    
          Rz(Inds{z}) = DotLabels{z}; % convert indices to raster map 
          Rs{z} = imdilate(Rz,strel('disk',ovlap));
 end
@@ -103,7 +103,7 @@ end
 
 for Z = 1:Zs % The primary layer Z = 16
          inds1 = Inds{Z};
-         R1 = zeros(hs,ws,intype);   
+         R1 = zeros(hs,ws,'uint16');   
          R1(inds1) = maxdots; % convert indices to raster map   
         % figure(3); clf; imagesc(R1);  colorbar; colormap jet;
         

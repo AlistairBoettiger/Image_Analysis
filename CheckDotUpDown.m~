@@ -47,7 +47,7 @@ clear DotData;
 
 
 NDots = length(dotC); % total number of dots;
-maxdots = eval([intype,'(max(dotsinlayer) +100)']);
+maxdots = max(dotsinlayer) +100, 'uint16');
 disp(['Max dots per layer = ',num2str(maxdots)]); 
 disp(['Total dots = ',num2str(NDots)]); 
 
@@ -94,7 +94,7 @@ LayerJoin = false(2*NDots,Zs);
 % pre-calc
 Rs = cell(Zs,1);
 for z=1:Zs
-         Rz = zeros(hs,ws,intype);   
+         Rz = zeros(hs,ws,'uint16'); % this is uint16 just for data size maintance.    
          Rz(Inds{z}) = DotLabels{z}; % convert indices to raster map 
          Rs{z} = imdilate(Rz,strel('disk',ovlap));
 end
@@ -103,7 +103,7 @@ end
 
 for Z = 1:Zs % The primary layer Z = 16
          inds1 = Inds{Z};
-         R1 = zeros(hs,ws,intype);   
+         R1 = zeros(hs,ws,'uint16');   
          R1(inds1) = maxdots; % convert indices to raster map   
         % figure(3); clf; imagesc(R1);  colorbar; colormap jet;
         
@@ -332,9 +332,10 @@ for i = 1:2:2*NDots-1 % i =5
         if stacked_dots == 0  && getpreciseZ == 1
              ii = find(cent(:,2)==i,1);
              dotC((i+1)/2,3) = cent(ii(1),1);
-             ii = (cent(ii(1),2)+1)/2;
-             dotC(masked_inds(i,j(1)),1) = dotC(ii,1); 
-             dotC(counted,2) = dotC(ii,2); 
+             i_self = masked_inds(i,j(1));
+             i_max = (cent(ii(1),2)+1)/2;
+             dotC(i_self,1) = dotC(i_max,1); 
+             dotC(i_self,2) = dotC(i_max,2); 
         end
     else
         remove_dot((i+1)/2) = 1;
@@ -352,9 +353,10 @@ for i = 1:2:2*NDots-1 % i =5
               ii = find(cent(:,2)==i);
               ii = ii( min(bi,length(ii)) );
               dotC((i+1)/2,3) = cent(ii,1);
-              ii = (cent(ii,2)+1)/2;
-              dotC(counted,1) = dotC(ii,1); 
-              dotC(counted,2) = dotC(ii,2);               
+              i_self = masked_inds(i,j(1));
+              i_max = (cent(ii,2)+1)/2;
+              dotC(i_self,1) = dotC(i_max,1); 
+              dotC(i_self,2) = dotC(i_max,2);         
           end
     stacked_dots =0;      
     end
