@@ -163,12 +163,18 @@ end
 
 plotdata = 0 ;% don't show 
 
- DotData1 = cell(1,Zs);    
-  DotMasks1 = cell(1,Zs); 
+
  im_folder = cell(1,Zs);
  
-  DotData2 = cell(1,Zs);    
-  DotMasks2 = cell(1,Zs); 
+ DotLabels1 = cell(1,Zs);    
+ DotData1 = cell(1,Zs);    
+ Inds1 = cell(1,Zs); 
+ Ints1 = cell(1,Zs); 
+    
+ DotLabels2 = cell(1,Zs);    
+ DotData2 = cell(1,Zs);    
+ Inds2 = cell(1,Zs); 
+ Ints2 = cell(1,Zs); 
 
  
  tic; disp('finding dots...'); 
@@ -179,7 +185,7 @@ for z = 1:Zs % z = 20
           mRNAchn = 1;   min_int =.06;  % .05; % 
           
          
-         [DotData1{z},DotMasks1{z}] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
+         [DotLabels1{z},DotData1{z},Inds1{z},Ints1{z}] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
 
         
           % figure(2); clf; imagesc(Alldots(:,:,z)); 
@@ -197,14 +203,14 @@ for z = 1:Zs % z = 20
 %           end
           
        mRNAchn = 2;    min_int = .05;   % .05;    %
-        [DotData2{z},DotMasks2{z}] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
+       [DotLabels2{z},DotData2{z},Inds2{z},Ints2{z}] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
  
           
 end
 toc;
 %%
 
-   consec_layers = 3;
+   consec_layers = 2;
    ovlap = 4; 
    intype = class(Iin_z);
    
@@ -213,8 +219,8 @@ toc;
    getpreciseZ = 0;
 
 ck_dots = tic;
-        NewDotC1 = CheckDotUpDown(DotData1,DotMasks1,im_folder,1,plotZdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2,intype);
-        NewDotC2 = CheckDotUpDown(DotData2,DotMasks2,im_folder,2,plotZdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2,intype);
+        NewDotC1 = CheckDotUpDown(DotLabels1,DotData1,Inds1,Ints1,plotZdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2,intype);
+        NewDotC2 = CheckDotUpDown(DotLabels2,DotData2,Inds2,Ints2,plotZdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2,intype);
  toc(ck_dots) 
         %% Project all layers
   
@@ -264,7 +270,7 @@ ck_dots = tic;
                 
            % plot(  NewDotC2(:,1),NewDotC2(:,2),'co','MarkerSize',14 ); 
         
-           minS = 6;
+           minS = 8;
            
             d2 = 10*zeros(1,length(NewDotC2));
             jn = zeros(1,length(NewDotC2));

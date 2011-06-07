@@ -124,8 +124,10 @@ for e= 1:Es
                min_int  = 0.05; % 
          end
         
+            DotLabels= cell(1,Zs); 
             DotData = cell(1,Zs);    
-            DotMasks = cell(1,Zs); 
+            Inds = cell(1,Zs); 
+            Ints = cell(1,Zs); 
             im_folder = cell(1,Zs);
             tic; disp('finding dots...'); 
             for z = 1:Zs % z = 11 
@@ -138,7 +140,7 @@ for e= 1:Es
                     disp(['stack depth = ',num2str(Zs)]);
                     break
                 end            
-                  [DotData{z},DotMasks{z}] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
+                   [DotLabels{z},DotData{z},Inds{z},Ints{z}]  = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
             end     
             toc;
             
@@ -149,8 +151,7 @@ for e= 1:Es
         %%
 
         intype = class(Iin_z);
-         dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,plotZdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2,intype);
-         
+         dotC =  CheckDotUpDown(DotLabels,DotData,Inds,Ints,plotdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2,intype);
 
         % Project all layers
          

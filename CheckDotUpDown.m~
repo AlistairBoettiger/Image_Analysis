@@ -8,7 +8,7 @@
 % avoids multiple dot counting and avoids fusion of dots in Z.
 
 
-function dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,plotdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2)
+function dotC = CheckDotUpDown(DotLabels,DotData,Inds,Ints,plotdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2,intype)
 %% Updates
 % Rewritten 03/07/11 to convert more things to uint16 / uint8 to save
 % memory (even fragment of single stack is several gigs of active mem). 
@@ -21,12 +21,12 @@ function dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,plotdata,getpr
 tic 
 
      
-intype = 'uint8';
+% intype = 'uint8';
 
 disp('connecting dots in Z...') 
 %  plotdata = 1;  h = hs; w = ws; mRNAchn = 1; ovlap = 2;
-% DotData = DotData2; DotMasks  = DotMasks2;
-  % I = Im{1,z}{mRNAchn}( xp1:xp2,yp1:yp2 );
+% DotData = DotData1; Inds = Inds1; Ints = Ints1; DotLabels = DotLabels1; intype = 'uint16';    
+
   
  comp_onVoff = 0;
 hs = yp2 - yp1+1; 
@@ -37,27 +37,24 @@ ws = xp2 - xp1+1;
 Zs = length(DotData);
 dotsinlayer = zeros(1,Zs,'single'); % important for later math functions
 dotzpos = cell(Zs,1); 
-%dotC = [];
 for z = 1:Zs
     dotsinlayer(z) = size(DotData{z},1);
     dotzpos{z} = z*ones(dotsinlayer(z),1);
-   % dotC = [dotC; DotData{z}, z*ones(dotsinlayer(z),1)];
 end
 dotC = [cell2mat(DotData'), cell2mat(dotzpos)];  
-
+clear DotData; 
 
 
 NDots = length(dotC); % total number of dots;
 maxdots = eval([intype,'(max(dotsinlayer) +100)']);
-totaldots = length(dotC);
 disp(['Max dots per layer = ',num2str(maxdots)]); 
-disp(['Total dots = ',num2str(totaldots)]); 
+disp(['Total dots = ',num2str(NDots)]); 
 
         % Rather memory inefficient, I have the same centroid data stored
         % in 2 different data structures.  Could build this guy to start
         % with.  
 
-%%        
+       
 % figure(10); clf;  plot3(dotC(:,1),dotC(:,2),dotC(:,3),'w.');
 % % for n=1:NDots
 % %     z = dotC(n,3); 
@@ -80,13 +77,12 @@ disp(['Total dots = ',num2str(totaldots)]);
 %       plot3(dotC(n,1),dotC(n,2),dotC(n,3),'color',cl.*[0,1,1],'Marker','.','MarkerSize',10);
 %      % pause(.001); 
 %   end
-%%  
+%  
 %  figure(11); clf; plot(DotData{20}(:,1),DotData{20}(:,2),'w.');
 %  hold on; plot(DotData{21}(:,1),DotData{21}(:,2),'c.');
 % hold on; plot(DotData{22}(:,1),DotData{22}(:,2),'b.');
         
    
-
 DotConn = zeros(2*NDots,Zs,'single'); % empty connectivity matrix for all dots;  as a uint16 restricts this to 65,536 dots per image.  
 ConnInt = zeros(2*NDots,Zs,intype); 
 LayerJoin = false(2*NDots,Zs); 
@@ -96,38 +92,16 @@ LayerJoin = false(2*NDots,Zs);
 
 % pre-calc
 Rs = cell(Zs,1);
-Inds = cell(Zs,1); 
-Ints = cell(Zs,1); 
 for z=1:Zs
-         inds = floor(DotData{z}(:,2))+floor(DotData{z}(:,1))*hs;  % indices in this layer  
-         inds(inds>ws*hs) = ws*hs;  
          Rz = zeros(hs,ws,intype);   
-         Rz(inds) = DotMasks{z}(inds); % convert indices to raster map 
-         Inds{z} = inds; % pixel-indices of all dots in layer
+         Rz(Inds{z}) = DotLabels{z}; % convert indices to raster map 
          Rs{z} = imdilate(Rz,strel('disk',ovlap));
 end
 
 
-% In each layer, index all the intensities at all x-y positions which
-% contain a potential dot in any of the z-layers.  This will be a faster
-% lookup table for getting the intensity of the pixels at correct
-% positions.  
-All_pix_inds = cell2mat(Inds);
-for z=1:Zs
-          clear Iw; 
-         Iw = imread(im_folder{z});  % read in whole-image
-        Iw = Iw(xp1:xp2,yp1:yp2,mRNAchn); % shrink to working size
-        Ints{z} =[0; Iw(All_pix_inds)];
-        
-end
-toc
 
-
-tic
-for Z = 1:Zs % The primary layer Z = 26
-         % convert to pixel linear-index
-         inds1 = floor(DotData{Z}(:,2))+floor(DotData{Z}(:,1))*hs;  % pixel-indices in this layer  
-         inds1(inds1>ws*hs) = ws*hs;  
+for Z = 1:Zs % The primary layer Z = 16
+         inds1 = Inds{Z};
          R1 = zeros(hs,ws,intype);   
          R1(inds1) = maxdots; % convert indices to raster map   
         % figure(3); clf; imagesc(R1);  colorbar; colormap jet;
@@ -140,7 +114,6 @@ for Z = 1:Zs % The primary layer Z = 26
         clear Loz;
          Loz = R1 + Rs{z}; 
          % figure(3); clf; imagesc(Rs{z});  colorbar; colormap jet;
-       %  Loz = R1 + DotMasks{z}; (only makes a small difference to use overlap box rather than within found dot.  
          
 %           figure(3); clf; imagesc(Loz);  colorbar; colormap jet;
 %          hold on; plot(DotData{Z}(:,1),DotData{Z}(:,2),'w.');
@@ -156,7 +129,6 @@ for Z = 1:Zs % The primary layer Z = 26
          inds_zin1 = Loz(inds1); % dot-indicies of layer Z overlapping layer z.       
          indsT = single(inds_zin1) + stz_dot_num; % convert layer specific dot-indices to total overall dot-indices 
          indsT(indsT == stz_dot_num) = 0; % makes sure missing indices are still 'missing' and not last of previous layer.   
-         indsI = indsT; indsI(indsI==0) = 1;
          
 %          % trouble shooting
 %          figure(3); hold on; indsT_NaN = nonzeros(indsT); 
@@ -165,7 +137,7 @@ for Z = 1:Zs % The primary layer Z = 26
 %          end
          
          DotConn(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) =  indsT; % STORE in DotConn matrix the indices 
-         ConnInt(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) = Ints{z}(indsI); % Iw(inds_zin1+1) ; %  % store actual intensities.  
+         ConnInt(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) = Ints{z}(inds_zin1+1); % Iw(inds_zin1+1) ; %  % store actual intensities.  
         % figure(3); clf; imagesc(DotConn); shading flat;
     end
     LayerJoin( 2*st1_dot_num+1 :2*(st1_dot_num + dotsinlayer(Z)),Z) = true(2*dotsinlayer(Z),1);    
@@ -173,10 +145,7 @@ end
 toc
 
 
-
-
-
-
+figure(3); clf; imagesc(ConnInt); colormap hot; colorbar;
 
 
 
@@ -208,23 +177,12 @@ toc
 % % figure(2); hold on; plot(dotC(p1,1),dotC(p1,2),'mo','MarkerSize',15); 
 % % plot(dotC(p2,1),dotC(p2,2),'m*','MarkerSize',15);
 %    
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
+      
    
 
 %%
 
-%clear DotMasks DotData R1 Rz Rs LoZ Inds Iw;
+clear R1 Rz Rs LoZ Inds;
 
 %%
 
@@ -430,9 +388,9 @@ end
 
 
 
-figure(2); clf; 
-imagesc(Imax_dots(1:80,1:80,:));   hold on;
-plot(dotC(:,1),dotC(:,2),'c+');
+% figure(2); clf; 
+% imagesc(Imax_dots);   hold on;
+% plot(dotC(:,1),dotC(:,2),'c+');
 
 
 

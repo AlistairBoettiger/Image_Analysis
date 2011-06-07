@@ -2,7 +2,7 @@
 %% dotfinder.m 
 
 % Alistair Boettiger                                   Date Begun: 01/21/11
-% Levine Lab                                        Last Modified: 03/12/11
+% Levine Lab                                        Last Modified: 06/06/11
 
 
 %% 
@@ -11,8 +11,11 @@
 % modified 3/12/11 to improve method
 % modified 03/13/11 to reuse more variable names more and reduce creating
 % mulitple large arrays. 
+% modified 06/06/11 to output dot_labels from the label matrix (in place of
+% the whole label matrix), the index of the center pixels (in addition to
+% the pixels themselves) and the intensity values at the center pixels.
 
-function [cent,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
+function [dot_labels,cent,inds,ints] = dotfinder(I,Ex,Ix,min_int,min_size)
 %%     
  % figure(1); clf; imagesc(I);
  %  I = Iin_z( :,:,mRNAchn );    %  Im{1,z}{mRNAchn}( xp1:xp2,yp1:yp2 );
@@ -24,13 +27,14 @@ function [cent,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
   
   
    bw = im2bw(I,min_int);  % if we're gonna do this, do it first.   
-   I(bw==0) =0;
+   Iin = I;
+   Iin(bw==0) =0;
    clear bw; 
   % figure(2); clf; imagesc(I); colormap hot; set(gcf,'color','k');  colorbar; 
 
    % Faster method to apply filter -- use straight Gaussians. 
-  outE = imfilter(single(I),Ex,'replicate'); 
-  outI = imfilter(single(I),Ix,'replicate'); 
+  outE = imfilter(single(Iin),Ex,'replicate'); 
+  outI = imfilter(single(Iin),Ix,'replicate'); 
   Iin = makeuint(outE - outI,16);
   
 %   figure(10); clf; subplot(2,1,1); imagesc(outE); shading flat;
@@ -114,6 +118,19 @@ function [cent,labeled] = dotfinder(I,Ex,Ix,min_int,min_size)
 % labeled =uint16(labeled); 
        R1 = regionprops(labeled,Iin,'WeightedCentroid'); % compute mRNA centroids      
        cent = reshape([R1.WeightedCentroid],2,length(R1))';
+       
+       
+  % % RECORD indices of each dot and intensity at centroid of each dot
+       inds = floor(cent(:,2))+floor(cent(:,1))*h;  % indices in this layer  
+       inds(inds>w*h) = w*h; 
+       ints = [0; I(inds)]; 
+       dot_labels = labeled(inds); 
+       % the leading zero is a dummy which allows pixel values to be set to
+       % 0 while referencing members of ints. 
+         
+         
+   
+       
        
 %        figure(10); clf; imagesc(uint16(bw2).*Iin); hold on;
 %        plot(cent(:,1),cent(:,2),'bo');
