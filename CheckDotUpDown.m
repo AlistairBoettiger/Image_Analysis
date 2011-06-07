@@ -207,7 +207,7 @@ if comp_onVoff == 1
 end
     
 %cent = [];
-Cent = cell(1,Nsects); 
+Cent = cell(Nsects,1); 
 
 for k=1:Nsects
 % For each dot in the system, there is a row i, which contains all the dots
@@ -215,26 +215,30 @@ for k=1:Nsects
 % which are connected to the dot as z=i.  For this we use the LayerJoin
 % object.  
      mask = DotConn(1+(k-1)*stp:min(k*stp,2*NDots),:)>0; % where dots exist 
-     ConnInt_T = immultiply(ConnInt(1+(k-1)*stp:min(k*stp,2*NDots),:),eval([intype,'(mask)'])); % report intensities where dot connections are found 
+     ConnInt_T = immultiply(ConnInt(1+(k-1)*stp:min(k*stp,2*NDots),:),cast(mask,intype)); % report intensities where dot connections are found 
      
      % Keep only main diagnol:
-     MD = imadd(eval([intype,'(LayerJoin(1+(k-1)*stp:min(k*stp,2*NDots),:))']),ConnInt_T); 
+     MD = imadd(cast(LayerJoin(1+(k-1)*stp:min(k*stp,2*NDots),:),intype),ConnInt_T); 
      % figure(4); clf; imagesc(MD);
      MD = MD>0;   
      MD = bwareaopen(MD,20); % Remove all dots in z not connected to the dot at z=i  
      % figure(4); clf; imagesc(MD);
-     ConnInt_T = immultiply(ConnInt_T,eval([intype,'(MD)']));
+     ConnInt_T = immultiply(ConnInt_T,cast(MD,intype));
    
     mask = ConnInt_T>0;
 
-%     % Watershed to split dots
-%     % W = ConnInt_T.*uint16(mask.*longDots); figure(4); clf; imagesc(W);
-%     W = immultiply(ConnInt_T,eval([intype,'(mask)']) ); 
-%     % figure(4); clf; imagesc(W);
-%     W = watershed(max(W(:)) - W);   % This is the Memory Kill Step; 
-%      % figure(3); clf; imagesc(W); colormap lines;
-%     mask(W==0) = 0; 
-%     % figure(4); clf; imagesc(mask);
+    % Remove small dots
+    mask = bwareaopen(mask,consec_layers); % figure(3); clf; imagesc(mask);
+ % bwareaopen is very expensive for big images    
+    
+    % Watershed to split dots
+    % W = ConnInt_T.*uint16(mask.*longDots); figure(4); clf; imagesc(W);
+    W = immultiply(ConnInt_T,cast(mask,intype)); 
+    % figure(4); clf; imagesc(W);
+    W = watershed(max(W(:)) - W);   % This is the Memory Kill Step; 
+     % figure(3); clf; imagesc(W); colormap lines;
+    mask(W==0) = 0; 
+    % figure(4); clf; imagesc(mask);
 
     if getpreciseZ == 1
         labeled = bwlabel(mask);
@@ -247,15 +251,15 @@ for k=1:Nsects
         if plotdata == 1;
             figure(4); clf; 
             colordef black; set(gcf,'color','k'); 
-            imagesc( ConnInt_T ); colormap hot; shading flat;  colorbar;
+            imagesc( immultiply(ConnInt_T,cast(mask,intype)) ); 
+            colormap hot; shading flat;  colorbar;
             ylabel('mRNA index'); xlabel('z-depth'); 
             hold on; plot(tcent(:,1),tcent(:,2),'co'); 
             title('Cross-Section of all dots'); 
         end
     end
 
-    % bwareaopen is very expensive for big images
-       mask = bwareaopen(mask,consec_layers); % figure(3); clf; imagesc(mask);
+   
        masked_inds(1+(k-1)*stp:min(k*stp,2*NDots),:) =  mask.*DotConn(1+(k-1)*stp:min(k*stp,2*NDots),:)  ;
 %      
        
@@ -319,15 +323,19 @@ remove_dot = zeros(NDots,1);
 stacked_dots =0;
 % loop through all dots
 
-for i = 1:2:2*NDots-1 % i = 605 i = 5401; i=5693 i = 5547  i = 6549 
-    j = find(masked_inds(i,:));
-    counted = masked_inds(i,j(2:end));   
+for i = 1:2:2*NDots-1 % i =5 
+    j = find(masked_inds(i,:)); % non-zero indices of masked_inds matrix at i
+    counted = masked_inds(i,j(2:end));  % dot-indices of overlapping dots. 
     if isempty(j) == 0
         stacked_dots = max(j)-min(j) > length(j)-1;
     
         if stacked_dots == 0  && getpreciseZ == 1
              ii = find(cent(:,2)==i,1);
              dotC((i+1)/2,3) = cent(ii(1),1);
+             i_self = masked_inds(i,j(1));
+             i_max = (cent(ii(1),2)+1)/2;
+             dotC(i_self,1) = dotC(i_max,1); 
+             dotC(i_self,2) = dotC(i_max,2); 
         end
     else
         remove_dot((i+1)/2) = 1;
@@ -343,7 +351,12 @@ for i = 1:2:2*NDots-1 % i = 605 i = 5401; i=5693 i = 5547  i = 6549
           counted = possibles(brk_pts(bi)+2:brk_pts(bi+1)); 
           if  getpreciseZ == 1
               ii = find(cent(:,2)==i);
-              dotC((i+1)/2,3) = cent(ii( min(bi,length(ii)) ),1);
+              ii = ii( min(bi,length(ii)) );
+              dotC((i+1)/2,3) = cent(ii,1);
+              i_self = masked_inds(i,j(1));
+              i_max = (cent(ii,2)+1)/2;
+              dotC(i_self,1) = dotC(i_max,1); 
+              dotC(i_self,2) = dotC(i_max,2);         
           end
     stacked_dots =0;      
     end

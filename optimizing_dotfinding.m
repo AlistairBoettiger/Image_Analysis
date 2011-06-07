@@ -216,7 +216,7 @@ toc;
    
    show_projected = 1; % show max-project with all dots and linked dots.  
    plotZdata = 1 ;% show z-map of data
-   getpreciseZ = 0;
+   getpreciseZ = 1;
 
 ck_dots = tic;
         NewDotC1 = CheckDotUpDown(DotLabels1,DotData1,Inds1,Ints1,plotZdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2,intype);
@@ -267,8 +267,6 @@ ck_dots = tic;
 %         end
 %         
         
-                
-           % plot(  NewDotC2(:,1),NewDotC2(:,2),'co','MarkerSize',14 ); 
         
            minS = 8;
            
@@ -281,7 +279,7 @@ ck_dots = tic;
            
             
             figure(10); clf; hist(d2);
-            sum(d2< minS)/length(d2)
+            d2miss = sum(d2< minS)/length(d2);
             
             d1 = 10*zeros(1,length(NewDotC1));
             for n = 1:length(NewDotC1)
@@ -289,12 +287,14 @@ ck_dots = tic;
             end
             
             figure(10); clf; hist(d1);
-            sum(d1< minS)/length(d1)
+            d1miss = sum(d1< minS)/length(d1);
             
              figure(4); hold on; plot(NewDotC1((d1< minS),1),NewDotC1((d1< minS),2),'c*')
              
               figure(3); subplot(2,1,1); hold on; plot(NewDotC2((d2> minS),1),NewDotC2((d2> minS),2),'y*')
+              title(['miss rate = ',num2str(d2miss,3)]);
               figure(3); subplot(2,1,2); hold on; plot(NewDotC1((d1> minS),1),NewDotC1((d1> minS),2),'y*')
+              title(['miss rate = ',num2str(d1miss,3)]);
             
 %% Project all layers
 
