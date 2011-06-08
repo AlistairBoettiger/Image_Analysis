@@ -1,7 +1,7 @@
 %%                      Unsupervised_DotFinding.m
 %
 % Alistair Boettiger                                   Date Begun: 03/10/11
-% Levine Lab                                        Last Modified: 04/15/11
+% Levine Lab                                        Last Modified: 06/07/11
 %
 
 clear all;
@@ -9,53 +9,70 @@ clear all;
 tot_time = tic;
 % Input options 
 old_lab = 0; 
-folder = '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/Enhancer_Modeling/Data/'; 
-rawfolder = '/Volumes/Data/Lab Data/Raw_Data/02-17-11/'; %%   %
-stackfolder = 'MP02_22C/'; % 'MP01_22C/'; 'MGa1x/'; % 'MP10_22C/'; %'MP05_22C/'; %'YW_ths_sog/'; % 'MP10_22C/'; %  % 'MP09_22C/'; % 'MGa2x/'; % 'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
-fname = 'MP02_22C_hb_y_b'; Es = 10; %'MP01_22C_hb_y_c'; Es = 10; % 'MP01_22C_hb_y_f'; Es = 12; %   'MP02_22C_hb_y'; Es = 9; % % % 'MP01_22C_hb_y'; Es = 13; % 'MGa1x_LacZ_b'; Es = 12; %  'MP10_22C_sna_y_e'; Es = 12; %  'MP05_22C_sna_y_c'; Es =7; %  'MP10_22C_sna_y_d3'; Es = 1;  %'YW_ths_sog'; Es = 12;  % % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
-mRNA_channels =  2; % 1; % total mRNA channels
+folder = '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/mRNA_counting/Data/'; % '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/Enhancer_Modeling/Data/'; 
+rawfolder = '/Volumes/Data/Lab Data/Raw_Data/2011-05-22/'; % '/Volumes/Data/Lab Data/Raw_Data/02-17-11/'; %%   %
 
+stackfolder = 's06_MP10_sna18/'; %'s01_MP09/'; %'s10_bcd1x/';%  's11_bcd6x/'; %'s14_comp_cntrl/'; % 's12_cntrl_2label/'; %'MP02_22C/'; %'MP01_22C/'; % 'MGa1x/'; % 'MP10_22C/'; %'MP05_22C/'; %'YW_ths_sog/'; % 'MP10_22C/'; %  % 'MP09_22C/'; % 'MGa2x/'; % 'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
+fname ='s06_MP10_sna18'; %'s10_bcd1x';% 's11_bcd6x'; % 's14_comp_cntrl'; Es =1; % 's12_cntrl_2label'; Es = 1; % 'MP09_22C_hb_y_f'; Es = 7; %  'MP02_22C_hb_y'; Es = 9; % 'MP02_22C_hb_y_b'; Es = 10; %  % 'MP01_22C_hb_y_f'; Es = 12; % 'MP01_22C_hb_y_c'; Es = 10; % 'MP01_22C_hb_y'; Es = 13; % 'MGa1x_LacZ_b'; Es = 12; %  'MP10_22C_sna_y_e'; Es = 12; %  'MP05_22C_sna_y_c'; Es =7; %  'MP10_22C_sna_y_d3'; Es = 1;  %'YW_ths_sog'; Es = 12;  % % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
+mRNA_channels = 2; %  3; %  1; % total mRNA channels
 
+sver = '_1'; % additional label on slide. 
 ver = '';% '_v2';
 
 % MP10_22C_sna_y_c and MP05_22C all done at 3.5, 4, 0.03, 30, 30
 % MGa2x and MGa1x all done at 2.5, 3, 0.03, 30, 30
 
-% Focus on subset of image: 
-     m = 1/2048;  % .9;%    .7; % .5; .7; %   1/2048; % 
 
-    Zs = 50; % Upper limit on number of Z sections   length(Im);
-    h = 2048; w=2048;
-    % [h,w] = size(Im{1,1}{1}); 
+filename = [rawfolder,'/',fname];     
+load([filename,sver,'.mat'])  
+Zs = Datas.LSM_info.DimensionZ; 
+w = Datas.Stack1.Image1.IMG.width;
+h = Datas.Stack1.Image1.IMG.height; 
+Es = length(fields(Datas)) - 3;   % Number of Stacks
 
-   getpreciseZ = 0;
-   consec_layers = 2;
-   ovlap = 2; 
-   thresh = .25;
+% ------- Option: Focus on subset of image: ------------------- %
+%      m = 1/2048;  % .9;%    .7; % .5; .7; %   1/2048; % 
+%    xp1= floor(h/2*m)+1; xp2 = floor(h/2*(2-m))+1;  yp1 = floor(w/2*m)+1;  yp2 = floor(w/2*(2-m))+1;
+%    hs = yp2-yp1+1;     ws = xp2-xp1+1;
 
-   show_projected = 1; % show max-project with all dots and linked dots.  
+ws = 2048; hs = 2048; xp1 = 1; yp1 = 1;
+xp2 = xp1 + ws -1; yp2 = yp1 + hs - 1; 
+disp(['Coordinates:  ', num2str(xp1), ' : ', num2str(xp2), ',   ' num2str(yp1), ' : ', num2str(yp2) ] );
+% ------------------------------------------------------------- %     
+    
+
+% -------------- Graphing and Display Options ------------------ %
+   show_projected = 0; % show max-project with all dots and linked dots. 
+   plotdata = 0; % CheckDotUpDown display parameter
    plotZdata = 0 ;% show z-map of data
    showhist = 1; % show histogram of mRNA counts per cell. 
    showim = 1; % show colorcoded mRNA counts per cell
    bins = 40; % bins for histograms of mRNA
    t = 0; %.45; % threshold for region definition plotting
    spread = 1.3; % over/under
+% ------------------------------------------------------------- % 
+
 
 %---- Dot Finding Parameters ----- %
+   % dotfinder's parameters 
     sigmaE = 3;%  IMPORTANT
     sigmaI = 4; % IMPORTANT
   %  min_int  = 0.04;    %  5    ;% .05 % not necessary Fix at Zero
     FiltSize = 30;% 
     min_size = 30;% 
    
-    % Build the Gaussian Filter   
-    Ex = fspecial('gaussian',FiltSize,sigmaE); % excitatory gaussian
-    Ix = fspecial('gaussian',FiltSize,sigmaI); % inhibitory gaussian
-    Filt = Ex -Ix;
+  % sphere finding parameters
+   getpreciseZ = 0;
+   consec_layers = 2;
+   ovlap = 4; 
 %---------------------------------%
 
 
-%Data = cell(10,mRNA_channels); 
+
+    % Build the Gaussian Filter   
+    Ex = fspecial('gaussian',FiltSize,sigmaE); % excitatory gaussian
+    Ix = fspecial('gaussian',FiltSize,sigmaI); % inhibitory gaussian
+
 %%
 for e= 1:Es
 %%
@@ -87,59 +104,39 @@ for e= 1:Es
              continue
         end
     end
-       
-%     filename = [rawfolder,'/',fname];
-%     Im = lsm_read_mod([filename,'.mat'],str2double(emb),1.5E4);    
-    
-
-
-    xp1= floor(h/2*m)+1; 
-    xp2 = floor(h/2*(2-m))+1;
-    yp1 = floor(w/2*m)+1;
-    yp2 = floor(w/2*(2-m))+1;
-    hs = yp2-yp1+1; 
-    ws = xp2-xp1+1;
-    disp(['Coordinates:  ', num2str(xp1), ' : ', num2str(xp2), ',   ' num2str(yp1), ' : ', num2str(yp2) ] );
    
     toc
     
-    % thresh = .1; 
     
     for mRNAchn = 1:mRNA_channels % mRNAchn =2
         
          if mRNAchn == 1;
-                  min_int  = 0.04;  % just for speed 
+                  min_int  = 0.05;  % just for speed 
          else
                min_int  = 0.02; % 
          end
         
+            DotLabels= cell(1,Zs); 
             DotData = cell(1,Zs);    
-            DotMasks = cell(1,Zs); 
+            Inds = cell(1,Zs); 
+            Ints = cell(1,Zs); 
             im_folder = cell(1,Zs);
+            
             tic; disp('finding dots...'); 
-            for z = 1:Zs % z = 11 
-                try 
-                  im_folder{z} = [rawfolder,stackfolder,fname,'_',emb,'_z',num2str(z),'.tif'];
-                  Iin_z = imread(im_folder{z}); 
-                catch meZ
-                    Zs = z-1;
-                    disp(meZ.message);
-                    disp(['stack depth = ',num2str(Zs)]);
-                    break
-                end            
-                  [DotData{z},DotMasks{z}] = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
+            for z = 1:Zs % z = 11     
+                 im_folder{z} = [rawfolder,stackfolder,fname,'_',emb,'_z',num2str(z),'.tif'];
+                 Iin_z = imreadfast(im_folder{z});       
+                 [DotLabels{z},DotData{z},Inds{z},Ints{z}]  = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
             end     
             toc;
             
-            Cents = cell2mat(DotData');
-            DotData = DotData(1:Zs);
-            DotMasks = DotMasks(1:Zs); 
-            
+                     
         %%
 
-         dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,hs,ws,plotZdata,getpreciseZ,consec_layers,ovlap);
+        intype = class(Iin_z);
+         dotC =  CheckDotUpDown(DotLabels,DotData,Inds,Ints,plotdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2,intype);
+         Cents = cell2mat(DotData');
          
-
         % Project all layers
          
         if show_projected == 1
@@ -161,7 +158,7 @@ for e= 1:Es
         end
         %%
         
-    clear Imax Cents DotData DotMasks Iin_z 
+    clear Imax Cents DotData DotLabels Inds Ints Iin_z 
         
         %%
         
@@ -182,7 +179,7 @@ for e= 1:Es
           Nmin = single(NucLabel); 
           Nmin(Nmin==0)=NaN; 
           Nstart = min(Nmin(:)); 
-          Nucs_list = unique(NucLabel);
+          Nucs_list = nonzeros(unique(NucLabel));
           Nnucs = length(Nucs_list);
           
 %           M = NucLabel;
@@ -197,7 +194,7 @@ for e= 1:Es
         mRNA_den = zeros(1,Nnucs);  % store densities of mRNA per cell
         nuc_area = zeros(1,Nnucs); 
         if showim == 1
-            Plot_mRNA = single(NucLabel);
+            Plot_mRNA = single(NucLabeled);
         end
         for i=1:Nnucs; % i = 4
             nn = Nucs_list(i);
@@ -208,7 +205,7 @@ for e= 1:Es
             mRNA_den(i) = mRNA_cnt(i)/imdata.Area(i); 
             nuc_area(i) = length(imdata.PixelID{i});
             if showim == 1
-                Plot_mRNA(NucLabel==nn) = single(mRNA_den(i));
+                Plot_mRNA(NucLabeled==nn) = single(mRNA_den(i));
             end
         end
         % normalize density to the average cell area
@@ -236,13 +233,13 @@ for e= 1:Es
                 set(gcf,'color','w');
                 title(['Cell size adjusted mRNA per cell. mean = ',...
                 num2str(m_den,4),' std=',num2str(s_den,4)]); 
-            saveas(histfig,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'_hist',ver,'.jpg'],'jpg'); 
+%            saveas(histfig,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'_hist',ver,'.jpg'],'jpg'); 
             % write to disk? 
          end
 
          if showim == 1        
             mRNA_map = figure(3); clf;  colordef black;
-            imagesc(Plot_mRNA); colormap('hot'); colorbar; 
+            imagesc(Plot_mRNA*mean(imdata.Area)); colormap('hot'); colorbar; 
             set(gcf,'color','k');  
             saveas(mRNA_map,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),'rvar',ver,'.jpg'],'jpg'); 
          end
@@ -257,18 +254,18 @@ for e= 1:Es
      clear imdata M C W  mRNA_map Fig_regvar histfig Iout  
         %
      %% Export data
-%      Data{e,mRNAchn}.nucarea = nuc_area;
-%      Data{e,mRNAchn}.dotC = dotC;
-%      Data{e,mRNAchn}.mRNAcnt = mRNA_cnt;
-%      Data{e,mRNAchn}.Plot_mRNA = Plot_mRNA;
-%      Data{e,mRNAchn}.mRNAsadj = mRNA_sadj;
-%     % Data{e,mRNAchn}.DotData = DotData; % break the camel; 
-%     % Data{e,mRNAchn}.DotMasks = DotMasks;
-%     % Data{e,mRNAchn}.imdata = imdata;
-%      % Data{e,mRNAchn}.mRNAden = mRNA_den;
+
+Rpars.sigmaE = sigmaE;
+Rpars.sigmaI = sigmaI;
+Rpars.min_int = min_int;
+Rpars.FiltSize = FiltSize;
+Rpars.min_size = min_size;
+Rpars.getpreciseZ = getpreciseZ;
+Rpars.consec_layers = consec_layers;
+Rpars.ovlap = ovlap; 
      
-       save([folder,fname,'_',emb,'_',num2str(mRNAchn),'_data',ver],...
-           'nuc_area','dotC','mRNA_cnt','Plot_mRNA','mRNA_sadj'); 
+       save([folder,fname,'_',emb,'_chn',num2str(mRNAchn),'_data',ver],...
+           'nuc_area','dotC','mRNA_cnt','Plot_mRNA','mRNA_sadj','Rpars'); 
      
      clear nuc_area dotC mRNA_cnt mRNA_sadj Plot_mRNA 
     
