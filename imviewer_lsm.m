@@ -364,7 +364,7 @@ function setup(hObject,eventdata,handles)
         %    set(handles.VarButtonName,'String',''); 
         dir = {'Step 1: Export layer data as tifs and max project between chosen';
             'starting and ending frames.  Use 0 for last frame to use all data.';
-            'Optional: change channel order e.g. [3,1,2]'} ;
+            'Optional: change channel order e.g. [4,3,1,2]'} ;
         set(handles.directions,'String',dir); 
  end
  
