@@ -14,17 +14,17 @@ rawfolder = '/Volumes/Data/Lab Data/Raw_Data/2011-05-22/'; % '/Volumes/Data/Lab 
 
 stackfolder = 's06_MP10_sna18/'; %'s01_MP09/'; %'s10_bcd1x/';%  's11_bcd6x/'; %'s14_comp_cntrl/'; % 's12_cntrl_2label/'; %'MP02_22C/'; %'MP01_22C/'; % 'MGa1x/'; % 'MP10_22C/'; %'MP05_22C/'; %'YW_ths_sog/'; % 'MP10_22C/'; %  % 'MP09_22C/'; % 'MGa2x/'; % 'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
 fname ='s06_MP10_sna18'; %'s10_bcd1x';% 's11_bcd6x'; % 's14_comp_cntrl'; Es =1; % 's12_cntrl_2label'; Es = 1; % 'MP09_22C_hb_y_f'; Es = 7; %  'MP02_22C_hb_y'; Es = 9; % 'MP02_22C_hb_y_b'; Es = 10; %  % 'MP01_22C_hb_y_f'; Es = 12; % 'MP01_22C_hb_y_c'; Es = 10; % 'MP01_22C_hb_y'; Es = 13; % 'MGa1x_LacZ_b'; Es = 12; %  'MP10_22C_sna_y_e'; Es = 12; %  'MP05_22C_sna_y_c'; Es =7; %  'MP10_22C_sna_y_d3'; Es = 1;  %'YW_ths_sog'; Es = 12;  % % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
-mRNA_channels = 2; %  3; %  1; % total mRNA channels
+mRNA_channels = 3; %  3; %  1; % total mRNA channels
 
-
-ver = '';% '_v2';
+sver = '_1'; % additional label on slide. 
+ver = '_v2';% '_v2';
 
 % MP10_22C_sna_y_c and MP05_22C all done at 3.5, 4, 0.03, 30, 30
 % MGa2x and MGa1x all done at 2.5, 3, 0.03, 30, 30
 
 
 filename = [rawfolder,'/',fname];     
-load([filename,ver,'.mat'])  
+load([filename,sver,'.mat'])  
 Zs = Datas.LSM_info.DimensionZ; 
 w = Datas.Stack1.Image1.IMG.width;
 h = Datas.Stack1.Image1.IMG.height; 
@@ -57,13 +57,13 @@ disp(['Coordinates:  ', num2str(xp1), ' : ', num2str(xp2), ',   ' num2str(yp1), 
    % dotfinder's parameters 
     sigmaE = 3;%  IMPORTANT
     sigmaI = 4; % IMPORTANT
-  %  min_int  = 0.04;    %  5    ;% .05 % not necessary Fix at Zero
+    min_int  = 0.03;    %  5    ;% .05 % not necessary Fix at Zero
     FiltSize = 30;% 
     min_size = 30;% 
    
   % sphere finding parameters
    getpreciseZ = 0;
-   consec_layers = 2;
+   consec_layers = 3; 
    ovlap = 4; 
 %---------------------------------%
 
@@ -108,7 +108,7 @@ for e= 1:Es
     toc
     
     
-    for mRNAchn = 1:mRNA_channels % mRNAchn =2
+    for mRNAchn = 3:mRNA_channels % mRNAchn =2
         
          if mRNAchn == 1;
                   min_int  = 0.05;  % just for speed 
@@ -132,7 +132,8 @@ for e= 1:Es
             
                      
         %%
-
+ % consec_layers = 4; 
+        
         intype = class(Iin_z);
          dotC =  CheckDotUpDown(DotLabels,DotData,Inds,Ints,plotdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2,intype);
          Cents = cell2mat(DotData');
@@ -156,9 +157,7 @@ for e= 1:Es
             plot(  Cents(:,1),Cents(:,2),'yo','MarkerSize',4);
             saveas(Iout,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),ver,'.fig']); 
         end
-        %%
-        
-    clear Imax Cents DotData DotLabels Inds Ints Iin_z 
+
         
         %%
         
@@ -272,17 +271,10 @@ Rpars.ovlap = ovlap;
      toc
     end % end loop over mNRA channels
        %  clean up;
-        clear Iin_z DotData DotMasks I_max cent1 bw dL Cents ...
-            Nmin imdata imdata2 NucLabel NucLabeled Plot_mRNA M C ...
-            nuc_area dotC mRNA_cnt mRNA_den mRNA_sadj inds conn_map;
-            
+      
     
 end % end loop over embryos 
 
-
-      clear Iin_z DotData DotMasks I_max cent1 bw dL Cents ...
-            Nmin imdata imdata2 NucLabeled Plot_mRNA M C ...
-            nuc_area dotC mRNA_cnt mRNA_den mRNA_sadj;
         
       %save([folder,fname,'_slidedata',ver], 'Data'); 
       

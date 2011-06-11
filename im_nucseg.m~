@@ -175,8 +175,14 @@ if step == 2;
     Cell_bnd(cell_bords) = 1;
     Cell_bnd = bwareaopen( Cell_bnd,100);
     
-    class(handles.Nucs);
-    Nucs = handles.Nucs + uint16(2^16*Cell_bnd);
+    int = class(handles.Nucs);
+    if strcmp(int,'uint16')
+        Nucs = handles.Nucs + uint16(2^16*Cell_bnd);
+    elseif strcmp(int,'uint8')
+         Nucs = handles.Nucs + uint8(2^8*Cell_bnd);
+    end
+        
+    
     figure(21); clf; imagesc(Nucs); colormap('hot');    
     
     
@@ -427,10 +433,15 @@ disp('loading image...');
     h = size(handles.Im,1);
     
     scale = 512/h;
-    Imini = imresize(handles.Im,scale);
+    
 try
+    Imini = imresize(handles.Im,scale);
     figure(1); clf; imshow(Imini);    
 catch me
+    try
+       figure(1); clf; imagesc(  imresize(
+    catch
+    end
     disp(me.message);
 end
     

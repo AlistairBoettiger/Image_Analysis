@@ -430,21 +430,26 @@ disp('loading image...');
     % fname =  [handles.fin,'/',handles.fname,'_',handles.embn,'_max.tif']; 
     fname =  [handles.fin,'/','max_',handles.fname,'_',handles.embn,'.tif']; 
     handles.Im =  imread(fname);
-    h = size(handles.Im,1);
     
-    scale = 512/h;
-    Imini = imresize(handles.Im,scale);
+    
+    h = size(handles.Im,1);
+    Nuc = handles.Im(:,:,handles.NucChn);
+    scale = handles.imsize/h;
+    handles.Nucs = imresize(Nuc,scale); 
+    disp(['rescaling to ',num2str(scale*100,3), ' percent']); 
+    
 try
+    Imini = imresize(handles.Im,scale);
     figure(1); clf; imshow(Imini);    
-catch me
-    disp(me.message);
+catch 
+    try % try just nuclear layer.  
+       figure(1); clf; imagesc(Nuc); colormap gray; 
+    catch me
+         disp(me.message);
+    end
 end
     
     
-   Nuc = handles.Im(:,:,handles.NucChn);
-   h = size(Nuc,1); 
-   handles.Nucs = imresize(Nuc,handles.imsize/h); 
-   disp(['rescaling to ',num2str(handles.imsize/h*100,3), ' percent']); 
     
     handles.output = hObject; 
     guidata(hObject,handles);% pause(.1);
