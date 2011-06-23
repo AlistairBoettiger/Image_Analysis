@@ -40,7 +40,7 @@ FiltSize = round(1.3*sigmaI);
 
   H = fspecial('disk',imblur); % Filter Kernel       
      I = imfilter(I,H,0); %Apply Filter
-    figure(2); clf; imshow(I); 
+    % figure(2); clf; imshow(I); 
 
    I =  adapthisteq(I); %Step 1: enhances the contrast of the grayscale image   
  %   H = - fspecial('log',FiltSize,FiltStd); % Step 2 : Filter Kernel
@@ -58,7 +58,7 @@ FiltSize = round(1.3*sigmaI);
   W = watershed(max(outims(:))-outims);
   outims(W==0) = 0; 
   outims = makeuint(outims,16); 
-  figure(4); clf; imshow(outims); 
+ %  figure(4); clf; imshow(outims); 
   
    bw = im2bw(outims,graythresh(outims)); %Step 3 : Automatic threshold calculated using Otsu's method.
 
