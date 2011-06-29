@@ -9,15 +9,18 @@ clear all;
 tot_time = tic;
 % Input options 
 old_lab = 0;  Es = 0; 
-folder = '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/mRNA_counting/Data/2011-05-22/'; % '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/Enhancer_Modeling/Data/'; 
-rawfolder = '/Volumes/Data/Lab Data/Raw_Data/2011-05-22/'; % '/Volumes/Data/Lab Data/Raw_Data/02-17-11/'; %%   %
+folder = '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/mRNA_counting/Data/2011-02-17/'; %  2011-05-22/'; % '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/Enhancer_Modeling/Data/'; 
+%rawfolder = '/Volumes/Data/Lab Data/Raw_Data/2011-02-17/'; %2011-05-22/'; % '/Volumes/Data/Lab Data/Raw_Data/02-17-11/'; %%   %
 
-stackfolder = 's21_MP07/';% 's04_MP10/';%  's01_MP09/';%'s07_MP08/';% 's03_MP02/';%  's02_MP01/';% 's10_bcd1x/';%  's11_bcd6x/'; %'s14_comp_cntrl/'; % 's12_cntrl_2label/'; %'MP02_22C/'; %'MP01_22C/'; % 'MGa1x/'; % 'MP10_22C/'; %'MP05_22C/'; %'YW_ths_sog/'; % 'MP10_22C/'; %  % 'MP09_22C/'; % 'MGa2x/'; % 'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
-fname =  'MP07het_snaD_22C'; % 's04_MP10Hz'; % 's01_MP09_Hz_22C_c';% 's07_MP08Hz_snaD_22C'; %'s03_MP02_Hz_22C_b';%   's01_MP09_Hz_22C_b';%  's02_MP01_Hz_22C'; % 's10_bcd1x';% 's11_bcd6x'; % 's14_comp_cntrl'; Es =1; % 's12_cntrl_2label'; Es = 1; % 'MP09_22C_hb_y_f'; Es = 7; %  'MP02_22C_hb_y'; Es = 9; % 'MP02_22C_hb_y_b'; Es = 10; %  % 'MP01_22C_hb_y_f'; Es = 12; % 'MP01_22C_hb_y_c'; Es = 10; % 'MP01_22C_hb_y'; Es = 13; % 'MGa1x_LacZ_b'; Es = 12; %  'MP10_22C_sna_y_e'; Es = 12; %  'MP05_22C_sna_y_c'; Es =7; %  'MP10_22C_sna_y_d3'; Es = 1;  %'YW_ths_sog'; Es = 12;  % % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
-mRNA_channels = 1; %  3; %  1; % total mRNA channels
 
-sname = 'MP07het_snaD_22C_1'; Es=4; Zs = 50; % MP07fname; % 's03_MP02_Hz_22C_b';%
-ver = '';% '_v2';
+ rawfolder = '/Volumes/GRAID/Raw_Data/2011-02-17/'; % 
+
+stackfolder ='MP05_22C/'; %'s02_MP01/';% 's03_MP02/';%  's04_MP10/';%  's21_MP07/';%  's01_MP09/';%'s07_MP08/';%   's10_bcd1x/';%  's11_bcd6x/'; %'s14_comp_cntrl/'; % 's12_cntrl_2label/'; %'MP02_22C/'; %'MP01_22C/'; % 'MGa1x/'; % 'MP10_22C/'; %'MP05_22C/'; %'YW_ths_sog/'; % 'MP10_22C/'; %  % 'MP09_22C/'; % 'MGa2x/'; % 'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
+fname =  'MP05_22C_sna_y_c';% 's02_MP01_Hz_22C';%  's03_MP02_Hz_22C';% 's03_MP02_Hz_22C_b';% 's04_MP10Hz'; %'MP07het_snaD_22C'; % 's01_MP09_Hz_22C_c';% 's07_MP08Hz_snaD_22C'; %   's01_MP09_Hz_22C_b';%  's02_MP01_Hz_22C'; % 's10_bcd1x';% 's11_bcd6x'; % 's14_comp_cntrl'; Es =1; % 's12_cntrl_2label'; Es = 1; % 'MP09_22C_hb_y_f'; Es = 7; %  'MP02_22C_hb_y'; Es = 9; % 'MP02_22C_hb_y_b'; Es = 10; %  % 'MP01_22C_hb_y_f'; Es = 12; % 'MP01_22C_hb_y_c'; Es = 10; % 'MP01_22C_hb_y'; Es = 13; % 'MGa1x_LacZ_b'; Es = 12; %  'MP10_22C_sna_y_e'; Es = 12; %  'MP05_22C_sna_y_c'; Es =7; %  'MP10_22C_sna_y_d3'; Es = 1;  %'YW_ths_sog'; Es = 12;  % % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
+mRNA_channels = 2; %  3; %  1; % total mRNA channels
+
+sname =  fname; % 'MP07het_snaD_22C_1'; Es=4; Zs = 50; % MP07  's03_MP02_Hz_22C_b';%
+ver = '';% '_v2'; % 
 
 % MP10_22C_sna_y_c and MP05_22C all done at 3.5, 4, 0.03, 30, 30
 % MGa2x and MGa1x all done at 2.5, 3, 0.03, 30, 30
@@ -76,17 +79,17 @@ disp(['Coordinates:  ', num2str(xp1), ' : ', num2str(xp2), ',   ' num2str(yp1), 
     Ix = fspecial('gaussian',FiltSize,sigmaI); % inhibitory gaussian
 
 %%
-for e= 2:Es
+for e= 1:Es
 %%
     tic 
-    disp('loading data...');
+    disp('Running DotFinder1, loading data...');
     if e<10
         emb = ['0',num2str(e)];
     else
         emb = num2str(e);
     end
-    
-    
+    disp(['analyzing embryo, ',emb,'...']);
+   
     
     try load([rawfolder,stackfolder,fname,'_',emb,'_nucdata.mat']);
     
@@ -113,7 +116,7 @@ for e= 2:Es
     for mRNAchn = 1:mRNA_channels % mRNAchn =2
         
          if mRNAchn == 1;
-               min_int  = 0.05;  % just for speed 
+               min_int  = 0.03;  % just for speed 
          else
                min_int  = 0.01; % 
          end
@@ -300,7 +303,9 @@ end % end loop over embryos
         
       %save([folder,fname,'_slidedata',ver], 'Data'); 
       
-      toc(tot_time)
+       Tout = toc(tot_time)/360;
+      disp(['elpased time = ',num2str(Tout), ' hours']); 
+      
       disp('All slide data saved'); 
       
         
