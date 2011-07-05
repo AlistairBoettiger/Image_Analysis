@@ -210,7 +210,7 @@ end
     conn_map = handles.conn_map; 
     Cell_bnd = handles.Cell_bnd;
     
-    save([fout,fname,'_nucdata'],...
+    save([fout,'/',fname,'_nucdata.mat'],...
         'NucLabeled','nuc_cents','conn_map','Cell_bnd','Nucs'); 
   
     
