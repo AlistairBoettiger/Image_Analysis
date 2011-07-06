@@ -280,7 +280,7 @@ Rpars.getpreciseZ = getpreciseZ;
 Rpars.consec_layers = consec_layers;
 Rpars.ovlap = ovlap; 
      
-       save([folder,fname,'_',emb,'_chn',num2str(mRNAchn),'_data',ver],...
+       save([folder,fname,'_',emb,'_chn',num2str(mRNAchn),'_data',ver,'.mat'],...
            'nuc_area','dotC','mRNA_cnt','Plot_mRNA','mRNA_sadj','Rpars'); 
      
      clear nuc_area dotC mRNA_cnt mRNA_sadj Plot_mRNA 

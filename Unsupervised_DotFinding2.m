@@ -12,12 +12,12 @@ old_lab = 0;  Es = 0; Zs = 0;
 folder = '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/mRNA_counting/Data/2011-05-22/'; %  2011-06-20/';%  '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/Enhancer_Modeling/Data/'; 
 rawfolder = '/Volumes/Data/Lab Data/Raw_Data/2011-05-22/'; %   2011-06-20/';% 2011-06-20/'; '/Volumes/Data/Lab Data/Raw_Data/02-17-11/'; %%   %
 
-stackfolder ='s05_MP06/';%  'sna2.8Hz/';% 's21_MP07/';% 'MP07Hz/';% 's11_G4B/' %   's04_MP10/';%  's01_MP09/';% 's02_MP01/';% %'s10_bcd1x/';%  's11_bcd6x/'; %'s14_comp_cntrl/'; % 's12_cntrl_2label/'; %'MP02_22C/'; %'MP01_22C/'; % 'MGa1x/'; % 'MP10_22C/'; %'MP05_22C/'; %'YW_ths_sog/'; % 'MP10_22C/'; %  % 'MP09_22C/'; % 'MGa2x/'; % 'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
-fname = 's05_MP06Hz_b';  Zs = 35;  % 'sna2.8_snaD_22C';%  'MP07het_snaD_22C'; %  'MP07Hz_snaD_22C';%'s11_G4B_LacZ';% 's06_MP10_sna18_b'; % 's05_MP06Hz'; % 's04_MP10Hz'; % 's01_MP09_Hz_22C_c'; % 's02_MP01_Hz_22C_b'; %%'s10_bcd1x';% 's11_bcd6x'; % 's14_comp_cntrl'; Es =1; % 's12_cntrl_2label'; Es = 1; % 'MP09_22C_hb_y_f'; Es = 7; %  'MP02_22C_hb_y'; Es = 9; % 'MP02_22C_hb_y_b'; Es = 10; %  % 'MP01_22C_hb_y_f'; Es = 12; % 'MP01_22C_hb_y_c'; Es = 10; % 'MP01_22C_hb_y'; Es = 13; % 'MGa1x_LacZ_b'; Es = 12; %  'MP10_22C_sna_y_e'; Es = 12; %  'MP05_22C_sna_y_c'; Es =7; %  'MP10_22C_sna_y_d3'; Es = 1;  %'YW_ths_sog'; Es = 12;  % % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
-mRNA_channels = 2; %  3; %  1; % total mRNA channels
+stackfolder = 's06_MP10_sna18/'; %'s05_MP06/';%  'sna2.8Hz/';% 's21_MP07/';% 'MP07Hz/';% 's11_G4B/' %   's04_MP10/';%  's01_MP09/';% 's02_MP01/';% %'s10_bcd1x/';%  's11_bcd6x/'; %'s14_comp_cntrl/'; % 's12_cntrl_2label/'; %'MP02_22C/'; %'MP01_22C/'; % 'MGa1x/'; % 'MP10_22C/'; %'MP05_22C/'; %'YW_ths_sog/'; % 'MP10_22C/'; %  % 'MP09_22C/'; % 'MGa2x/'; % 'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
+fname =  's06_MP10_sna18_b'; %'s05_MP06Hz_b';  Zs = 35;  % 'sna2.8_snaD_22C';%  'MP07het_snaD_22C'; %  'MP07Hz_snaD_22C';%'s11_G4B_LacZ';% 's05_MP06Hz'; % 's04_MP10Hz'; % 's01_MP09_Hz_22C_c'; % 's02_MP01_Hz_22C_b'; %%'s10_bcd1x';% 's11_bcd6x'; % 's14_comp_cntrl'; Es =1; % 's12_cntrl_2label'; Es = 1; % 'MP09_22C_hb_y_f'; Es = 7; %  'MP02_22C_hb_y'; Es = 9; % 'MP02_22C_hb_y_b'; Es = 10; %  % 'MP01_22C_hb_y_f'; Es = 12; % 'MP01_22C_hb_y_c'; Es = 10; % 'MP01_22C_hb_y'; Es = 13; % 'MGa1x_LacZ_b'; Es = 12; %  'MP10_22C_sna_y_e'; Es = 12; %  'MP05_22C_sna_y_c'; Es =7; %  'MP10_22C_sna_y_d3'; Es = 1;  %'YW_ths_sog'; Es = 12;  % % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
+mRNA_channels = 3; %  3; %  1; % total mRNA channels
 
-sname = 's05_MP06Hz';%  fname; % 'MP07het_snaD_22C_1';% '_1'; % additional label on slide. 
-ver = '_v4';% '_v2'; % '_v3';% '_v2';
+sname =  fname; %'s05_MP06Hz';%  'MP07het_snaD_22C_1';% '_1'; % additional label on slide. 
+ver = '_v3';% '_v2'; % '_v3';% '_v2';
 
 % MP10_22C_sna_y_c and MP05_22C all done at 3.5, 4, 0.03, 30, 30
 % MGa2x and MGa1x all done at 2.5, 3, 0.03, 30, 30
@@ -79,7 +79,7 @@ disp(['Coordinates:  ', num2str(xp1), ' : ', num2str(xp2), ',   ' num2str(yp1), 
     Ix = fspecial('gaussian',FiltSize,sigmaI); % inhibitory gaussian
 
 %%
-for e= 10;%  1:Es
+for e=  1:Es
 %%
     tic 
     disp('Running DotFinder2, loading data...');
@@ -116,11 +116,11 @@ for e= 10;%  1:Es
     for mRNAchn = 2:mRNA_channels % mRNAchn =2
         
          if mRNAchn == 1;
-                  min_int  = 0.05;  % .05 just for speed 
+                  min_int  = 0.01;  % .05 just for speed 
          elseif mRNAchn == 2
-               min_int  = 0.028; % 01
+               min_int  = 0.01; % .028 .01
          else
-             min_int = 0.05;
+             min_int = 0.1; % .05
          end
         
             DotLabels= cell(1,Zs); 
@@ -270,7 +270,7 @@ Rpars.getpreciseZ = getpreciseZ;
 Rpars.consec_layers = consec_layers;
 Rpars.ovlap = ovlap; 
      
-       save([folder,fname,'_',emb,'_chn',num2str(mRNAchn),'_data',ver],...
+       save([folder,fname,'_',emb,'_chn',num2str(mRNAchn),'_data',ver,'.mat'],...
            'nuc_area','dotC','mRNA_cnt','Plot_mRNA','mRNA_sadj','Rpars'); 
      
      clear nuc_area dotC mRNA_cnt mRNA_sadj Plot_mRNA 
