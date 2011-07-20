@@ -175,12 +175,21 @@ function [handles] = projectNsave(hObject, eventdata, handles)
     
        
     % find if data is uint16 or something else; 
-     inttype =  ['uint',num2str(Datas.Stack1.Image1.IMG.bits)];
-     disp(['data is ',inttype]); 
-     
+try
+    inttype =  ['uint',num2str(Datas.Stack1.Image1.IMG.bits)];
+        disp(['data is ',inttype]); 
      channels =  Datas.Stack1.Image1.TIF.SamplesPerPixel;  
-     disp(['Data contains ', num2str(channels),' channels']); 
+     w = Datas.Stack1.Image1.IMG.width;
+     h = Datas.Stack1.Image1.IMG.height;
+        disp(['Data contains ', num2str(channels),' channels']);
+catch er
+    disp(er.message); 
+    disp('data is not an image stack');
+end
     
+
+     
+
       
     if str_chns{:} == ' '
         chns = 1:channels;
@@ -188,10 +197,7 @@ function [handles] = projectNsave(hObject, eventdata, handles)
         chns = eval(str_chns{:});
     end
      
-     
-     
-    w = Datas.Stack1.Image1.IMG.width;
-    h = Datas.Stack1.Image1.IMG.height;
+   
     Zs = Datas.LSM_info.DimensionZ;
 
    last(last == 0) = Zs;

@@ -217,6 +217,8 @@ end
     guidata(hObject, handles); 
  toc
    disp('data saved'); 
+   dir = {'data saved'};
+   set(handles.directions,'String',dir); 
      
  end
  

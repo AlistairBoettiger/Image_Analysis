@@ -1,4 +1,4 @@
-%%                      Unsupervised_DotFinding.m
+%%                      Unsupervised_DotFinding3.m
 %
 % Alistair Boettiger                                   Date Begun: 03/10/11
 % Levine Lab                                        Last Modified: 06/07/11
@@ -9,14 +9,15 @@ clear all;
 tot_time = tic;
 % Input options 
 old_lab = 0;  Es = 0;  ver = '';% '_v2';
-folder = '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/mRNA_counting/Data/2011-06-20/'; % 2011-02-17/'; % 2011-05-22/'; % '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/Enhancer_Modeling/Data/'; 
- rawfolder = '/Volumes/Data/Lab Data/Raw_Data/2011-06-20/'; % 2011-05-22/'; %
+folder = '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/mRNA_counting/Data/2011-06-20/'; %2011-07-12/'; %2011-06-20/'; % 2011-02-17/'; % 2011-05-22/
+rawfolder = '/Volumes/Data/Lab Data/Raw_Data/2011-06-20/'; %2011-07-12/'; %  2011-05-22/'; % 
 
 % rawfolder = '/Volumes/GRAID/Raw_Data/2011-02-17/'; % 
 
-stackfolder = 's01_MP09/';% 'MP10_22C/'; % 's08_EsplN_vndN/';% 's03_MP02/';% 's10_bcd1x/';%  's11_bcd6x/'; %'s14_comp_cntrl/'; % 's12_cntrl_2label/'; %'MP02_22C/'; %'MP01_22C/'; % 'MGa1x/'; % 'MP10_22C/'; %'MP05_22C/'; %'YW_ths_sog/'; % 'MP10_22C/'; %  % 'MP09_22C/'; % 'MGa2x/'; % 'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
- fname = 's01_MP09_cflip';% 'MP10_22C_sna_y_d'; ver = '_v3'; %  's08_EsplN_vndN'; % 's03_MP02_Hz_22C'; % 's10_bcd1x';% 's11_bcd6x'; % 's14_comp_cntrl'; Es =1; % 's12_cntrl_2label'; Es = 1; % 'MP09_22C_hb_y_f'; Es = 7; %  'MP02_22C_hb_y'; Es = 9; % 'MP02_22C_hb_y_b'; Es = 10; %  % 'MP01_22C_hb_y_f'; Es = 12; % 'MP01_22C_hb_y_c'; Es = 10; % 'MP01_22C_hb_y'; Es = 13; % 'MGa1x_LacZ_b'; Es = 12; %  'MP10_22C_sna_y_e'; Es = 12; %  'MP05_22C_sna_y_c'; Es =7; %  'MP10_22C_sna_y_d3'; Es = 1;  %'YW_ths_sog'; Es = 12;  % % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
+ stackfolder = 's07_MP05Hz/';% 'sna2p8het/';  %  's04_MP10/';%    's01_MP09/';% 'MP10_22C/'; % 's08_EsplN_vndN/';% 's03_MP02/';% 's10_bcd1x/';%  's11_bcd6x/'; %'s14_comp_cntrl/'; % 's12_cntrl_2label/'; %'MP02_22C/'; %'MP01_22C/'; % 'MGa1x/'; % 'MP10_22C/'; %'MP05_22C/'; %'YW_ths_sog/'; % 'MP10_22C/'; %  % 'MP09_22C/'; % 'MGa2x/'; % 'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
+ fname = 's07_MP05Hz_22C_c'; ver = '';% 'sna2p8het_sim_sna'; % 's04_MP10Hz_b'; ver = '_v2';%  's07_MP05Hz_22C'; ver = '_v2';% %'s01_MP09_cflip';% 'MP10_22C_sna_y_d'; ver = '_v3'; %  's08_EsplN_vndN'; % 's03_MP02_Hz_22C'; % 's10_bcd1x';% 's11_bcd6x'; % 's14_comp_cntrl'; Es =1; % 's12_cntrl_2label'; Es = 1; % 'MP09_22C_hb_y_f'; Es = 7; %  'MP02_22C_hb_y'; Es = 9; % 'MP02_22C_hb_y_b'; Es = 10; %  % 'MP01_22C_hb_y_f'; Es = 12; % 'MP01_22C_hb_y_c'; Es = 10; % 'MP01_22C_hb_y'; Es = 13; % 'MGa1x_LacZ_b'; Es = 12; %  'MP10_22C_sna_y_e'; Es = 12; %  'MP05_22C_sna_y_c'; Es =7; %  'MP10_22C_sna_y_d3'; Es = 1;  %'YW_ths_sog'; Es = 12;  % % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
 mRNA_channels = 2; %  3; %  1; % total mRNA channels
+
 
 sname =  fname; % 's08_EsplN_vndN_01'; Es=4; Zs = 50; %
 
@@ -26,7 +27,7 @@ sname =  fname; % 's08_EsplN_vndN_01'; Es=4; Zs = 50; %
 
 
 filename = [rawfolder,'/',fname];     
-load([rawfolder,'/',sname,'.mat'])  
+load([rawfolder,stackfolder,sname,'.mat'])  
 
 w = Datas.Stack1.Image1.IMG.width;
 h = Datas.Stack1.Image1.IMG.height; 
@@ -43,7 +44,10 @@ ws = 2048; hs = 2048; xp1 = 1; yp1 = 1;
 xp2 = xp1 + ws -1; yp2 = yp1 + hs - 1; 
 disp(['Coordinates:  ', num2str(xp1), ' : ', num2str(xp2), ',   ' num2str(yp1), ' : ', num2str(yp2) ] );
 % ------------------------------------------------------------- %     
-    
+   
+
+
+
 
 % -------------- Graphing and Display Options ------------------ %
    show_projected = 0; % show max-project with all dots and linked dots. 
@@ -91,7 +95,6 @@ for e= 1:Es
     
     
     try load([rawfolder,stackfolder,fname,'_',emb,'_nucdata.mat']);
-    
     catch err
         disp(err.message)
         try load([folder,fname,'_',emb,'_nucdata.mat']);

@@ -126,7 +126,7 @@ end
 toc
 
 
-figure(3); clf; imagesc(ConnInt); colormap hot; colorbar;
+% figure(3); clf; imagesc(ConnInt); colormap hot; colorbar;
 
 
 
