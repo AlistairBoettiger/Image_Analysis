@@ -19,9 +19,6 @@ max_size = 200; % Biggest linear dimension at which to attempt 3D projection;
 
 
 
-    
-
-
 tic; 
 disp('loading data...');
 
@@ -29,7 +26,8 @@ disp('loading data...');
 %fname = 'MP05_22C_sna_y'; emb = '02';
 %fname = 'MP09_22C_hb_y_d'; emb = '01';
 
-folder = '/Volumes/Data/Lab Data/Raw_Data/2011-05-22/';
+rawfolder = '/home/alistair/Documents/Research/Raw_Data_Temp/2011_06_22/';
+folder = '/home/alistair/Documents/Research/Projects/Chromatin/Data/';
 
 
 rawfolder =  folder; % '/Volumes/Data/Lab Data/Raw_Data/2011-05-22/s12_cntrl_2label/';

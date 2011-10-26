@@ -55,7 +55,7 @@ function varargout = im_nucseg(varargin)
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
 % Edit the above text to modify the response to help im_nucseg
-% Last Modified by GUIDE v2.5 10-Mar-2011 12:19:13
+% Last Modified by GUIDE v2.5 22-Oct-2011 19:05:31
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -88,7 +88,8 @@ function im_nucseg_OpeningFcn(hObject, eventdata, handles, varargin)
    
   % Some initial setup 
       % Folder to save .mat data files in for normal script function.  
-     handles.fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
+handles.fdata = '/home/alistair/Documents/Research/Projects/OpenImageProcessing/';
+     %  '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
      handles.step = 0;  % starting step is step 0 
      set(handles.stepnum,'String',handles.step); % change step label in GUI
      handles.output = hObject; % update handles object with new step number
@@ -250,7 +251,7 @@ function VarButton_Callback(hObject, eventdata, handles)
 function setup(hObject,eventdata,handles)
  if handles.step == 0; 
        load([handles.fdata, 'imnucseg_pars0']); 
-       % pars = {'3','512',' ',' ',' ',' '}; save([handles.fdata,'imnucseg_pars0'], 'pars' );
+       % pars = {'3','512',' ',' ',' ',' '}; save([handles.fdata,'imnucseg_pars0.mat'], 'pars' );
         set(handles.in1label,'String','Nuclei channel');
         set(handles.in1,'String', pars(1));
         set(handles.in2label,'String','imsize');
@@ -273,7 +274,7 @@ function setup(hObject,eventdata,handles)
  
    if handles.step == 1; 
        load([handles.fdata,'/','imnucseg_pars1']);
-       %  pars = {'100','4','20','23','30',' '};  save([handles.fdata,'imnucseg_pars1'], 'pars' );
+       %  pars = {'100','4','20','23','30',' '};  save([handles.fdata,'imnucseg_pars1.mat'], 'pars' );
         set(handles.in1label,'String','min Nuc size'); % number of pixels in filter (linear dimension of a square)
         set(handles.in1,'String', pars{1});
         set(handles.in2label,'String','Imblur'); % width of Gaussian in pixels
@@ -293,7 +294,7 @@ function setup(hObject,eventdata,handles)
   end      
   if handles.step == 2;  % nuclei segmentation
     load([handles.fdata,'/','imnucseg_pars2']); 
-    % pars = {'45','3','2','','','',''};  save([handles.fdata,'imnucseg_pars2'], 'pars' );
+    % pars = {'45','3','2','','','',''};  save([handles.fdata,'imnucseg_pars2.mat'], 'pars' );
         set(handles.in1label,'String','thicken nuclei'); 
         set(handles.in1,'String', pars{1});
         set(handles.in2label,'String','thin boundaries');
@@ -580,4 +581,3 @@ function fout_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-

@@ -158,7 +158,7 @@ disp('loading data...');
             
         %%
 
-        intype = class(Iin_z);
+         intype = class(Iin_z);
          dotC =  CheckDotUpDown(DotLabels,DotData,Inds,Ints,plotdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2,intype);
          Cents = cell2mat(DotData');
          
