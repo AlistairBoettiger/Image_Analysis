@@ -23,15 +23,15 @@ function [dot_labels,cent,inds,ints] = dotfinder(I,Ex,Ix,min_int,min_size)
 %  xp1 = 640; yp1 = 640; xp2 = 840; yp2 = 840; 
 %  xp1 = 340; yp1 = 340; xp2 = 540; yp2 = 540; 
 %   z = 20;  Iin_z = imread(im_folder{z}); I = Iin_z(xp1:xp2,yp1:yp2,1);
-%  figure(9); clf; imagesc(3*I); ; colormap hot; set(gcf,'color','k');  colorbar; 
+% figure(9); clf; imagesc(3*I); ; colormap hot; set(gcf,'color','k');  colorbar; 
   
   
    bw = im2bw(I,min_int);  % if we're gonna do this, do it first.   
    Iin = I;
    Iin(bw==0) =0;
    clear bw; 
-  % figure(2); clf; imagesc(I); colormap hot; set(gcf,'color','k');  colorbar; 
-
+  % figure(2); clf; imagesc(Iin); colormap hot; set(gcf,'color','k');  colorbar; 
+    % figure(8); clf; imagesc(bw); colormap hot; 
    % Faster method to apply filter -- use straight Gaussians. 
   outE = imfilter(single(Iin),Ex,'replicate'); 
   outI = imfilter(single(Iin),Ix,'replicate'); 
@@ -123,7 +123,7 @@ function [dot_labels,cent,inds,ints] = dotfinder(I,Ex,Ix,min_int,min_size)
   % % RECORD indices of each dot and intensity at centroid of each dot
        inds = floor(cent(:,2))+floor(cent(:,1))*h;  % indices in this layer  
        inds(inds>w*h) = w*h; 
-       ints = [0; I(inds)]; 
+       ints = [I(inds);0]; 
        dot_labels = labeled(inds); 
        % the leading zero is a dummy which allows pixel values to be set to
        % 0 while referencing members of ints. 
@@ -131,10 +131,10 @@ function [dot_labels,cent,inds,ints] = dotfinder(I,Ex,Ix,min_int,min_size)
          
    
        
-       
+%        
 %        figure(10); clf; imagesc(uint16(bw2).*Iin); hold on;
 %        plot(cent(:,1),cent(:,2),'bo');
-%        figure(2); clf; imagesc(3*I); hold on; 
+%        figure(7); clf; imagesc(3*I); hold on; 
 %         shading flat; colormap hot; set(gcf,'color','k'); 
 %        plot(cent(:,1),cent(:,2),'bo');
        
