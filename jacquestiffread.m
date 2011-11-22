@@ -131,6 +131,8 @@ while  TIF.img_pos ~= 0
         switch TIF.entry_tag
             case 254
                 TIF.NewSubfiletype = entry.val;
+                
+                           
             case 256         % image width - number of column
                 IMG.width          = entry.val;
                 
@@ -212,7 +214,7 @@ end
 
 Data.LSM_info=LSM_info;
 
-numberofstacks = round((count-2)/Data.LSM_info.DimensionZ);
+numberofstacks = (count-1)/Data.LSM_info.DimensionZ;
 
 for i =1:numberofstacks
     for j=1:Data.LSM_info.DimensionZ
@@ -231,7 +233,7 @@ Datas.TEMPDat = TIF.TEMPDat;
 save(filenameout,'Datas');
 disp('data saved'); 
 
-fclose(TIF.file)
+fclose(TIF.file);
 
 end
 
@@ -336,7 +338,7 @@ else
            
            end
            
-           entry.val(i)= entry.val(i)+TEMPDat.counterr*(2^32-1);
+           entry.val(i)= entry.val(i)+TEMPDat.counterr*(2^32);
            
            TEMPDat.pastposi=entryvaltemp(i);
            

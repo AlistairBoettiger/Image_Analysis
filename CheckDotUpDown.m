@@ -24,10 +24,6 @@ function New_dotC = CheckDotUpDown(DotLabels,DotData,Inds,Ints,plotdata,getpreci
 % use linear indexing of all dots
 tic 
 
-     
-% intype = 'uint8';
-
-disp('connecting dots in Z...') 
 %  plotdata = 1;  h = hs; w = ws; getpreciseZ =1; ovlap = 2; intype = 'uint16';  
 % DotData = DotData1; Inds = Inds1; Ints = Ints1; DotLabels = DotLabels1; 
 % DotData1 = DotData; Inds1 = Inds; Ints1 = Ints; DotLabels1 = DotLabels; 
@@ -48,7 +44,7 @@ for z = 1:Zs
     dotzpos{z} = z*ones(dotsinlayer(z),1);
 end
 dotC = [cell2mat(DotData'), cell2mat(dotzpos)];  
- % clear DotData; 
+clear DotData; 
 
 
 NDots = length(dotC); % total number of dots;
@@ -60,7 +56,7 @@ disp(['Total dots = ',num2str(NDots)]);
         % in 2 different data structures.  Could build this guy to start
         % with.  
 
-       
+%% Troubleshooting plots (3D dot scatter)       
 % figure(10); clf;  plot3(dotC(:,1),dotC(:,2),dotC(:,3),'w.');
 % % for n=1:NDots
 % %     z = dotC(n,3); 
@@ -88,7 +84,8 @@ disp(['Total dots = ',num2str(NDots)]);
 %  hold on; plot(DotData{21}(:,1),DotData{21}(:,2),'c.');
 % hold on; plot(DotData{22}(:,1),DotData{22}(:,2),'b.');
         
-   
+%%
+disp('connecting dots in Z...') 
 DotConn = zeros(2*NDots,Zs,'single'); % empty connectivity matrix for all dots;  as a uint16 restricts this to 65,536 dots per image.  
 ConnInt = zeros(2*NDots,Zs,intype); 
 LayerJoin = false(2*NDots,Zs); 
@@ -122,8 +119,6 @@ for Z = 1:Zs % The primary layer Z = 8
 %             Iin_z = imreadfast(im_folder{Z});  
 %             I_test = Iin_z(xp1:xp2,yp1:yp2,mRNAchn+1);  imagesc(I_test); colorbar; colormap hot;
 %              hold on; plot(dotC(indsT,1),dotC(indsT,2),'c+');
-            
-   
          
          DotConn(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) =  indsT; % STORE in DotConn matrix the indices 
          ConnInt(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) = Ints{z}(inds_zin1+1); % Ints{z}(inds_zin1+1); ; %  % store actual intensities.  
@@ -154,18 +149,6 @@ toc
 %     liny = dotC(nonzeros(DotConn(n,:)),2) ;  
 %     plot(linx,liny,'w');
 % end
-
-%    for z=1:Zs
-%             text(DotData2{z}(:,1),DotData2{z}(:,2),[num2str(z)],'color','w','FontSize',8);
-%            % text(DotData1{z}(:,1),DotData1{z}(:,2),[num2str(z)],'color','m','FontSize',8);
-%    end
-%         
-
-% % Flag specific points of interest.  
-% p1 = (1089+1)/2; p2 = (525);
-% figure(2); hold on; plot(dotC(p1,1),dotC(p1,2),'mo','MarkerSize',15); 
-% plot(dotC(p2,1),dotC(p2,2),'m*','MarkerSize',15);
-   
       
    
 
@@ -232,8 +215,6 @@ for k=1:Nsects
         labeled = bwlabel(mask);
         R = regionprops(labeled,ConnInt_T,'WeightedCentroid');
         tcent =  reshape([R.WeightedCentroid],2,length(R))';
-
-      %  cent = [cent; tcent(:,1),(k-1)*stp + tcent(:,2)];
         Cent{k} = [tcent(:,1),(k-1)*stp + tcent(:,2)];
         
         if plotdata == 1;
@@ -246,8 +227,8 @@ for k=1:Nsects
             title('Cross-Section of all dots'); 
         end
     end
-
    
+    % Final output is just DotConn split up by mask
        masked_inds(1+(k-1)*stp:min(k*stp,2*NDots),:) =  mask.*DotConn(1+(k-1)*stp:min(k*stp,2*NDots),:)  ;
 %      
        
@@ -255,6 +236,8 @@ for k=1:Nsects
         masked_ints(1+(k-1)*stp:min(k*stp,2*NDots),:) =  mask.*single(ConnInt(1+(k-1)*stp:min(k*stp,2*NDots),:) );
        end
 end
+
+% figure(3); clf; imagesc(masked_inds); colormap hot;
 
 if plotdata == 1
     cent = cell2mat(Cent); 
@@ -266,42 +249,65 @@ toc
 
 
   %% Troubleshooting
-% tic
-% 
 % figure(2); clf; 
 % imagesc(Imax_dots);   hold on;
 % plot(dotC(:,1),dotC(:,2),'c+');
 
 %%
+
+%%  Free up some Memory
+%clear  ConnInt_T DotConn LayerJoin  mask  ConnInt
+% 
+
+%% New method for removing duplicates
+
+% masked inds has continuous blocks of connected dots, such that
+% dotC(masked_inds) gives the the x and y coordinates of of the N
+% associated dots with any given mRNA spot.  
+
+% we first pulll out these separate clusters, then we loop through strings
+% of dots, comparing them to all other strings of dots, to remove the ones
+% which occur twice. 
+
+tic
+disp('Building unique-spheres from cross-section disks...');
+
 Linx = cell(NDots,1); Liny = cell(NDots,1); 
 for n=1:2:2*NDots  
-     % text(dotC((n+1)/2,1)+1,dotC((n+1)/2,2),['   ', num2str( (n+1)/2 )],'color','c','FontSize',8);
-    % text(dotC((n+1)/2,1)+1,dotC((n+1)/2,2),['   ', num2str( dotC((n+1)/2,3) )],'color','c','FontSize',8);
     Linx{(n+1)/2} = dotC(nonzeros(masked_inds(n,:)),1);
     Liny{(n+1)/2} = dotC(nonzeros(masked_inds(n,:)),2);
     % % troubleshooting
-    %plot(Linx{(n+1)/2},Liny{(n+1)/2},'c');    
+    %plot(Linx{(n+1)/2},Liny{(n+1)/2},'c'); 
+    % text(dotC((n+1)/2,1)+1,dotC((n+1)/2,2),['   ', num2str(dotC((n+1)/2,3) )],'color','c','FontSize',8);
 end
-
-
-% dup = cell(length(Linx),1);
-for j=1:length(Linx); % j =1
-    for k=1:length(Linx) % k =3
-        if j~=k
-           if isempty(Linx{k})==0 && isempty(Linx{j})==0 
-               if length(intersect(Linx{k}, Linx{j})) > 3
-                 %  dup{j} = [dup{j},k];
-                  Linx{k} = [];
-                 %  disp('duplicate removed');
-               end
-           end
-        end
-    end
- %   unique_ind(j)median(dup{j})
-end
-old_dotC = dotC;
-dotC = old_dotC; 
 %%
+
+for j=1:length(Linx); % j =1
+         if isempty(Linx{j})==1;
+             continue; 
+         end
+    for k=1:length(Linx) % k =3
+         if isempty(Linx{k})==1;
+             continue; 
+         end
+            if j~=k
+               if (Linx{k}(1) - Linx{j}(1) + Liny{k}(1) - Liny{j}(1))^2 <  .01
+                   % length(intersect(Linx{k}, Linx{j})) > 1  % this is the slow step
+                  Linx{k} = [];
+                  % disp('duplicate removed'); 
+               end
+            end
+    end
+end
+
+%  Convert string of dots to x-y-z of center dot. 
+
+% The median x,y position is taken as the true center since true 3D Gaussian
+% fitting is too slow.
+% the z position is either determined from the precise center of mass
+% fitting of the trace if get-preciseZ is active, otherwise it is chosen as
+% the middle of the stack (position where dot is first detected + half).  
+
 unique_inds = find(~cellfun('isempty',Linx));
 unique_dotX = [Linx(~cellfun('isempty',Linx))];
 unique_dotY = [Liny( ~cellfun('isempty',Linx))];
@@ -309,9 +315,9 @@ unique_dotY = [Liny( ~cellfun('isempty',Linx))];
 Ndots = length(unique_dotX);
 New_dotC = zeros(Ndots,3); 
 for k =1:Ndots
-    phalf = round(Ndots/2);
-    New_dotC(k,1) = unique_dotX{k}(phalf);
-    New_dotC(k,2) = unique_dotY{k}(phalf);
+    phalf = round(length(unique_dotX{k}/2));
+    New_dotC(k,1) = median(unique_dotX{k}); % unique_dotX{k}(phalf);
+    New_dotC(k,2) = median(unique_dotY{k}); % unique_dotY{k}(phalf);
     
     if plotdata == 1 && getpreciseZ == 1
         New_dotC(k,3) = cent(cent(:,2) == 2*unique_inds(k)-1,1);
@@ -320,23 +326,15 @@ for k =1:Ndots
     end
 end
 
+disp([num2str(Ndots),' total spheres found']);
+
+toc
+
 % 
 % figure(2); clf; 
 % imagesc(Imax_dots);   hold on;
-% plot(New_dotC(:,1),New_dotC(:,2),'c+');
-
-
-  
-% 
-% hold on;
-%    for z=1:Zs
-%             text(DotData2{z}(:,1),DotData2{z}(:,2),[num2str(z)],'color','w','FontSize',8);
-%            % text(DotData1{z}(:,1),DotData1{z}(:,2),[num2str(z)],'color','m','FontSize',8);
-%    end
-%         
-% 
-% 
-% toc
+% plot(dotC(:,1),dotC(:,2),'c+');
+% plot(New_dotC(:,1),New_dotC(:,2),'w.','MarkerSize',30);
 
 
 
@@ -346,10 +344,10 @@ end
 
 
 
-%%
-%clear  ConnInt_T DotConn LayerJoin  mask  ConnInt
-% 
-% %%  Remove duplicates
+
+
+
+%% Old Method to Remove duplicates
 % 
 % tic
 % disp('Building spheres from cross-section disks...');
