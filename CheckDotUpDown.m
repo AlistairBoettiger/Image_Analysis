@@ -1,6 +1,6 @@
 %%                              CheckDotUpDown
 % Alistair Boettiger                                   Date Begun: 01/30/11
-% Levine Lab                                        Last Modified: 06/06/11
+% Levine Lab                                        Last Modified: 11/22/11
 
 
 %% Description
@@ -249,11 +249,16 @@ toc
 
 
   %% Troubleshooting
-% figure(2); clf; 
-% imagesc(Imax_dots);   hold on;
-% plot(dotC(:,1),dotC(:,2),'c+');
-
-%%
+%  figure(2); clf; 
+%  imagesc(Imax_dots);   hold on;
+%  plot(dotC(:,1),dotC(:,2),'c+');
+% for n=1:2:2*NDots  
+%     linx = dotC(nonzeros(masked_inds(n,:)),1); % trailing zero prevents cellfun error   
+%     liny = dotC(nonzeros(masked_inds(n,:)),2);
+%     plot(linx,liny,'c'); 
+%      text(dotC((n+1)/2,1)+1,dotC((n+1)/2,2),[' ', num2str(dotC((n+1)/2,3) )],'color','c','FontSize',8);
+% end
+%
 
 %%  Free up some Memory
 %clear  ConnInt_T DotConn LayerJoin  mask  ConnInt
@@ -274,29 +279,30 @@ disp('Building unique-spheres from cross-section disks...');
 
 Linx = cell(NDots,1); Liny = cell(NDots,1); Lind = cell(NDots,1); 
 for n=1:2:2*NDots  
-    Linx{(n+1)/2} = [dotC(nonzeros(masked_inds(n,:)),1)',0]; % trailing zero prevents cellfun error   
-    Liny{(n+1)/2} = [dotC(nonzeros(masked_inds(n,:)),2)',0];
-    Lind{(n+1)/2} = (n+1)/2; % must be a non-loop way to do this
-    % % troubleshooting
-    %plot(Linx{(n+1)/2},Liny{(n+1)/2},'c'); 
-    % text(dotC((n+1)/2,1)+1,dotC((n+1)/2,2),['   ', num2str(dotC((n+1)/2,3) )],'color','c','FontSize',8);
+    Linx{(n+1)/2} = [dotC(nonzeros(masked_inds(n,:)),1)',0,0,0]; % trailing zero prevents cellfun error   
+    Liny{(n+1)/2} = [dotC(nonzeros(masked_inds(n,:)),2)',0,0,0];
+    Lind{(n+1)/2} = (n+1)/2; % [nonzeros(masked_inds(n,:))',0,0,0]; % must be a non-loop way to do this
 end
-%%
+%
 
- UL = cellfun(@(x,y) [x(1),y],Linx,Lind,'UniformOutput',0); % Add index to 
+ UL = cellfun(@(x,y,z) [x(1:3),y(1:3),z(1)],Linx,Liny,Lind,'UniformOutput',0); % Add index to 
  UL = cell2mat(UL);    % this is infact uniform output, not sure why matlab insists we do it this way 
  UL = UL(UL(:,1)>0,:); % remove all empty values
- [~,unique_inds] = unique(UL(:,1));
- 
+  unique_inds = UL(:,7); 
+ [~,ui] = unique(sum(UL(:,1:6),2));
+ unique_inds = UL(ui,7); 
 unique_dotX = Linx(unique_inds);
 unique_dotY = Liny(unique_inds);
 
 Ndots = length(unique_dotX);
 New_dotC = zeros(Ndots,3); 
 for k =1:Ndots
-    phalf = round(length(unique_dotX{k}/2));
-    New_dotC(k,1) = median(unique_dotX{k}); % unique_dotX{k}(phalf);
-    New_dotC(k,2) = median(unique_dotY{k}); % unique_dotY{k}(phalf);
+    phalf = round(length((unique_dotX{k})-3)/2);
+    %New_dotC(k,1) = unique_dotX{k}(phalf); % median(unique_dotX{k}); %
+    %New_dotC(k,2) =   unique_dotY{k}(phalf); %median(unique_dotY{k}); %
+    
+     New_dotC(k,1) = median(unique_dotX{k}(1:end-3)); %
+    New_dotC(k,2) =   median(unique_dotY{k}(1:end-3)); %
     
     if plotdata == 1 && getpreciseZ == 1
         New_dotC(k,3) = cent(cent(:,2) == 2*unique_inds(k)-1,1);
@@ -310,10 +316,11 @@ disp([num2str(Ndots),' total spheres found']);
 toc
 
 % 
-% figure(2); clf; 
+% figure(4); clf; 
 % imagesc(Imax_dots);   hold on;
-% plot(dotC(:,1),dotC(:,2),'c+');
 % plot(New_dotC(:,1),New_dotC(:,2),'w.','MarkerSize',30);
+% plot(dotC(:,1),dotC(:,2),'c+');
+% 
 
 
 
