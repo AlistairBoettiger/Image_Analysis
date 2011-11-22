@@ -65,7 +65,7 @@ disp(['Coordinates:  ', num2str(xp1), ' : ', num2str(xp2), ',   ' num2str(yp1), 
     min_int  = 0.04;    %  5    ;% .05 % not necessary Fix at Zero
     FiltSize = 30;% 
     min_size = 30;% 
-    min_peak = 600; %
+    min_peak = 1000; %
    
   % sphere finding parameters
    getpreciseZ = 0;

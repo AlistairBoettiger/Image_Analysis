@@ -272,45 +272,24 @@ toc
 tic
 disp('Building unique-spheres from cross-section disks...');
 
-Linx = cell(NDots,1); Liny = cell(NDots,1); 
+Linx = cell(NDots,1); Liny = cell(NDots,1); Lind = cell(NDots,1); 
 for n=1:2:2*NDots  
-    Linx{(n+1)/2} = dotC(nonzeros(masked_inds(n,:)),1);
-    Liny{(n+1)/2} = dotC(nonzeros(masked_inds(n,:)),2);
+    Linx{(n+1)/2} = [dotC(nonzeros(masked_inds(n,:)),1)',0]; % trailing zero prevents cellfun error   
+    Liny{(n+1)/2} = [dotC(nonzeros(masked_inds(n,:)),2)',0];
+    Lind{(n+1)/2} = (n+1)/2; % must be a non-loop way to do this
     % % troubleshooting
     %plot(Linx{(n+1)/2},Liny{(n+1)/2},'c'); 
     % text(dotC((n+1)/2,1)+1,dotC((n+1)/2,2),['   ', num2str(dotC((n+1)/2,3) )],'color','c','FontSize',8);
 end
 %%
 
-for j=1:length(Linx); % j =1
-         if isempty(Linx{j})==1;
-             continue; 
-         end
-    for k=1:length(Linx) % k =3
-         if isempty(Linx{k})==1;
-             continue; 
-         end
-            if j~=k
-               if (Linx{k}(1) - Linx{j}(1) + Liny{k}(1) - Liny{j}(1))^2 <  .01
-                   % length(intersect(Linx{k}, Linx{j})) > 1  % this is the slow step
-                  Linx{k} = [];
-                  % disp('duplicate removed'); 
-               end
-            end
-    end
-end
-
-%  Convert string of dots to x-y-z of center dot. 
-
-% The median x,y position is taken as the true center since true 3D Gaussian
-% fitting is too slow.
-% the z position is either determined from the precise center of mass
-% fitting of the trace if get-preciseZ is active, otherwise it is chosen as
-% the middle of the stack (position where dot is first detected + half).  
-
-unique_inds = find(~cellfun('isempty',Linx));
-unique_dotX = [Linx(~cellfun('isempty',Linx))];
-unique_dotY = [Liny( ~cellfun('isempty',Linx))];
+ UL = cellfun(@(x,y) [x(1),y],Linx,Lind,'UniformOutput',0); % Add index to 
+ UL = cell2mat(UL);    % this is infact uniform output, not sure why matlab insists we do it this way 
+ UL = UL(UL(:,1)>0,:); % remove all empty values
+ [~,unique_inds] = unique(UL(:,1));
+ 
+unique_dotX = Linx(unique_inds);
+unique_dotY = Liny(unique_inds);
 
 Ndots = length(unique_dotX);
 New_dotC = zeros(Ndots,3); 
