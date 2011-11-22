@@ -15,9 +15,9 @@
 % the whole label matrix), the index of the center pixels (in addition to
 % the pixels themselves) and the intensity values at the center pixels.
 
-function [dot_labels,cent,inds,ints] = dotfinder(I,Ex,Ix,min_int,min_size)
+function [dot_labels,cent,inds,ints] = dotfinder(I,Ex,Ix,min_int,min_size,min_peak)
 %%     
- % figure(1); clf; imagesc(I);
+ % figure(1); clf; imagesc(I); colorbar;
  %  I = Iin_z( :,:,mRNAchn );    %  Im{1,z}{mRNAchn}( xp1:xp2,yp1:yp2 );
 %  
 %  xp1 = 640; yp1 = 640; xp2 = 840; yp2 = 840; 
@@ -123,14 +123,20 @@ function [dot_labels,cent,inds,ints] = dotfinder(I,Ex,Ix,min_int,min_size)
   % % RECORD indices of each dot and intensity at centroid of each dot
        inds = floor(cent(:,2))+floor(cent(:,1))*h;  % indices in this layer  
        inds(inds>w*h) = w*h; 
-       ints = [I(inds);0]; 
-       dot_labels = labeled(inds); 
+       ints = [I(inds)]; 
+       
+       good_dots_index = ints>min_peak;
+       cent = cent(good_dots_index,:);  % EXPORTED VAR 
+       inds = [inds(good_dots_index)]; % EXPORTED VAR 
+      
+       ints = [0; ints(good_dots_index)];  % EXPORTED VAR
        % the leading zero is a dummy which allows pixel values to be set to
        % 0 while referencing members of ints. 
+       dot_labels = 1:length(inds); % EXPORTED VAR  
+      % labeled(inds); 
+      
          
-         
-   
-       
+
 %        
 %        figure(10); clf; imagesc(uint16(bw2).*Iin); hold on;
 %        plot(cent(:,1),cent(:,2),'bo');
