@@ -88,7 +88,8 @@ function im_nucseg_OpeningFcn(hObject, eventdata, handles, varargin)
    
   % Some initial setup 
       % Folder to save .mat data files in for normal script function.  
-handles.fdata = '/home/alistair/Documents/Research/Projects/OpenImageProcessing/';
+handles.fdata = 'C:\Users\Alistair\My Documents\Projects\Image_Analysis\';
+    %'/home/alistair/Documents/Research/Projects/OpenImageProcessing/';
      %  '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
      handles.step = 0;  % starting step is step 0 
      set(handles.stepnum,'String',handles.step); % change step label in GUI

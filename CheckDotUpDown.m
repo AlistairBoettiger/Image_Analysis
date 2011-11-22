@@ -1,6 +1,6 @@
 %%                              CheckDotUpDown
 % Alistair Boettiger                                   Date Begun: 01/30/11
-% Levine Lab                                        Last Modified: 06/06/11
+% Levine Lab                                        Last Modified: 11/22/11
 
 
 %% Description
