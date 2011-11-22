@@ -55,7 +55,7 @@ function varargout = im_nucseg(varargin)
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
 % Edit the above text to modify the response to help im_nucseg
-% Last Modified by GUIDE v2.5 10-Mar-2011 12:19:13
+% Last Modified by GUIDE v2.5 22-Oct-2011 19:05:31
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -88,7 +88,8 @@ function im_nucseg_OpeningFcn(hObject, eventdata, handles, varargin)
    
   % Some initial setup 
       % Folder to save .mat data files in for normal script function.  
-     handles.fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
+handles.fdata = '/home/alistair/Documents/Research/Projects/OpenImageProcessing/';
+     %  '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
      handles.step = 0;  % starting step is step 0 
      set(handles.stepnum,'String',handles.step); % change step label in GUI
      handles.output = hObject; % update handles object with new step number
@@ -210,13 +211,15 @@ end
     conn_map = handles.conn_map; 
     Cell_bnd = handles.Cell_bnd;
     
-    save([fout,fname,'_nucdata'],...
+    save([fout,'/',fname,'_nucdata.mat'],...
         'NucLabeled','nuc_cents','conn_map','Cell_bnd','Nucs'); 
   
     
     guidata(hObject, handles); 
  toc
    disp('data saved'); 
+   dir = {'data saved'};
+   set(handles.directions,'String',dir); 
      
  end
  
@@ -248,7 +251,7 @@ function VarButton_Callback(hObject, eventdata, handles)
 function setup(hObject,eventdata,handles)
  if handles.step == 0; 
        load([handles.fdata, 'imnucseg_pars0']); 
-       % pars = {'3','512',' ',' ',' ',' '}; save([handles.fdata,'imnucseg_pars0'], 'pars' );
+       % pars = {'3','512',' ',' ',' ',' '}; save([handles.fdata,'imnucseg_pars0.mat'], 'pars' );
         set(handles.in1label,'String','Nuclei channel');
         set(handles.in1,'String', pars(1));
         set(handles.in2label,'String','imsize');
@@ -271,7 +274,7 @@ function setup(hObject,eventdata,handles)
  
    if handles.step == 1; 
        load([handles.fdata,'/','imnucseg_pars1']);
-       %  pars = {'100','4','20','23','30',' '};  save([handles.fdata,'imnucseg_pars1'], 'pars' );
+       %  pars = {'100','4','20','23','30',' '};  save([handles.fdata,'imnucseg_pars1.mat'], 'pars' );
         set(handles.in1label,'String','min Nuc size'); % number of pixels in filter (linear dimension of a square)
         set(handles.in1,'String', pars{1});
         set(handles.in2label,'String','Imblur'); % width of Gaussian in pixels
@@ -291,7 +294,7 @@ function setup(hObject,eventdata,handles)
   end      
   if handles.step == 2;  % nuclei segmentation
     load([handles.fdata,'/','imnucseg_pars2']); 
-    % pars = {'45','3','2','','','',''};  save([handles.fdata,'imnucseg_pars2'], 'pars' );
+    % pars = {'45','3','2','','','',''};  save([handles.fdata,'imnucseg_pars2.mat'], 'pars' );
         set(handles.in1label,'String','thicken nuclei'); 
         set(handles.in1,'String', pars{1});
         set(handles.in2label,'String','thin boundaries');
@@ -430,21 +433,26 @@ disp('loading image...');
     % fname =  [handles.fin,'/',handles.fname,'_',handles.embn,'_max.tif']; 
     fname =  [handles.fin,'/','max_',handles.fname,'_',handles.embn,'.tif']; 
     handles.Im =  imread(fname);
-    h = size(handles.Im,1);
     
-    scale = 512/h;
-    Imini = imresize(handles.Im,scale);
+    
+    h = size(handles.Im,1);
+    Nuc = handles.Im(:,:,handles.NucChn);
+    scale = handles.imsize/h;
+    handles.Nucs = imresize(Nuc,scale); 
+    disp(['rescaling to ',num2str(scale*100,3), ' percent']); 
+    
 try
+    Imini = imresize(handles.Im,scale);
     figure(1); clf; imshow(Imini);    
-catch me
-    disp(me.message);
+catch 
+    try % try just nuclear layer.  
+       figure(1); clf; imagesc(Nuc); colormap gray; 
+    catch me
+         disp(me.message);
+    end
 end
     
     
-   Nuc = handles.Im(:,:,handles.NucChn);
-   h = size(Nuc,1); 
-   handles.Nucs = imresize(Nuc,handles.imsize/h); 
-   disp(['rescaling to ',num2str(handles.imsize/h*100,3), ' percent']); 
     
     handles.output = hObject; 
     guidata(hObject,handles);% pause(.1);
@@ -573,4 +581,3 @@ function fout_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-

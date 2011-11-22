@@ -251,17 +251,17 @@ end % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 if handles.step==4 % Get Nuclei centroids
   
     I = handles.nuc;    
-    AspectRatio = str2double(get(handles.edit1,'String'));  % 
-    FiltStr = str2double(get(handles.edit2,'String'));
+    FiltSize = str2double(get(handles.edit1,'String'));  % 
+    imblur = str2double(get(handles.edit2,'String'));
     sigmaE = str2double(get(handles.edit3,'String'));
     sigmaI = str2double(get(handles.edit4,'String'));
-    dilp = str2double(get(handles.edit5,'String'));
-    minN = str2double(get(handles.edit6,'String'));   
+    minN = str2double(get(handles.edit5,'String'));   
     
     
   % get threshold image 'bw' and nuclei centroids 'cent'  
    % [handles.bw,handles.cent] = fxn_nuc_seg(I,FiltSize,FiltStr,sigmaE,sigmaI,PercP,minN); 
-   [handles.bw,handles.cent] =fxn_nuc_seg(I,minN,FiltStr,sigmaE,sigmaI,AspectRatio,dilp);
+  %  [handles.bw,handles.cent] =fxn_nuc_seg(I,minN,FiltStr,sigmaE,sigmaI,AspectRatio,dilp);
+   [handles.bw,handles.cent] = fxn_nuc_seg(I,minN,sigmaE,sigmaI,FiltSize,imblur);
 end
     
 
@@ -276,7 +276,7 @@ if handles.step==5
     Mthin = str2double(get(handles.edit2,'String'));
     Imnn = str2double(get(handles.edit3,'String'));
     [handles.Nuc_map,handles.Nuc_overlay,handles.conn_map] = fxn_nuc_reg(handles.nuc,handles.bw,Mthink,Mthin,Imnn);  
-    % figure(3); clf; imagesc(handles.Nuc_map); 
+     figure(3); clf; imagesc(handles.Nuc_map); 
 end
 
 
@@ -315,8 +315,9 @@ if handles.step==6
         top_nuc = H(top); bot_nuc = H(bot); 
         
         try
-        [cnt_nuc(t),path,jnk] = graphshortestpath(C,top_nuc,bot_nuc,'Method','Dijkstra');   % 'BFS'    
-        L = ismember(H,path);
+             [cnt_nuc(t),path,jnk] = graphshortestpath(C,top_nuc,bot_nuc,'Method','Dijkstra');   % 'BFS'    
+             % [cnt_nuc(t),path,jnk] = my_graphshortestpath(C,top_nuc,bot_nuc,'Method','Dijkstra');   % 'BFS'    
+               L = ismember(H,path);
         
         if rem(t,10)==0
         I3(:,:,1) = I3(:,:,1) + uint8(100*L); 
@@ -463,17 +464,17 @@ end
 if handles.step == 4;
       load quantsna_v3_pars4; % pars = {'15','.9','3','8','75','10',''};   save quantsna_v3_pars4 pars;
         set(handles.steplabel,'String','Step 4: Locate Nuclei');
-        set(handles.in1label,'String','Max Aspect R'); % number of pixels in filter (linear dimension of a square)
+        set(handles.in1label,'String','Filter Size'); % number of pixels in filter (linear dimension of a square)
         set(handles.edit1,'String', pars{1});
-        set(handles.in2label,'String','Filter Strength'); % width of Gaussian in pixels
+        set(handles.in2label,'String','imblur'); % width of Gaussian in pixels
         set(handles.edit2,'String',pars{2});
         set(handles.in3label,'String','Excitation Width');
         set(handles.edit3,'String',pars{3}); 
         set(handles.in4label,'String','Inhibition Width');
         set(handles.edit4,'String', pars{4});
-        set(handles.in5label,'String','Erode fused');
+        set(handles.in5label,'String','min Nuc size');
         set(handles.edit5,'String', pars{5});
-        set(handles.in6label,'String','min Nuc size');
+        set(handles.in6label,'String','');
         set(handles.edit6,'String', pars{6});  
         set(handles.in7label,'String','');
         set(handles.edit7,'String',pars{7});
@@ -533,7 +534,7 @@ if handles.step == 7;
     set(handles.in7label,'String','');
  % reset default field entries  
     set(handles.edit1,'String',pars{1});
-    set(handles.edit2,'String',handles.saveroot);
+    set(handles.edit2,'String',['v2_',handles.saveroot]);
     set(handles.edit3,'String',pars{3});
     set(handles.edit4,'String',pars{4});
     set(handles.edit5,'String',pars{5});

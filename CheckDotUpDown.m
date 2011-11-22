@@ -7,8 +7,11 @@
 % Stitch multi-stack data together to find 3D positions of all dots. 
 % avoids multiple dot counting and avoids fusion of dots in Z.
 
+% if getpreciseZ is off, the first layer in which the dot occurs is used as
+% the z postion, rather than the brightest layer  
 
-function dotC = CheckDotUpDown(DotLabels,DotData,Inds,Ints,plotdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2,intype)
+function New_dotC = CheckDotUpDown(DotLabels,DotData,Inds,Ints,plotdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2,intype)
+
 %% Updates
 % Rewritten 03/07/11 to convert more things to uint16 / uint8 to save
 % memory (even fragment of single stack is several gigs of active mem). 
@@ -21,14 +24,12 @@ function dotC = CheckDotUpDown(DotLabels,DotData,Inds,Ints,plotdata,getpreciseZ,
 % use linear indexing of all dots
 tic 
 
-     
-% intype = 'uint8';
-
-disp('connecting dots in Z...') 
-%  plotdata = 1;  h = hs; w = ws; mRNAchn = 1; ovlap = 2;
-% DotData = DotData1; Inds = Inds1; Ints = Ints1; DotLabels = DotLabels1; intype = 'uint16';    
-
-  
+%  plotdata = 1;  h = hs; w = ws; getpreciseZ =1; ovlap = 2; intype = 'uint16';  
+% DotData = DotData1; Inds = Inds1; Ints = Ints1; DotLabels = DotLabels1; 
+% DotData1 = DotData; Inds1 = Inds; Ints1 = Ints; DotLabels1 = DotLabels; 
+ % DotData = DotData(mRNAchn,:); Inds = Inds(mRNAchn,:);  Ints = Ints(mRNAchn,:); DotLabels = DotLabels(mRNAchn,:);
+ % mRNAchn = 2; 
+ 
  comp_onVoff = 0;
 hs = yp2 - yp1+1; 
 ws = xp2 - xp1+1;
@@ -47,7 +48,7 @@ clear DotData;
 
 
 NDots = length(dotC); % total number of dots;
-maxdots = eval([intype,'(max(dotsinlayer) +100)']);
+maxdots = cast(max(dotsinlayer) +100, 'uint16');
 disp(['Max dots per layer = ',num2str(maxdots)]); 
 disp(['Total dots = ',num2str(NDots)]); 
 
@@ -55,7 +56,7 @@ disp(['Total dots = ',num2str(NDots)]);
         % in 2 different data structures.  Could build this guy to start
         % with.  
 
-       
+%% Troubleshooting plots (3D dot scatter)       
 % figure(10); clf;  plot3(dotC(:,1),dotC(:,2),dotC(:,3),'w.');
 % % for n=1:NDots
 % %     z = dotC(n,3); 
@@ -83,7 +84,8 @@ disp(['Total dots = ',num2str(NDots)]);
 %  hold on; plot(DotData{21}(:,1),DotData{21}(:,2),'c.');
 % hold on; plot(DotData{22}(:,1),DotData{22}(:,2),'b.');
         
-   
+%%
+disp('connecting dots in Z...') 
 DotConn = zeros(2*NDots,Zs,'single'); % empty connectivity matrix for all dots;  as a uint16 restricts this to 65,536 dots per image.  
 ConnInt = zeros(2*NDots,Zs,intype); 
 LayerJoin = false(2*NDots,Zs); 
@@ -94,65 +96,46 @@ LayerJoin = false(2*NDots,Zs);
 % pre-calc
 Rs = cell(Zs,1);
 for z=1:Zs
-         Rz = zeros(hs,ws,intype);   
+         Rz = zeros(hs,ws,'uint16'); % this is uint16 just for data size maintance.    
          Rz(Inds{z}) = DotLabels{z}; % convert indices to raster map 
          Rs{z} = imdilate(Rz,strel('disk',ovlap));
 end
 
 
-
-for Z = 1:Zs % The primary layer Z = 16
-         inds1 = Inds{Z};
-         R1 = zeros(hs,ws,intype);   
-         R1(inds1) = maxdots; % convert indices to raster map   
-        % figure(3); clf; imagesc(R1);  colorbar; colormap jet;
-        
+for Z = 1:Zs % The primary layer Z = 8
+         inds1 = Inds{Z};      
          st1_dot_num = sum(dotsinlayer(1:Z-1)); % starting dot number for the layer under study     
-      
-        % figure(3); clf; imagesc(Iw);
-         
+               
     for z=1:Zs % compare primary layer to all other layers  z = Z+1 
-        clear Loz;
-         Loz = R1 + Rs{z}; 
-         % figure(3); clf; imagesc(Rs{z});  colorbar; colormap jet;
-         
-%           figure(3); clf; imagesc(Loz);  colorbar; colormap jet;
-%          hold on; plot(DotData{Z}(:,1),DotData{Z}(:,2),'w.');
-%          hold on; plot(DotData{z}(:,1),DotData{z}(:,2),'c.');
-        
-        % figure(3); clf; imagesc(DotMasks{z}); 
-         Loz(Loz<maxdots+1) = 0; % remove non-overlapping dots;
-         Loz = Loz - maxdots; % LoZ is already positive, so we don't need to worry about negative values.  
-        %  figure(2); clf;  imagesc(Loz); colorbar; colormap jet;
-
       % Need to get linear index to stick correctly in array of all dots.  
          stz_dot_num = sum(dotsinlayer(1:z-1));  % starting dot number for the comparison layer     
-         inds_zin1 = Loz(inds1); % dot-indicies of layer Z overlapping layer z.       
+         inds_zin1 = Rs{z}(inds1);% dot-indicies of layer Z overlapping layer z.       
          indsT = single(inds_zin1) + stz_dot_num; % convert layer specific dot-indices to total overall dot-indices 
          indsT(indsT == stz_dot_num) = 0; % makes sure missing indices are still 'missing' and not last of previous layer.   
          
-%          % trouble shooting
-%          figure(3); hold on; indsT_NaN = nonzeros(indsT); 
-%          for kk = 1:length(indsT_NaN)
-%             plot(dotC(indsT_NaN(kk),1),dotC(indsT_NaN(kk),2),'r+');
-%          end
+%         % trouble shooting        
+%          figure(1); clf; 
+%             im_folder{Z} = [rawfolder,stackfolder,fname,'_',emb,'_z',num2str(Z),'.tif'];
+%             Iin_z = imreadfast(im_folder{Z});  
+%             I_test = Iin_z(xp1:xp2,yp1:yp2,mRNAchn+1);  imagesc(I_test); colorbar; colormap hot;
+%              hold on; plot(dotC(indsT,1),dotC(indsT,2),'c+');
          
          DotConn(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) =  indsT; % STORE in DotConn matrix the indices 
-         ConnInt(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) = Ints{z}(inds_zin1+1); % Iw(inds_zin1+1) ; %  % store actual intensities.  
-        % figure(3); clf; imagesc(DotConn); shading flat;
+         ConnInt(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) = Ints{z}(inds_zin1+1); % Ints{z}(inds_zin1+1); ; %  % store actual intensities.  
+        %  figure(3); clf; imagesc(DotConn); shading flat;
     end
     LayerJoin( 2*st1_dot_num+1 :2*(st1_dot_num + dotsinlayer(Z)),Z) = true(2*dotsinlayer(Z),1);    
 end
 toc
 
 
-figure(3); clf; imagesc(ConnInt); colormap hot; colorbar;
+% figure(3); clf; imagesc(ConnInt); colormap hot; colorbar;
 
 
 
 
 
-% %%  Trouble-shooting: Draw lines between connected dots
+%%  Trouble-shooting: Draw lines between connected dots
 % 
 % 
 % figure(1); clf; 
@@ -166,18 +149,6 @@ figure(3); clf; imagesc(ConnInt); colormap hot; colorbar;
 %     liny = dotC(nonzeros(DotConn(n,:)),2) ;  
 %     plot(linx,liny,'w');
 % end
-% 
-%    for z=1:Zs
-%             text(DotData2{z}(:,1),DotData2{z}(:,2),[num2str(z)],'color','w','FontSize',8);
-%            % text(DotData1{z}(:,1),DotData1{z}(:,2),[num2str(z)],'color','m','FontSize',8);
-%    end
-%         
-% 
-% % % Flag specific points of interest.  
-% % p1 = (1089+1)/2; p2 = (525);
-% % figure(2); hold on; plot(dotC(p1,1),dotC(p1,2),'mo','MarkerSize',15); 
-% % plot(dotC(p2,1),dotC(p2,2),'m*','MarkerSize',15);
-%    
       
    
 
@@ -207,7 +178,7 @@ if comp_onVoff == 1
 end
     
 %cent = [];
-Cent = cell(1,Nsects); 
+Cent = cell(Nsects,1); 
 
 for k=1:Nsects
 % For each dot in the system, there is a row i, which contains all the dots
@@ -215,47 +186,49 @@ for k=1:Nsects
 % which are connected to the dot as z=i.  For this we use the LayerJoin
 % object.  
      mask = DotConn(1+(k-1)*stp:min(k*stp,2*NDots),:)>0; % where dots exist 
-     ConnInt_T = immultiply(ConnInt(1+(k-1)*stp:min(k*stp,2*NDots),:),eval([intype,'(mask)'])); % report intensities where dot connections are found 
+     ConnInt_T = immultiply(ConnInt(1+(k-1)*stp:min(k*stp,2*NDots),:),cast(mask,intype)); % report intensities where dot connections are found 
      
      % Keep only main diagnol:
-     MD = imadd(eval([intype,'(LayerJoin(1+(k-1)*stp:min(k*stp,2*NDots),:))']),ConnInt_T); 
+     MD = imadd(cast(LayerJoin(1+(k-1)*stp:min(k*stp,2*NDots),:),intype),ConnInt_T); 
      % figure(4); clf; imagesc(MD);
      MD = MD>0;   
      MD = bwareaopen(MD,20); % Remove all dots in z not connected to the dot at z=i  
      % figure(4); clf; imagesc(MD);
-     ConnInt_T = immultiply(ConnInt_T,eval([intype,'(MD)']));
+     ConnInt_T = immultiply(ConnInt_T,cast(MD,intype));
    
     mask = ConnInt_T>0;
 
-%     % Watershed to split dots
-%     % W = ConnInt_T.*uint16(mask.*longDots); figure(4); clf; imagesc(W);
-%     W = immultiply(ConnInt_T,eval([intype,'(mask)']) ); 
-%     % figure(4); clf; imagesc(W);
-%     W = watershed(max(W(:)) - W);   % This is the Memory Kill Step; 
-%      % figure(3); clf; imagesc(W); colormap lines;
-%     mask(W==0) = 0; 
-%     % figure(4); clf; imagesc(mask);
+    % Remove small dots
+    mask = bwareaopen(mask,consec_layers); % figure(3); clf; imagesc(mask);
+ % bwareaopen is very expensive for big images    
+    
+    % Watershed to split dots
+    % W = ConnInt_T.*uint16(mask.*longDots); figure(4); clf; imagesc(W);
+    W = immultiply(ConnInt_T,cast(mask,intype)); 
+    % figure(4); clf; imagesc(W);
+    W = watershed(max(W(:)) - W);   % This is the Memory Kill Step; 
+     % figure(3); clf; imagesc(W); colormap lines;
+    mask(W==0) = 0; 
+    % figure(4); clf; imagesc(mask);
 
     if getpreciseZ == 1
         labeled = bwlabel(mask);
         R = regionprops(labeled,ConnInt_T,'WeightedCentroid');
         tcent =  reshape([R.WeightedCentroid],2,length(R))';
-
-      %  cent = [cent; tcent(:,1),(k-1)*stp + tcent(:,2)];
         Cent{k} = [tcent(:,1),(k-1)*stp + tcent(:,2)];
         
         if plotdata == 1;
             figure(4); clf; 
             colordef black; set(gcf,'color','k'); 
-            imagesc( ConnInt_T ); colormap hot; shading flat;  colorbar;
+            imagesc( immultiply(ConnInt_T,cast(mask,intype)) ); 
+            colormap hot; shading flat;  colorbar;
             ylabel('mRNA index'); xlabel('z-depth'); 
             hold on; plot(tcent(:,1),tcent(:,2),'co'); 
             title('Cross-Section of all dots'); 
         end
     end
-
-    % bwareaopen is very expensive for big images
-       mask = bwareaopen(mask,consec_layers); % figure(3); clf; imagesc(mask);
+   
+    % Final output is just DotConn split up by mask
        masked_inds(1+(k-1)*stp:min(k*stp,2*NDots),:) =  mask.*DotConn(1+(k-1)*stp:min(k*stp,2*NDots),:)  ;
 %      
        
@@ -263,6 +236,8 @@ for k=1:Nsects
         masked_ints(1+(k-1)*stp:min(k*stp,2*NDots),:) =  mask.*single(ConnInt(1+(k-1)*stp:min(k*stp,2*NDots),:) );
        end
 end
+
+% figure(3); clf; imagesc(masked_inds); colormap hot;
 
 if plotdata == 1
     cent = cell2mat(Cent); 
@@ -274,121 +249,179 @@ toc
 
 
   %% Troubleshooting
-% tic
-% 
 % figure(2); clf; 
-% imagesc(Imax_dots(1:80,1:80,:));   hold on;
+% imagesc(Imax_dots);   hold on;
 % plot(dotC(:,1),dotC(:,2),'c+');
-% for n=1:2:2*NDots  
-%      text(dotC((n+1)/2,1)+1,dotC((n+1)/2,2),['   ', num2str( (n+1)/2 )],'color','c','FontSize',8);
-%     linx = dotC(nonzeros(masked_inds(n,:)),1);
-%     liny = dotC(nonzeros(masked_inds(n,:)),2) ;  
-%     plot(linx,liny,'w');
-% end
-% 
-% hold on;
-%    for z=1:Zs
-%             text(DotData2{z}(:,1),DotData2{z}(:,2),[num2str(z)],'color','w','FontSize',8);
-%            % text(DotData1{z}(:,1),DotData1{z}(:,2),[num2str(z)],'color','m','FontSize',8);
-%    end
-%         
-% 
-% 
-% toc
-
-
-
-
-
-
-
-
 
 %%
+
+%%  Free up some Memory
 %clear  ConnInt_T DotConn LayerJoin  mask  ConnInt
+% 
 
-%%
+%% New method for removing duplicates
+
+% masked inds has continuous blocks of connected dots, such that
+% dotC(masked_inds) gives the the x and y coordinates of of the N
+% associated dots with any given mRNA spot.  
+
+% we first pulll out these separate clusters, then we loop through strings
+% of dots, comparing them to all other strings of dots, to remove the ones
+% which occur twice. 
 
 tic
-disp('Building spheres from cross-section disks...');
+disp('Building unique-spheres from cross-section disks...');
 
-% figure(3); clf; imagesc(masked_inds); colormap hot;
+Linx = cell(NDots,1); Liny = cell(NDots,1); Lind = cell(NDots,1); 
+for n=1:2:2*NDots  
+    Linx{(n+1)/2} = [dotC(nonzeros(masked_inds(n,:)),1)',0]; % trailing zero prevents cellfun error   
+    Liny{(n+1)/2} = [dotC(nonzeros(masked_inds(n,:)),2)',0];
+    Lind{(n+1)/2} = (n+1)/2; % must be a non-loop way to do this
+    % % troubleshooting
+    %plot(Linx{(n+1)/2},Liny{(n+1)/2},'c'); 
+    % text(dotC((n+1)/2,1)+1,dotC((n+1)/2,2),['   ', num2str(dotC((n+1)/2,3) )],'color','c','FontSize',8);
+end
+%%
 
-% testL = NaN*zeros(1,2*NDots); 
-remove_dot = zeros(NDots,1); 
-stacked_dots =0;
-% loop through all dots
+ UL = cellfun(@(x,y) [x(1),y],Linx,Lind,'UniformOutput',0); % Add index to 
+ UL = cell2mat(UL);    % this is infact uniform output, not sure why matlab insists we do it this way 
+ UL = UL(UL(:,1)>0,:); % remove all empty values
+ [~,unique_inds] = unique(UL(:,1));
+ 
+unique_dotX = Linx(unique_inds);
+unique_dotY = Liny(unique_inds);
 
-for i = 1:2:2*NDots-1 % i = 605 i = 5401; i=5693 i = 5547  i = 6549 
-    j = find(masked_inds(i,:));
-    counted = masked_inds(i,j(2:end));   
-    if isempty(j) == 0
-        stacked_dots = max(j)-min(j) > length(j)-1;
+Ndots = length(unique_dotX);
+New_dotC = zeros(Ndots,3); 
+for k =1:Ndots
+    phalf = round(length(unique_dotX{k}/2));
+    New_dotC(k,1) = median(unique_dotX{k}); % unique_dotX{k}(phalf);
+    New_dotC(k,2) = median(unique_dotY{k}); % unique_dotY{k}(phalf);
     
-        if stacked_dots == 0  && getpreciseZ == 1
-             ii = find(cent(:,2)==i,1);
-             dotC((i+1)/2,3) = cent(ii(1),1);
-        end
+    if plotdata == 1 && getpreciseZ == 1
+        New_dotC(k,3) = cent(cent(:,2) == 2*unique_inds(k)-1,1);
     else
-        remove_dot((i+1)/2) = 1;
+        New_dotC(k,3) = dotC(unique_inds(k),3) + phalf;
     end
-    if stacked_dots == 1% if stacked dots split up.  
-        brk_pts =[0, find(diff(j)>1),length(j),length(j)]; % breakpoints in stack 
-        possibles = masked_inds(i,j); % all possible multicounted indices 
-        ii = find(possibles == (i+1)/2,1) ; % find this breakpoint    
-        % only need this if low intensity points have been removed
-        if isempty(ii); [jnk, ii] = min( ((i+1)/2 - possibles).^2 );  end
-       % find nearest breakpoint without going over
-          kk = (ii-brk_pts); kk(kk<0) = 100; [jnk,bi] = min(kk);    
-          counted = possibles(brk_pts(bi)+2:brk_pts(bi+1)); 
-          if  getpreciseZ == 1
-              ii = find(cent(:,2)==i);
-              dotC((i+1)/2,3) = cent(ii( min(bi,length(ii)) ),1);
-          end
-    stacked_dots =0;      
-    end
-     remove_dot(counted) = 1;   
-   % testL(i) = length(remove_dot);
 end
+
+disp([num2str(Ndots),' total spheres found']);
+
 toc
-sum(remove_dot);
 
-% clear DotData DotMasks 
-% clear ConnInt ConnInt_T DotConn  LayerJoin R1 Rz Rs  
-% clear W Nuclabeld  Cell_bnd dL bw1 
-% clear dotC New_dotC test_dotC  Cents
-% clear Iin_z LoZ MD conn_map mask masked_inds 
+% 
+% figure(2); clf; 
+% imagesc(Imax_dots);   hold on;
+% plot(dotC(:,1),dotC(:,2),'c+');
+% plot(New_dotC(:,1),New_dotC(:,2),'w.','MarkerSize',30);
 
-% figure(1); clf; plot(testL,'w.');
-% sum(stacked_dots)
-          % NB can't sum stacked dots, all stack dots are also multiply
-          % counted.  i.e. the first time a doublet is enountered we say
-          % Tstacked = Tstacked + 1, and then we enounter that the other of
-          % the pair and again say Tstacked = Tstacked + 1;  
 
- if plotdata ==1
-    test_dotC = dotC; test_dotC(logical(remove_dot),3) = 0;
-    figure(5); clf; imagesc(masked_inds); colormap hot;
-    hold on; plot(test_dotC(:,3),linspace(1,2*NDots-1,NDots),'co');
-end
+
+
+
+
+
+
+
+
+
+
+%% Old Method to Remove duplicates
+% 
+% tic
+% disp('Building spheres from cross-section disks...');
+% 
+% % figure(3); clf; imagesc(masked_inds); colormap hot;
+% 
+% % testL = NaN*zeros(1,2*NDots); 
+% remove_dot = zeros(NDots,1); 
+% stacked_dots =0;
+% % loop through all dots
+% 
+% for i = 1:2:2*NDots-1 % i =15 
+%     j = find(masked_inds(i,:)); % non-zero indices of masked_inds matrix at i
+%     counted = masked_inds(i,j(2:end));  % global-dot-indices of overlapping dots. 
+%     if isempty(j) == 0
+%         stacked_dots = max(j)-min(j) > length(j)-1;
+%     
+%         if stacked_dots == 0  && getpreciseZ == 1
+%              ii = find(cent(:,2)==i,1);
+%              dotC((i+1)/2,3) = cent(ii(1),1);
+%              i_self = masked_inds(i,j(1));
+%              i_max = (cent(ii(1),2)+1)/2;
+%              dotC(i_self,1) = dotC(i_max,1); 
+%              dotC(i_self,2) = dotC(i_max,2); 
+%         end
+%     else
+%         remove_dot((i+1)/2) = 1;
+%     end
+%     if stacked_dots == 1% if stacked dots split up.  
+%         brk_pts =[0, find(diff(j)>1),length(j),length(j)]; % breakpoints in stack 
+%         possibles = masked_inds(i,j); % all possible multicounted indices 
+%         ii = find(possibles == (i+1)/2,1) ; % find this breakpoint    
+%         % only need this if low intensity points have been removed
+%         if isempty(ii); [jnk, ii] = min( ((i+1)/2 - possibles).^2 );  end
+%        % find nearest breakpoint without going over
+%           kk = (ii-brk_pts); kk(kk<0) = 100; [jnk,bi] = min(kk);    
+%           counted = possibles(brk_pts(bi)+2:brk_pts(bi+1)); 
+%           if  getpreciseZ == 1
+%               ii = find(cent(:,2)==i);
+%               ii = ii( min(bi,length(ii)) );
+%               dotC((i+1)/2,3) = cent(ii,1);
+%               i_self = masked_inds(i,j(1));
+%               i_max = (cent(ii,2)+1)/2;
+%               dotC(i_self,1) = dotC(i_max,1); 
+%               dotC(i_self,2) = dotC(i_max,2);         
+%           end
+%     stacked_dots =0;      
+%     end
+%      remove_dot(counted) = 1;   
+%    % testL(i) = length(remove_dot);
+% end
+% toc
+% sum(remove_dot);
+% 
+% % clear DotData DotMasks 
+% % clear ConnInt ConnInt_T DotConn  LayerJoin R1 Rz Rs  
+% % clear W Nuclabeld  Cell_bnd dL bw1 
+% % clear dotC New_dotC test_dotC  Cents
+% % clear Iin_z LoZ MD conn_map mask masked_inds 
+% 
+% % figure(1); clf; plot(testL,'w.');
+% % sum(stacked_dots)
+%           % NB can't sum stacked dots, all stack dots are also multiply
+%           % counted.  i.e. the first time a doublet is enountered we say
+%           % Tstacked = Tstacked + 1, and then we enounter that the other of
+%           % the pair and again say Tstacked = Tstacked + 1;  
+% 
+%  if plotdata ==1
+%     test_dotC = dotC; test_dotC(logical(remove_dot),3) = 0;
+%     figure(5); clf; imagesc(masked_inds); colormap hot;
+%     hold on; plot(test_dotC(:,3),linspace(1,2*NDots-1,NDots),'co');
+%  end
+%  
+%  New_dotC = dotC(~remove_dot,:);
+% figure(2); clf; 
+% imagesc(Imax_dots);   hold on;
+% plot(New_dotC(:,1),New_dotC(:,2),'c+');
+ 
+    %%      
           
-          
-          
-%New_dotC = dotC(~remove_dot,:);
-dotC = dotC(~remove_dot,:);
-N_dots = length(dotC); 
-%N_dots = NDots - sum(remove_dot) % sum(stacked_dots)
-%N_dots = length(New_dotC); 
-disp(['Counted ',num2str(N_dots),' spheres']); 
-
-
-
-if comp_onVoff == 1
-    figure(7); clf;  subplot(2,1,1);
-    hist(log(nonzeros(masked_ints(~remove_dot,:)))); title('intensities of kept dots');
-    subplot(2,1,2);
-    hist(log(nonzeros(masked_ints(logical(remove_dot),:)))); title('intensities of removed dots');
-end
+% %New_dotC = dotC(~remove_dot,:);
+% dotC = dotC(~remove_dot,:);
+% [N_dots, jnk] = size(dotC); 
+% %N_dots = NDots - sum(remove_dot) % sum(stacked_dots)
+% %N_dots = length(New_dotC); 
+% disp(['Counted ',num2str(N_dots),' spheres']); 
+% 
+% 
+% 
+% if comp_onVoff == 1
+%     figure(7); clf;  subplot(2,1,1);
+%     hist(log(nonzeros(masked_ints(~remove_dot,:)))); title('intensities of kept dots');
+%     subplot(2,1,2);
+%     hist(log(nonzeros(masked_ints(logical(remove_dot),:)))); title('intensities of removed dots');
+% end
 
 
 

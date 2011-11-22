@@ -1,4 +1,4 @@
-%%                      Unsupervised_DotFinding2.m
+%%                      Unsupervised_DotFinding3.m
 %
 % Alistair Boettiger                                   Date Begun: 03/10/11
 % Levine Lab                                        Last Modified: 06/07/11
@@ -8,33 +8,33 @@ clear all;
 
 tot_time = tic;
 % Input options 
-old_lab = 0;  Es = 0; Zs = 0; ver = ''; 
-folder = '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/mRNA_counting/Data/2011-04_and_earlier/';%   2011-06-20/';%  2011-07-12/'; %2011-05-22/'; %2011-06-20/';% 2011-05-22/'; %  2011-06-20/';%  '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/Enhancer_Modeling/Data/'; 
-rawfolder = '/Volumes/Data/Lab Data/Raw_Data/2011-04_and_earlier/';%    2011-06-20/';%  2011-07-12/'; %2011-05-22/'; %  '/Volumes/Data/Lab Data/Raw_Data/02-17-11/'; %%   %
+old_lab = 0;  Es = 0;  ver = '';% '_v2';
+folder = '/Users/alistair/Documents/Berkeley/Levine_Lab/Projects/mRNA_counting/Data/2011-06-20/'; %  2011-05-22/'; % 2011-06-20/'; %2011-07-12/'; %2011-06-20/'; % 2011-02-17/'; % 2011-05-22/
+rawfolder = '/Volumes/Data/Lab Data/Raw_Data/2011-06-20/'; %     2011-05-22/'; % 2011-07-12/'; %  
 
-stackfolder = 'MP12Hz/'; %'sna2p8het/'; % 'MP07Hz/'; % 's07_MP05Hz/';%'s04_MP10/';%  's05_MP06/';% 's01_MP09/';% 's06_MP10_sna18/'; %'s05_MP06/';%  'sna2.8Hz/';% 's21_MP07/';% 'MP07Hz/';% 's11_G4B/' %    's02_MP01/';% %'s10_bcd1x/';%  's11_bcd6x/'; %'s14_comp_cntrl/'; % 's12_cntrl_2label/'; %'MP02_22C/'; %'MP01_22C/'; % 'MGa1x/'; % 'MP10_22C/'; %'MP05_22C/'; %'YW_ths_sog/'; % 'MP10_22C/'; %  % 'MP09_22C/'; % 'MGa2x/'; % 'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
-fname = 'MP12Hz_snaD_22C'; ver = '_v3'; % 'sna2p8het_30C'; % 'MP07Hz_snaD_22C_b' ; ver = '_v2'; % 's07_MP05Hz_22C_c'; %  's04_MP10Hz_b';% 's05_MP06Hz_b';% 's01_MP09_cflip';% 's01_MP09_Hz_22C';%  's06_MP10_sna18_b'; %'s05_MP06Hz_b';  Zs = 35;  % 'sna2.8_snaD_22C';%  'MP07het_snaD_22C'; %  'MP07Hz_snaD_22C';%'s11_G4B_LacZ';% 's05_MP06Hz'; % 's04_MP10Hz'; % 's01_MP09_Hz_22C_c'; % 's02_MP01_Hz_22C_b'; %%'s10_bcd1x';% 's11_bcd6x'; % 's14_comp_cntrl'; Es =1; % 's12_cntrl_2label'; Es = 1; % 'MP09_22C_hb_y_f'; Es = 7; %  'MP02_22C_hb_y'; Es = 9; % 'MP02_22C_hb_y_b'; Es = 10; %  % 'MP01_22C_hb_y_f'; Es = 12; % 'MP01_22C_hb_y_c'; Es = 10; % 'MP01_22C_hb_y'; Es = 13; % 'MGa1x_LacZ_b'; Es = 12; %  'MP10_22C_sna_y_e'; Es = 12; %  'MP05_22C_sna_y_c'; Es =7; %  'MP10_22C_sna_y_d3'; Es = 1;  %'YW_ths_sog'; Es = 12;  % % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
+% rawfolder = '/Volumes/GRAID/Raw_Data/2011-02-17/'; % 
+
+ stackfolder = 's08_MP06Hz/'; % 's07_MP05Hz/';% 's04_MP10/';%    'sna2p8het/';  %  'MP10_22C/';  %  's01_MP09/';% % 's08_EsplN_vndN/';% 's03_MP02/';% 's10_bcd1x/';%  's11_bcd6x/'; %'s14_comp_cntrl/'; % 's12_cntrl_2label/'; %'MP02_22C/'; %'MP01_22C/'; % 'MGa1x/'; % 'MP10_22C/'; %'MP05_22C/'; %'YW_ths_sog/'; % 'MP10_22C/'; %  % 'MP09_22C/'; % 'MGa2x/'; % 'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
+ fname = 's08_MP06Hz_cflip';% 's07_MP05Hz_22C_c'; ver = '';%  's04_MP10Hz_b'; ver = '_v3';%  'sna2p8het_sim_sna'; %  's07_MP05Hz_22C'; ver = '_v2';% %'s01_MP09_cflip';% 'MP10_22C_sna_y_d'; ver = '_v3'; %  's08_EsplN_vndN'; % 's03_MP02_Hz_22C'; % 's10_bcd1x';% 's11_bcd6x'; % 's14_comp_cntrl'; Es =1; % 's12_cntrl_2label'; Es = 1; % 'MP09_22C_hb_y_f'; Es = 7; %  'MP02_22C_hb_y'; Es = 9; % 'MP02_22C_hb_y_b'; Es = 10; %  % 'MP01_22C_hb_y_f'; Es = 12; % 'MP01_22C_hb_y_c'; Es = 10; % 'MP01_22C_hb_y'; Es = 13; % 'MGa1x_LacZ_b'; Es = 12; %  'MP10_22C_sna_y_e'; Es = 12; %  'MP05_22C_sna_y_c'; Es =7; %  'MP10_22C_sna_y_d3'; Es = 1;  %'YW_ths_sog'; Es = 12;  % % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
 mRNA_channels = 2; %  3; %  1; % total mRNA channels
 
-sname =  fname; %'s05_MP06Hz';%  'MP07het_snaD_22C_1';% '_1'; % additional label on slide. 
+
+sname =  fname; % 's08_EsplN_vndN_01'; Es=4; Zs = 50; %
+
 
 % MP10_22C_sna_y_c and MP05_22C all done at 3.5, 4, 0.03, 30, 30
 % MGa2x and MGa1x all done at 2.5, 3, 0.03, 30, 30
 
 
- 
-filename = [rawfolder,stackfolder,'/',fname];     
-load([rawfolder,stackfolder,sname,'.mat'])   
+filename = [rawfolder,'/',fname];     
+load([rawfolder,stackfolder,sname,'.mat'])  
+
 w = Datas.Stack1.Image1.IMG.width;
 h = Datas.Stack1.Image1.IMG.height; 
-% auotomatically find quantities if not programed.  
-if Es == 0
+if Es==0
+    Zs = Datas.LSM_info.DimensionZ; 
     Es = length(fields(Datas)) - 3;   % Number of Stacks
 end
-if Zs == 0
-    Zs = Datas.LSM_info.DimensionZ; 
-end
-
 % ------- Option: Focus on subset of image: ------------------- %
 %      m = 1/2048;  % .9;%    .7; % .5; .7; %   1/2048; % 
 %    xp1= floor(h/2*m)+1; xp2 = floor(h/2*(2-m))+1;  yp1 = floor(w/2*m)+1;  yp2 = floor(w/2*(2-m))+1;
@@ -44,7 +44,10 @@ ws = 2048; hs = 2048; xp1 = 1; yp1 = 1;
 xp2 = xp1 + ws -1; yp2 = yp1 + hs - 1; 
 disp(['Coordinates:  ', num2str(xp1), ' : ', num2str(xp2), ',   ' num2str(yp1), ' : ', num2str(yp2) ] );
 % ------------------------------------------------------------- %     
-    
+   
+
+
+
 
 % -------------- Graphing and Display Options ------------------ %
    show_projected = 0; % show max-project with all dots and linked dots. 
@@ -62,13 +65,13 @@ disp(['Coordinates:  ', num2str(xp1), ' : ', num2str(xp2), ',   ' num2str(yp1), 
    % dotfinder's parameters 
     sigmaE = 3;%  IMPORTANT
     sigmaI = 4; % IMPORTANT
-    min_int  = 0.03;    %  5    ;% .05 % not necessary Fix at Zero
+  %  min_int  = 0.04;    %  5    ;% .05 % not necessary Fix at Zero
     FiltSize = 30;% 
     min_size = 30;% 
    
   % sphere finding parameters
    getpreciseZ = 0;
-   consec_layers = 3;  
+   consec_layers = 3;
    ovlap = 4; 
 %---------------------------------%
 
@@ -79,20 +82,19 @@ disp(['Coordinates:  ', num2str(xp1), ' : ', num2str(xp2), ',   ' num2str(yp1), 
     Ix = fspecial('gaussian',FiltSize,sigmaI); % inhibitory gaussian
 
 %%
-for e=  1:Es
+for e= 1:Es
 %%
     tic 
-    disp('Running DotFinder2, loading data...');
+    disp('DotFinder3,  loading data...');
     if e<10
         emb = ['0',num2str(e)];
     else
         emb = num2str(e);
     end
-    disp(['analyzing embryo, ',emb,'...']);
+    
     
     
     try load([rawfolder,stackfolder,fname,'_',emb,'_nucdata.mat']);
-    
     catch err
         disp(err.message)
         try load([folder,fname,'_',emb,'_nucdata.mat']);
@@ -116,11 +118,9 @@ for e=  1:Es
     for mRNAchn = 1:mRNA_channels % mRNAchn =2
         
          if mRNAchn == 1;
-                  min_int  = 0.05;  % .05 just for speed 
-         elseif mRNAchn == 2
-               min_int  = 0.01; % .028 .01
+               min_int  = 0.06;  % just for speed 
          else
-             min_int = 0.2; % .05
+               min_int  = 0.02; % 
          end
         
             DotLabels= cell(1,Zs); 
@@ -132,15 +132,26 @@ for e=  1:Es
             tic; disp('finding dots...'); 
             for z = 1:Zs % z = 11     
                  im_folder{z} = [rawfolder,stackfolder,fname,'_',emb,'_z',num2str(z),'.tif'];
+                 try
                  Iin_z = imreadfast(im_folder{z});       
                  [DotLabels{z},DotData{z},Inds{z},Ints{z}]  = dotfinder(Iin_z(xp1:xp2,yp1:yp2,mRNAchn),Ex,Ix,min_int,min_size);
-            end     
+                 catch err
+                     disp(err.message); 
+                     Zs = z-1; 
+                    break
+                 end 
+            end
             toc;
             
-                     
+            % resize;        
+            DotLabels= DotLabels(1:Zs); 
+            DotData = DotData(1:Zs);    
+            Inds = Inds(1:Zs); 
+            Ints = Ints(1:Zs); 
+
+            
         %%
- % consec_layers = 4; 
-        
+
         intype = class(Iin_z);
          dotC =  CheckDotUpDown(DotLabels,DotData,Inds,Ints,plotdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2,intype);
          Cents = cell2mat(DotData');
@@ -164,7 +175,9 @@ for e=  1:Es
             plot(  Cents(:,1),Cents(:,2),'yo','MarkerSize',4);
             saveas(Iout,[folder,fname,'_',emb,'_chn',num2str(mRNAchn),ver,'.fig']); 
         end
-
+        %%
+        
+    clear Imax Cents DotData DotLabels Inds Ints Iin_z 
         
         %%
         
@@ -278,15 +291,21 @@ Rpars.ovlap = ovlap;
      toc
     end % end loop over mNRA channels
        %  clean up;
-      
+        clear Iin_z DotData DotMasks I_max cent1 bw dL Cents ...
+            Nmin imdata imdata2 NucLabel NucLabeled Plot_mRNA M C ...
+            nuc_area dotC mRNA_cnt mRNA_den mRNA_sadj inds conn_map;
+            
     
 end % end loop over embryos 
 
+
+      clear Iin_z DotData DotMasks I_max cent1 bw dL Cents ...
+            Nmin imdata imdata2 NucLabeled Plot_mRNA M C ...
+            nuc_area dotC mRNA_cnt mRNA_den mRNA_sadj;
         
       %save([folder,fname,'_slidedata',ver], 'Data'); 
       
-      Tout = toc(tot_time)/60;
-      disp(['elpased time = ',num2str(Tout), ' minutes']); 
+      toc(tot_time)
       disp('All slide data saved'); 
       
         
