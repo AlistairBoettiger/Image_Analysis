@@ -287,12 +287,14 @@ end
 
  UL = cellfun(@(x,y,z) [x(1:3),y(1:3),z(1)],Linx,Liny,Lind,'UniformOutput',0); % Add index to 
  UL = cell2mat(UL);    % this is infact uniform output, not sure why matlab insists we do it this way 
- UL = UL(UL(:,1)>0,:); % remove all empty values
-  unique_inds = UL(:,7); 
- [~,ui] = unique(sum(UL(:,1:6),2));
- unique_inds = UL(ui,7); 
-unique_dotX = Linx(unique_inds);
-unique_dotY = Liny(unique_inds);
+ 
+ if isempty(UL) == 0
+     UL = UL(UL(:,1)>0,:); % remove all empty values
+      unique_inds = UL(:,7); 
+     [~,ui] = unique(sum(UL(:,1:6),2));
+     unique_inds = UL(ui,7); 
+    unique_dotX = Linx(unique_inds);
+    unique_dotY = Liny(unique_inds);
 
 Ndots = length(unique_dotX);
 New_dotC = zeros(Ndots,3); 
@@ -310,6 +312,11 @@ for k =1:Ndots
         New_dotC(k,3) = dotC(unique_inds(k),3) + phalf;
     end
 end
+
+ else
+     Ndots = 0;
+     New_dotC = [NaN,NaN,NaN]; 
+ end
 
 disp([num2str(Ndots),' total spheres found']);
 
