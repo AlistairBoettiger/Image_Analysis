@@ -10,7 +10,7 @@
 % if getpreciseZ is off, the first layer in which the dot occurs is used as
 % the z postion, rather than the brightest layer  
 
-function New_dotC = CheckDotUpDown(DotLabels,DotData,Inds,Ints,plotdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2,intype)
+function [New_dotC,Linx,Liny] = CheckDotUpDown(DotLabels,DotData,Inds,Ints,plotdata,getpreciseZ,consec_layers,ovlap,xp1,xp2,yp1,yp2,intype,watershedZ)
 
 %% Updates
 % Rewritten 03/07/11 to convert more things to uint16 / uint8 to save
@@ -44,7 +44,7 @@ for z = 1:Zs
     dotzpos{z} = z*ones(dotsinlayer(z),1);
 end
 dotC = [cell2mat(DotData'), cell2mat(dotzpos)];  
-clear DotData; 
+%clear DotData; 
 
 
 NDots = length(dotC); % total number of dots;
@@ -149,8 +149,8 @@ toc
 %     liny = dotC(nonzeros(DotConn(n,:)),2) ;  
 %     plot(linx,liny,'w');
 % end
-      
-   
+%       
+%    
 
 %%
 
@@ -202,6 +202,7 @@ for k=1:Nsects
     mask = bwareaopen(mask,consec_layers); % figure(3); clf; imagesc(mask);
  % bwareaopen is very expensive for big images    
     
+ if watershedZ == 1
     % Watershed to split dots
     % W = ConnInt_T.*uint16(mask.*longDots); figure(4); clf; imagesc(W);
     W = immultiply(ConnInt_T,cast(mask,intype)); 
@@ -210,7 +211,8 @@ for k=1:Nsects
      % figure(3); clf; imagesc(W); colormap lines;
     mask(W==0) = 0; 
     % figure(4); clf; imagesc(mask);
-
+ end
+ 
     if getpreciseZ == 1
         labeled = bwlabel(mask);
         R = regionprops(labeled,ConnInt_T,'WeightedCentroid');
@@ -248,9 +250,9 @@ end
 toc
 
 
-  %% Troubleshooting
+ %% Troubleshooting
 %  figure(2); clf; 
-%  imagesc(Imax_dots);   hold on;
+%  imagesc(Imax_dots); colormap hot;  hold on;
 %  plot(dotC(:,1),dotC(:,2),'c+');
 % for n=1:2:2*NDots  
 %     linx = dotC(nonzeros(masked_inds(n,:)),1); % trailing zero prevents cellfun error   
@@ -258,7 +260,17 @@ toc
 %     plot(linx,liny,'c'); 
 %      text(dotC((n+1)/2,1)+1,dotC((n+1)/2,2),[' ', num2str(dotC((n+1)/2,3) )],'color','c','FontSize',8);
 % end
-%
+% 
+% 
+%  figure(1); clf; 
+%  imagesc(Imax_dots(:,:,mRNAchn)); colormap hot;  hold on;
+% for n=1:2:2*NDots  
+%     linx = dotC(nonzeros(masked_inds(n,:)),1); % trailing zero prevents cellfun error   
+%     liny = dotC(nonzeros(masked_inds(n,:)),2);
+%     plot(linx,liny,'c'); 
+% %     text(dotC((n+1)/2,1)+1,dotC((n+1)/2,2),[' ', num2str(dotC((n+1)/2,3) )],'color','c','FontSize',8);
+% end
+
 
 %%  Free up some Memory
 %clear  ConnInt_T DotConn LayerJoin  mask  ConnInt
@@ -289,12 +301,14 @@ end
  UL = cell2mat(UL);    % this is infact uniform output, not sure why matlab insists we do it this way 
  
  if isempty(UL) == 0
-     UL = UL(UL(:,1)>0,:); % remove all empty values
-      unique_inds = UL(:,7); 
-     [~,ui] = unique(sum(UL(:,1:6),2));
-     unique_inds = UL(ui,7); 
-    unique_dotX = Linx(unique_inds);
-    unique_dotY = Liny(unique_inds);
+ 
+ UL = UL(UL(:,1)>0,:); % remove all empty values
+ % unique_inds = UL(:,7);
+ [~,ui] = unique([UL(:,1);UL(:,2);UL(:,3)]);
+ ULi = [UL(:,7);UL(:,7);UL(:,7)];
+ unique_inds = ULi(ui); 
+unique_dotX = Linx(unique_inds);
+unique_dotY = Liny(unique_inds);
 
 Ndots = length(unique_dotX);
 New_dotC = zeros(Ndots,3); 
@@ -321,14 +335,16 @@ end
 disp([num2str(Ndots),' total spheres found']);
 
 toc
-
+% 
 % 
 % figure(4); clf; 
 % imagesc(Imax_dots);   hold on;
 % plot(New_dotC(:,1),New_dotC(:,2),'w.','MarkerSize',30);
-% plot(dotC(:,1),dotC(:,2),'c+');
+% plot(dotC(:,1),dotC(:,2),'m+');
 % 
-
+%    for k=1:length(Linx)
+%                 plot(Linx{k}(1:end-3),Liny{k}(1:end-3),'c');
+%    end
 
 
 

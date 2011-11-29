@@ -22,7 +22,7 @@
 % 
 %
 %
-%% Overview:
+%% Overview:    
 %
 %
 %% Required subroutines
@@ -177,20 +177,19 @@ function [handles] = projectNsave(hObject, eventdata, handles)
     % find if data is uint16 or something else; 
 try
     inttype =  ['uint',num2str(Datas.Stack1.Image1.IMG.bits)];
+        disp(['data is ',inttype]); 
      channels =  Datas.Stack1.Image1.TIF.SamplesPerPixel;  
      w = Datas.Stack1.Image1.IMG.width;
      h = Datas.Stack1.Image1.IMG.height;
-     disp(['Data contains ', num2str(channels),' channels'])
+        disp(['Data contains ', num2str(channels),' channels']);
 catch er
     disp(er.message); 
-   % disp([fsource,'/',froot,'.mat', '   failed to load']);  
-    inttype =  'uint16';
+    disp('data is not an image stack');
 end
     
-    disp(['data is ',inttype]); 
+
      
-; 
-    
+
       
     if str_chns{:} == ' '
         chns = 1:channels;
