@@ -291,8 +291,8 @@ disp('Building unique-spheres from cross-section disks...');
 
 Linx = cell(NDots,1); Liny = cell(NDots,1); Lind = cell(NDots,1); 
 for n=1:2:2*NDots  
-    Linx{(n+1)/2} = [dotC(nonzeros(masked_inds(n,:)),1)',0,0,0]; % trailing zero prevents cellfun error   
-    Liny{(n+1)/2} = [dotC(nonzeros(masked_inds(n,:)),2)',0,0,0];
+    Linx{(n+1)/2} = [dotC(nonzeros(masked_inds(n,:)),1)',NaN,NaN,NaN]; % trailing zero prevents cellfun error   
+    Liny{(n+1)/2} = [dotC(nonzeros(masked_inds(n,:)),2)',NaN,NaN,NaN];
     Lind{(n+1)/2} = (n+1)/2; % [nonzeros(masked_inds(n,:))',0,0,0]; % must be a non-loop way to do this
 end
 %
@@ -302,30 +302,36 @@ end
  
  if isempty(UL) == 0
  
- UL = UL(UL(:,1)>0,:); % remove all empty values
- % unique_inds = UL(:,7);
- [~,ui] = unique([UL(:,1);UL(:,2);UL(:,3)]);
- ULi = [UL(:,7);UL(:,7);UL(:,7)];
- unique_inds = ULi(ui); 
-unique_dotX = Linx(unique_inds);
-unique_dotY = Liny(unique_inds);
+     UL = UL(~isnan(UL(:,1)),:);  % remove all empty values
+     UL(isnan(UL(:,3)),3) = 0;
 
-Ndots = length(unique_dotX);
-New_dotC = zeros(Ndots,3); 
-for k =1:Ndots
-    phalf = round(length((unique_dotX{k})-3)/2);
-    %New_dotC(k,1) = unique_dotX{k}(phalf); % median(unique_dotX{k}); %
-    %New_dotC(k,2) =   unique_dotY{k}(phalf); %median(unique_dotY{k}); %
-    
-     New_dotC(k,1) = median(unique_dotX{k}(1:end-3)); %
-    New_dotC(k,2) =   median(unique_dotY{k}(1:end-3)); %
-    
-    if plotdata == 1 && getpreciseZ == 1
-        New_dotC(k,3) = cent(cent(:,2) == 2*unique_inds(k)-1,1);
-    else
-        New_dotC(k,3) = dotC(unique_inds(k),3) + phalf;
+     max_clusters = length(UL); 
+     ULcat = [[UL(:,1)+UL(:,4);UL(:,2)+UL(:,5);UL(:,3)+UL(:,6)],[UL(:,7);UL(:,7);UL(:,7)]];
+     [~,ui] = unique(ULcat(:,1)); % find unique values
+     ui = ui(ui<max_clusters);  % only want indices corresponding to original clusters 
+
+     unique_inds = ULcat(ui,2); % take the cluster indices from the set of unique clusters 
+     unique_dotX = Linx(unique_inds);
+     unique_dotY = Liny(unique_inds);
+
+    Ndots = length(unique_dotX);
+    New_dotC = zeros(Ndots,3); 
+    for k =1:Ndots
+        phalf = floor(length((unique_dotX{k})-3)/2);
+        New_dotC(k,1) = unique_dotX{k}(phalf); % median(unique_dotX{k}); %
+       New_dotC(k,2) =   unique_dotY{k}(phalf); %median(unique_dotY{k}); %
+
+    %     [New_dotC(k,1),idx] = mymedian(unique_dotX{k}(1:end-3)); %
+    %    % if isempty(idx)~=0
+    %         New_dotC(k,2) = unique_dotY{k}(idx(1)); %
+    %    % end
+
+        if plotdata == 1 && getpreciseZ == 1
+            New_dotC(k,3) = cent(cent(:,2) == 2*unique_inds(k)-1,1);
+        else
+            New_dotC(k,3) = dotC(unique_inds(k),3) + phalf;
+        end
     end
-end
 
  else
      Ndots = 0;
