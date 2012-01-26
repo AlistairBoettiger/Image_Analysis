@@ -195,6 +195,7 @@ end
         chns = 1:channels;
     else
         chns = eval(str_chns{:});
+        channels = length(chns); 
     end
      
    
@@ -274,6 +275,14 @@ end
         end  % close loop over colors
         imwrite(Im_layer,[fout,'/',oname,'_',emb_out,'_z', num2str(i),'.tif'],'tif');
      
+            if channels == 4
+                ImRGB = zeros(h,w,3,inttype);
+                ImRGB(:,:,1) = Im_layer(:,:,2)+Im_layer(:,:,4);
+                ImRGB(:,:,2) = Im_layer(:,:,3);
+                ImRGB(:,:,3) = Im_layer(:,:,1)+Im_layer(:,:,4);
+                imwrite(ImRGB,[fout,'/',oname,'_',emb_out,'_RBG_z', num2str(i),'.tif'],'tif');
+            end
+        
     clear Im_layer %  TIF IMG;
     end
     
@@ -284,6 +293,15 @@ end
                 Imax(:,:,2) = eval([inttype,'(zeros(h,w,1))']); 
             end
     imwrite(Imax,[fout,'/','max_',oname,'_',emb_out,'.tif'],'tif');
+        if channels == 4
+                maxRGB = zeros(h,w,3,inttype);
+                maxRGB(:,:,1) = Imax(:,:,2)+Imax(:,:,4);
+                maxRGB(:,:,2) = Imax(:,:,3);
+                maxRGB(:,:,3) = Imax(:,:,1)+Imax(:,:,4);
+                imwrite(maxRGB,[fout,'/max_',oname,'_',emb_out,'_RBG', num2str(i),'.tif'],'tif');
+        end
+    
+    
     disp(['data written for embryo', emb]); 
     guidata(hObject, handles);  % update GUI data with new handles
     clear Imax; 
