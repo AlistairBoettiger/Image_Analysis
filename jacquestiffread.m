@@ -479,10 +479,12 @@ for i=1:num-1,
         R.DataSummary.Objective=R.AllData.(['EntryNumber' num2str(i)]).Data;
         
     elseif strcmp(R.AllData.(['EntryNumber' num2str(i)]).FieldTag,'0x010000036')
-        
+      try  
         time = datenum('30-Dec-1899', 'dd-mmm-yyyy') + R.AllData.(['EntryNumber' num2str(i)]).Data;
         R.DataSummary.Time = datestr(time, 'mmmm dd, yyyy HH:MM');
-        
+      catch
+          R.DataSummary.Time = '';% 
+      end
     elseif strcmp(R.AllData.(['EntryNumber' num2str(i)]).FieldTag,'0x070000026')
         
         R.DataSummary.Fluorophores(end+1,1)={R.AllData.(['EntryNumber' num2str(i)]).Data};

@@ -277,9 +277,9 @@ end
      
             if channels == 4
                 ImRGB = zeros(h,w,3,inttype);
-                ImRGB(:,:,1) = Im_layer(:,:,2)+Im_layer(:,:,4);
-                ImRGB(:,:,2) = Im_layer(:,:,3);
-                ImRGB(:,:,3) = Im_layer(:,:,1)+Im_layer(:,:,4);
+                ImRGB(:,:,1) = Im_layer(:,:,1)+Im_layer(:,:,4);
+                ImRGB(:,:,2) = Im_layer(:,:,2);
+                ImRGB(:,:,3) = Im_layer(:,:,3)+Im_layer(:,:,4);
                 imwrite(ImRGB,[fout,'/',oname,'_',emb_out,'_RBG_z', num2str(i),'.tif'],'tif');
             end
         
@@ -295,9 +295,9 @@ end
     imwrite(Imax,[fout,'/','max_',oname,'_',emb_out,'.tif'],'tif');
         if channels == 4
                 maxRGB = zeros(h,w,3,inttype);
-                maxRGB(:,:,1) = Imax(:,:,2)+Imax(:,:,4);
-                maxRGB(:,:,2) = Imax(:,:,3);
-                maxRGB(:,:,3) = Imax(:,:,1)+Imax(:,:,4);
+                maxRGB(:,:,1) = Imax(:,:,1)+Imax(:,:,4);
+                maxRGB(:,:,2) = Imax(:,:,2);
+                maxRGB(:,:,3) = Imax(:,:,3)+Imax(:,:,4);
                 imwrite(maxRGB,[fout,'/max_',oname,'_',emb_out,'_RBG', num2str(i),'.tif'],'tif');
         end
     
@@ -453,6 +453,7 @@ function froot_Callback(hObject, eventdata, handles)
 function embin_Callback(hObject, eventdata, handles)
  handles.step = 1;  % starting step is step 0 
      set(handles.stepnum,'String',handles.step); % change step label in GUI
+     set(handles.embin,'String','01'); % return embyro counter to 1
     handles.output = hObject; % update handles object with new step number
     guidata(hObject, handles);  % update GUI data with new handles
      setup(hObject, eventdata, handles); % set up labels and default values for new step

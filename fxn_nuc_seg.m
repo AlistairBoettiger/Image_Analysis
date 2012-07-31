@@ -34,7 +34,7 @@ function  [bw,cents] = fxn_nuc_seg(I,minN,sigmaE,sigmaI,FiltSize,imblur)
 
 
 % for save data; 
-fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
+% fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
 
 FiltSize = round(1.3*sigmaI); 
 
