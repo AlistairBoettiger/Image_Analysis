@@ -203,17 +203,22 @@ end
  tic
     fout = get(handles.fout,'String');
     fname = get(handles.in1,'String');
-    disp(['exporting data to ',fout,fname,'...']); 
+    AgeClass = get(handles.in2,'String');
+    disp(['Recorded Age: ',AgeClass]); 
+    disp(['exporting data to ',fout,'/',fname,'...']); 
     
-        
+    
+    bw = handles.bw;
     NucLabeled = handles.NucLabeled;
     nuc_cents = handles.cent; 
     Nucs = handles.Nucs; 
     conn_map = handles.conn_map; 
     Cell_bnd = handles.Cell_bnd;
     
+    disp(['Age Class = ',AgeClass]);
+    
     save([fout,'/',fname,'_nucdata.mat'],...
-        'NucLabeled','nuc_cents','conn_map','Cell_bnd','Nucs'); 
+        'NucLabeled','nuc_cents','conn_map','Cell_bnd','Nucs','bw','AgeClass'); 
   
     
     guidata(hObject, handles); 
@@ -326,9 +331,9 @@ function setup(hObject,eventdata,handles)
      
         set(handles.in1label,'String','Save Name'); 
         set(handles.in1,'String', fname);
-        set(handles.in2label,'String',' ');
+        set(handles.in2label,'String','Age_class');
         set(handles.in2,'String', pars{2});
-        set(handles.in3label,'String',' '); 
+        set(handles.in3label,'String','unknown'); 
         set(handles.in3,'String', pars{3}); 
         set(handles.in4label,'String',' ');
         set(handles.in4,'String', pars{4});
@@ -337,7 +342,7 @@ function setup(hObject,eventdata,handles)
         set(handles.in6label,'String',' ');
         set(handles.in6,'String', pars{6});
         set(handles.VarButtonName,'String','Manual Reg Select');
-   dir = {'Step 3: Save Data'};
+   dir = {'Step 3: Record Age and Save Data'; 'eg. cc12, cc13meta, cc13ana, cc14e, cc14l'};
   set(handles.directions,'String',dir); 
   end
   
