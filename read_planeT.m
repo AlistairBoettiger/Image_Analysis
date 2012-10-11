@@ -6,8 +6,14 @@ function plane = read_planeT(offset, width, height, plane_nb,TIF)
 % load([handles.fdata,'/','test']);
 % % offset = 0, width = IMG.width, height = IMG.height, 
 
+%%
 
-
+%                       
+% width = IMG.width;
+% height = IMG.height;  
+% plane_nb = c; 
+% addpath('C:\Users\Alistair\Documents\Projects\GenCode\');
+%  figure(1); clf; imagesc(plane)  % look at output (for troubleshooting
 
 %return an empty array if the sample format has zero bits
 if ( TIF.BitsPerSample(plane_nb) == 0 )

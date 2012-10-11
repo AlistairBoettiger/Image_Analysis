@@ -85,7 +85,7 @@ function imviewer_lsm_OpeningFcn(hObject, eventdata, handles, varargin)
    
   % Some initial setup 
       % Folder to save .mat data files in for normal script function.  
-     handles.fdata = '/Users/alistair/Documents/Berkeley/Levine_Lab/ImageProcessing/';
+     handles.fdata = 'C:\Users\Alistair\Documents\Projects\Snail Patterning\Code_data/';
  
      
      handles.step = 1;  % starting step is step 0 
@@ -164,13 +164,18 @@ function [handles] = projectNsave(hObject, eventdata, handles)
    
     
     if N == 1 % only need to do this once.  
-        jacquestiffread([fsource,'/',froot,'.lsm']);
+         jacquestiffread([fsource,'/',froot,'.lsm']);
+        %parselsm([fsource,'/',froot,'.lsm']);
     end
     
      % froot = 's02_MP01_Hz_22C'; fsource = '/Volumes/Data/Lab Data/Raw_Data/2011-05-22/';
-
-    
+   try
     load([fsource,'/',froot,'.mat'])  
+   catch er
+       disp(er.message);
+        jacquestiffread([fsource,'/',froot,'.lsm']);
+        % parselsm([fsource,'/',froot,'.lsm']); % new version
+   end
     filetemp= fopen(Datas.filename,'r','l');
     
        
@@ -186,32 +191,21 @@ catch er
     disp(er.message); 
     disp('data is not an image stack');
 end
-    
-
-     
-
       
     if str_chns{:} == ' '
         chns = 1:channels;
     else
         chns = eval(str_chns{:});
         channels = length(chns); 
-    end
-     
+    end   
    
     Zs = Datas.LSM_info.DimensionZ;
-
-   last(last == 0) = Zs;
-    
-    
-    Imax = zeros(h,w,channels,inttype);
- 
-    
-     
+    last(last == 0) = Zs; 
+    Imax = zeros(h,w,channels,inttype); 
    tic
    disp('writing data...'); 
    
-    for i=1:Zs
+    for i=1:Zs  % i = 47
       %  disp(['embryo ', num2str(N), '   stack-position', num2str(i) ]);
        % shorthand    
     TIF = Datas.([ 'Stack' num2str(N)]).(['Image' num2str(i)]).TIF;
@@ -219,23 +213,31 @@ end
     TIF.file=filetemp;
     Im_layer = zeros(h,w,channels,inttype); %   eval([inttype,'(zeros(h,w,channels));']);
    
-   
         %read the image channels
-        for cc = 1:channels % c=3
+        for cc = 1:channels % c=2
             offset = 0;    
             c = chns(cc);
             TIF.StripCnt = c;
             IMG.data{c} = read_planeT(offset, IMG.width, IMG.height, c,TIF); 
-
+                 
+          %   figure(1); clf; imagesc(IMG.data{c})
+            
+            
+%             %  UINT12 FIX
+%            if  strfind('uint16',inttype) % uint12 get called uint16 without having correct scaling
+%             IMG.data{c} = makeuint(IMG.data{c},16); % for uint12
+%            end
+           
             % check for screwed up offset
             [h,w] = size(IMG.data{c});
-            % look in middle of data set and see if it's noise or
-            % signal
+            % look in middle of data set and see if it's noise or signal
             sdata =  IMG.data{c}( floor(h/2*.9):floor(h/2*1.1), floor(w/2*.9):floor(w/2*1.1)  ); 
             isnoise = std(double(sdata(:)));
-            
-%             save([handles.fdata,'/','test']);
-%      load([handles.fdata,'/','test']);
+
+% % trouble shooting                       
+%  handles.fdata = 'C:\Users\Alistair\Documents\Projects\Snail Patterning\Code_data/';            
+%      save([handles.fdata,'/','test']);
+%    load([handles.fdata,'/','test']);
             
            if isnoise > nmax %  && c<3
                offset = 1;
@@ -453,7 +455,7 @@ function froot_Callback(hObject, eventdata, handles)
 function embin_Callback(hObject, eventdata, handles)
  handles.step = 1;  % starting step is step 0 
      set(handles.stepnum,'String',handles.step); % change step label in GUI
-     set(handles.embin,'String','01'); % return embyro counter to 1
+    % set(handles.embin,'String','01'); % return embyro counter to 1
     handles.output = hObject; % update handles object with new step number
     guidata(hObject, handles);  % update GUI data with new handles
      setup(hObject, eventdata, handles); % set up labels and default values for new step
