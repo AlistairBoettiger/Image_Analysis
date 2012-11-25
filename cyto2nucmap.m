@@ -57,8 +57,9 @@ Mthink = 45; Mthin = 3; Imnn = 2;
    %% 
     nuc_cents = handles.cent; 
     Nucs = N; 
+    AgeClass = input('embryo age class =','s');
     
     save([fout,'/',fname,'_0',num2str(emb),'_nucdata.mat'],...
-        'NucLabeled','nuc_cents','conn_map','Cell_bnd','Nucs'); 
+        'NucLabeled','nuc_cents','conn_map','Cell_bnd','Nucs','AgeClass'); 
     %%
 end
