@@ -62,6 +62,7 @@ C = [1,0,0;
     0,0,1;
     1,0,1];
 
+addpath('C:\Users\Alistair\Documents\Projects\General_STORM\Matlab_Tools');
 
 % Update handles structure
 guidata(hObject, handles);
