@@ -26,7 +26,7 @@
 %
 %
 %% Required subroutines
-
+% jacquestiffread and dependencies
 % 
 %% Updates: 
 % 03/10/11: changed export name to max_fname from fname_max.
@@ -52,7 +52,7 @@ function varargout = imviewer_lsm(varargin)
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
 % Edit the above text to modify the response to help imviewer_lsm
-% Last Modified by GUIDE v2.5 01-Jun-2011 11:37:38
+% Last Modified by GUIDE v2.5 03-Dec-2012 12:43:44
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -133,18 +133,31 @@ end
 
 function [handles] = projectNsave(hObject, eventdata, handles)    
    
-    global TIF;
-    fsource = get(handles.source,'String'); % source folder containing data
+    % processes inputs, then call projection file
     froot = get(handles.froot,'String');  % .lsm file name
-    fout = get(handles.fout,'String');  % save folder
     oname = get(handles.oname,'String'); % output file name
-    
+    emb = get(handles.embin,'String'); % input file number
+    emb_out = get(handles.in5,'String'); % output file number
+    fout = get(handles.fout,'String');  % save folder
+    fsource = get(handles.source,'String'); % source folder containing data
     nmax = str2double(get(handles.in1,'String')); % max noise parameter
     firstc =  get(handles.in2,'String'); % first frame for max project
     lastc = get(handles.in3,'String'); % last frame for max project  
-    emb = get(handles.embin,'String');
-    str_chns = get(handles.in4,'String'); 
-    emb_out = get(handles.in5,'String');
+    str_chns = get(handles.in4,'String'); % RGB/CMYK channel order
+    
+    handles.first = eval(firstc{:});
+    handles.last = eval(lastc{:}); 
+    
+    [handles] = RunProjection(hObject,eventdata,handles,...
+            froot,oname,emb,emb_out,fout,fsource,nmax,str_chns);
+    guidata(hObject, handles); 
+
+% this function is spliced out of ProjectNSave to enable automatic filename
+% detection    
+function [handles] = RunProjection(hObject,eventdata,handles,...
+            froot,oname,emb,emb_out,fout,fsource,nmax,str_chns)    
+    
+    global TIF;
     
     if emb_out{:} == ' ';
         emb_out = emb;
@@ -152,17 +165,13 @@ function [handles] = projectNsave(hObject, eventdata, handles)
         emb_out = emb_out{:};
     end
     
-    handles.first = eval(firstc{:});
-    handles.last = eval(lastc{:}); 
-     
+
     first = handles.first;
     last = handles.last;
     
     
     N = str2double(emb);  % embryo number
 
-   
-    
     if N == 1 % only need to do this once.  
          jacquestiffread([fsource,'/',froot,'.lsm']);
         %parselsm([fsource,'/',froot,'.lsm']);
@@ -317,11 +326,41 @@ end
  % The rest of this code is GUI manipulations
 
 
+ 
+% --- Executes on button press in ExtractLSM.
+function ExtractLSM_Callback(hObject, eventdata, handles)
+% hObject    handle to ExtractLSM (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
 
+    fsource = get(handles.source,'String'); % source folder containing data
+    lsmdata = dir([fsource,filesep,'*.lsm']);
+    
+    for n=1:length(lsmdata)
+        froot = regexprep(lsmdata(n).name,'.lsm',''); % get root
+        oname = froot; 
+
+        emb = get(handles.embin,'String'); % input file number
+        emb_out = get(handles.in5,'String'); % output file number
+        fout = get(handles.fout,'String');  % save folder
+
+        nmax = str2double(get(handles.in1,'String')); % max noise parameter
+        firstc =  get(handles.in2,'String'); % first frame for max project
+        lastc = get(handles.in3,'String'); % last frame for max project  
+        str_chns = get(handles.in4,'String'); % RGB/CMYK channel order
+
+        handles.first = eval(firstc{:});
+        handles.last = eval(lastc{:}); 
+
+        [handles] = RunProjection(hObject,eventdata,handles,...
+                froot,oname,emb,emb_out,fout,fsource,nmax,str_chns);
+        guidata(hObject, handles); 
+    end
+        
 % --- Executes on button press in AutoCycle.
 function AutoCycle_Callback(hObject, eventdata, handles)
 
-    froot = get(handles.froot,'String'); % where to find images
+    froot = get(handles.froot,'String'); % root name of image
     emb = str2double(get(handles.embin,'String'));  
     handles.folderout = get(handles.fout,'String');   % where to save images
 
@@ -568,3 +607,5 @@ function oname_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+

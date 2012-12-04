@@ -2,7 +2,7 @@
 
 %%                                  loadlsm.m
 % Jacques Bothma                                Date shared: 01/13/11
-% now Alistair Boettiger
+% and Alistair Boettiger
 % Levine Lab                                    Last Modified: 01/13/11
 
 
