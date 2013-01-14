@@ -119,7 +119,7 @@ end
 
 %%
 mRNAchn = 1; plotZdata = 0; getpreciseZ = 0; consec_layers = 2; ovlap = 2; 
-  dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,hs,ws,plotZdata,getpreciseZ,consec_layers,ovlap);
+dotC = CheckDotUpDown(DotData,DotMasks,im_folder,mRNAchn,hs,ws,plotZdata,getpreciseZ,consec_layers,ovlap);
 
 
 %%

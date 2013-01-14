@@ -159,12 +159,13 @@ function [handles] = RunProjection(hObject,eventdata,handles,...
     
     global TIF;
     
-    if emb_out{:} == ' ';
-        emb_out = emb;
-    else
-        emb_out = emb_out{:};
+    if ~isempty(emb_out)
+        if emb_out{:} == ' ';
+            emb_out = emb;
+        else
+            emb_out = emb_out{:};
+        end
     end
-    
 
     first = handles.first;
     last = handles.last;
@@ -341,7 +342,7 @@ function ExtractLSM_Callback(hObject, eventdata, handles)
         oname = froot; 
 
         emb = get(handles.embin,'String'); % input file number
-        emb_out = get(handles.in5,'String'); % output file number
+        emb_out = '';%  get(handles.in5,'String'); % output file number
         fout = get(handles.fout,'String');  % save folder
 
         nmax = str2double(get(handles.in1,'String')); % max noise parameter
