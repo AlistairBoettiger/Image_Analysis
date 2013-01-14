@@ -2,19 +2,25 @@
 % use cytoplasmically distributed mRNA to extract nuclei map.  
 
 
-folder = 'C:\Users\Alistair\Data\2011-12\';
+folder = 'D:\Data\2013-01-10_no-dist\';
 fout = folder;
-fname = 's05_MP08_b';
+fname = 'MP08Hz_snaD_2';
 
-for emb = 5;
+nuc_chn = 3; 
+
+
     %%
-    emb = 2;
+    emb = 6;
 
 C = zeros(2048,2048,'uint16');
 
-for z =   22:30;
-    I = imread([folder,fname, '_0', num2str(emb),'_z',num2str(z),'.tif']); 
-    C = (C+I(:,:,2))./uint16(2);
+zs = 30; % starting frame for z-projection of nuclei channel
+zf = 35;  % ending frame fo z-projection of nuclei channel
+
+for z =   zs:zf;
+    I = imreadfast([folder,fname, '_0', num2str(emb),'_z',num2str(z),'.tif']); 
+   % figure(1); clf; imshow(I);
+    C = (C+I(:,:,nuc_chn))./uint16(2);
 end
 
 F = fspecial('gaussian',50,5); 
@@ -24,14 +30,17 @@ C2 = imresize(C2,512/2048);
 figure(1); clf; imagesc(C2); colormap gray; colorbar;
 %%
 
-N = imadjust(C2,[0,.061],[0,1],.51); N = max(N(:)) - N;
+N = imadjust(C2,[0,1],[0,1],.45);
+ N = max(N(:)) - N;
 
 % N = .1*max(C2(:)) - C2;
 figure(2); clf; imagesc(N); colormap gray; colorbar; caxis([0,1*max(N(:))])
 
 %N = C2;
-
-minN = 100; imblur = 2; sigmaE = 16; sigmaI = 18; FiltSize = 30;
+%
+% minN = 100; imblur = 2; sigmaE = 26; sigmaI = 30; FiltSize = 45;
+% Mthink = 45; Mthin = 3; Imnn = 2;
+minN = 40; imblur = 2; sigmaE = 15; sigmaI = 17; FiltSize = 45;
 Mthink = 45; Mthin = 3; Imnn = 2;
  [handles.bw,handles.cent] = fxn_nuc_seg(N,minN,sigmaE,sigmaI,FiltSize,imblur);
 %%
@@ -62,4 +71,3 @@ Mthink = 45; Mthin = 3; Imnn = 2;
     save([fout,'/',fname,'_0',num2str(emb),'_nucdata.mat'],...
         'NucLabeled','nuc_cents','conn_map','Cell_bnd','Nucs','AgeClass'); 
     %%
-end
