@@ -119,9 +119,14 @@ for Z = 1:Zs % The primary layer Z = 8
 %             Iin_z = imreadfast(im_folder{Z});  
 %             I_test = Iin_z(xp1:xp2,yp1:yp2,mRNAchn+1);  imagesc(I_test); colorbar; colormap hot;
 %              hold on; plot(dotC(indsT,1),dotC(indsT,2),'c+');
-         
+         try
          DotConn(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) =  indsT; % STORE in DotConn matrix the indices 
          ConnInt(2*st1_dot_num+1:2:2*(st1_dot_num + dotsinlayer(Z)),z) = Ints{z}(inds_zin1+1); % Ints{z}(inds_zin1+1); ; %  % store actual intensities.  
+         catch er
+             disp(er.message)
+             save('C:\Users\Alistair\Documents\Projects\mRNA_counting\Data\test_error.mat');
+         end
+         
         %  figure(3); clf; imagesc(DotConn); shading flat;
     end
     LayerJoin( 2*st1_dot_num+1 :2*(st1_dot_num + dotsinlayer(Z)),Z) = true(2*dotsinlayer(Z),1);    
