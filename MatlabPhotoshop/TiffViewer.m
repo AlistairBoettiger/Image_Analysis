@@ -22,7 +22,7 @@ function varargout = TiffViewer(varargin)
 
 % Edit the above text to modify the response to help TiffViewer
 
-% Last Modified by GUIDE v2.5 25-Nov-2012 13:24:09
+% Last Modified by GUIDE v2.5 12-Dec-2012 12:25:08
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -63,6 +63,11 @@ C = [1,0,0;
     1,0,1];
 
 addpath('C:\Users\Alistair\Documents\Projects\General_STORM\Matlab_Tools');
+
+% set up sliders
+set(handles.gammaslider,'Min',0);
+set(handles.gammaslider,'Max',4); 
+set(handles.gammaslider,'Value',1);
 
 % Update handles structure
 guidata(hObject, handles);
@@ -110,13 +115,30 @@ function savegrays_ClickedCallback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global myImage
+global I1 I
+figure(1);
+xs = round(get(gca,'XLim'));
+ys = round(get(gca,'YLim'));
+s = 1;
 
- imwrite(imresize(Iout,.2),[output_folder,filesep,fname,'.png']);
- imwrite(imresize(myImage(:,:,1),.2),[output_folder,filesep,fname,'_c1.png']);
- imwrite(imresize(myImage(:,:,2),.2),[output_folder,filesep,fname,'_c2.png']);
- imwrite(imresize(myImage(:,:,3),.2),[output_folder,filesep,fname,'_c3.png']);
- imwrite(imresize(myImage(:,:,4),.2),[output_folder,filesep,fname,'_c4.png']);
+channels(1) = get(handles.chn1,'Value');
+channels(2) = get(handles.chn2,'Value');
+channels(3) = get(handles.chn3,'Value');
+channels(4) = get(handles.chn4,'Value');
+channels = find(channels); 
+
+
+ [fname,output_folder] = uiputfile('.png'); 
+ fname = regexprep(fname,'.png',''); 
+ imwrite((I(ys(1):ys(2),xs(1):xs(2),:)),[output_folder,filesep,fname,'.png']);
+ for c = channels
+     Itemp = I1;
+%      [h,w,cs] = size(Itemp);
+%      all_other_channels = 1:cs; 
+%       all_other_channels(c) = [];
+%      Itemp(:,:,all_other_channels) = uint16(0); 
+ imwrite((Itemp(ys(1):ys(2),xs(1):xs(2),c)),[output_folder,filesep,fname,'_c',num2str(c),'.png']);
+ end
 
 
 
@@ -162,12 +184,13 @@ function sliders(hObject, eventdata, handles)
 global I1 myImage
 minC = get(handles.minslider,'Value');
 maxC = get(handles.maxslider,'Value');
+gamma = get(handles.gammaslider,'Value');
 channels(1) = get(handles.editchn1,'Value');
 channels(2) = get(handles.editchn2,'Value');
 channels(3) = get(handles.editchn3,'Value');
 channels(4) = get(handles.editchn4,'Value');
 c = find(channels); 
-I1(:,:,c) = mycontrast(myImage(:,:,c),1-maxC,minC);
+I1(:,:,c) = imadjust(myImage(:,:,c),[minC,maxC],[0,1],gamma);
 updateimage;
 
 % --- Executes on slider movement.
@@ -179,8 +202,6 @@ function maxslider_Callback(hObject, eventdata, handles)
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 sliders(hObject, eventdata, handles)
 
-
-
 % --- Executes on slider movement.
 function minslider_Callback(hObject, eventdata, handles)
 % hObject    handle to minslider (see GCBO)
@@ -190,7 +211,12 @@ function minslider_Callback(hObject, eventdata, handles)
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 sliders(hObject, eventdata, handles)
 
-
+% --- Executes on slider movement.
+function gammaslider_Callback(hObject, eventdata, handles)
+% hObject    handle to gammaslider (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+sliders(hObject, eventdata, handles)
 
 % --------------------------------------------------------------------
 function showchannels_ClickedCallback(hObject, eventdata, handles)
@@ -382,4 +408,21 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
 
+
+
+
+
+
+
+% --- Executes during object creation, after setting all properties.
+function gammaslider_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to gammaslider (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+%        slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
 
