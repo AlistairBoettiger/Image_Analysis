@@ -318,7 +318,7 @@ end
     guidata(hObject, handles);  % update GUI data with new handles
     clear Imax; 
     
-   %  fclose(filetemp);
+     fclose(filetemp);
     toc
 
 

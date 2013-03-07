@@ -1,5 +1,4 @@
 
-
 %%                                  loadlsm.m
 % Jacques Bothma                                Date shared: 01/13/11
 % and Alistair Boettiger

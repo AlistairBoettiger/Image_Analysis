@@ -1,0 +1,11 @@
+## ignore figure files ##
+*.asv
+*.mat
+*.m~
+
+
+*.doc
+*.log
+
+
+

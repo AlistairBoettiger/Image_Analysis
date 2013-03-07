@@ -10,15 +10,15 @@ tot_time = tic;
 % Input options 
 old_lab = 0;  Es = 0;  ver = '';
 
-slidedate = '2013-01-10_no-dist\'; % '2013-01-06_no-dist\'; % '2011-12\'; % '2011-06-20/';  % '2011-04_and_earlier/';  %   '2011-05-22/'; %
+slidedate = '2013-01-14_no-prox\';% 2013-01-10_no-dist\'; % '2013-01-06_no-dist\'; % '2011-12\'; % '2011-06-20/';  % '2011-04_and_earlier/';  %   '2011-05-22/'; %
 folder = 'C:\Users\Alistair\My Documents\Projects\mRNA_counting\Data\'; 
 rawfolder = 'D:\Data\';  % K:\Confocal_fall_2011\'; % 'G:\Raw_Data/'; % 
 %rawfolder =  'D:\Data\2012-08-20_ML124\'; % 2012-08-15_MLslides\'; % 2012-08-02\'; % '2011-02-17/'; % 2011-04_and_earlier/'; %
 stackfolder = ''; % 's07_MP05Hz/'; % 's04_MP10/';% ''; %   's08_MP06Hz'; % 's04_MP10/'; % 'MP10_22C/';% ''; % 'MP05_22C/';% 'MP12Hz/'; 'MP07Hz/';% 's07_MP08/'; % 's04_MP10/';%   'MP07Hz/'; %     's02_MP01/';% 's01_MP09/';%   'sna2.8Hz/' ;%'s06_MP10_sna18/'; %'s21_MP07/';% 'MP07Hz/';% 's11_G4B/' %  's06_MP10_sna18/'; % %'s10_bcd1x/';%  's11_bcd6x/'; %'s14_comp_cntrl/'; % 's12_cntrl_2label/'; %'MP02_22C/'; %'MP01_22C/'; % 'MGa1x/'; % 'MP10_22C/'; %'MP05_22C/'; %'YW_ths_sog/'; % 'MP10_22C/'; %  % 'MP09_22C/'; % 'MGa2x/'; % 'MGa1x/'; % 'MGa2x/'; % 'MP10_22C_sna_y_c/'; %
-fname ='MP10Hz'; ver = '_v4'; % 'MP06Hz'; ver = '_v2'; % 's04_MP08_b'; ver = '_vN';% 's07_MP05Hz_22C'; ver ='_vN4';  %  's04_MP10Hz_b'; ver = '_vN2';% 'ml124B'; %'ml125'; ver = '_v2';Es=1; %  'b308first 2pos'; ver = '_v2'; %'m106a'; %'m105b' % 'm105a2' % 'm105a' %'m116b' %  'm116a' % 'm198d'; Es=3; %  %  's08_MP06Hz' ; ver = '_vN3'; % 'MP10Hz_c'; ver = '_vN'; % % '4xsna_c'; % 's6_MP08_b';% 'snaD_b'; % 's05_MP08_b'; ver = ''; % 's142_sna', ver = '_v2'% 'snaD';% 'MP05_22C_sna_y_c'; ver = '_vN2'; % 'MP12Hz_snaD_22C', ver = '_vN'% 'wt_sna', ver = '_v2'% 's05_MP06Hz'; ver = '_vN2'; % 'MP08_snaD_LacZ647'; ver = '_v3'% 'MP05';%'MP07Hz_snaD_22C'; ver = '_vN' %  'MP08Hz_snaD_22C_b'; % % 'MP10Hz_c'; %'MP07Hz_snaD_22C_b' ; ver = '_v3';%      's04_MP10Hz'; % 's02_MP01_Hz_22C_b'; % 's01_MP09_Hz_22C_c'; %'sna2.8Hz_snaD_22C'; % 's06_MP10_sna18_b'; % 'MP07het_snaD_22C'; %  'MP07Hz_snaD_22C';%'s11_G4B_LacZ';% 's06_MP10_sna18_b'; % 's05_MP06Hz'; %   %'s10_bcd1x';% 's11_bcd6x'; % 's14_comp_cntrl'; Es =1; % 's12_cntrl_2label'; Es = 1; % 'MP09_22C_hb_y_f'; Es = 7; %  'MP02_22C_hb_y'; Es = 9; % 'MP02_22C_hb_y_b'; Es = 10; %  % 'MP01_22C_hb_y_f'; Es = 12; % 'MP01_22C_hb_y_c'; Es = 10; % 'MP01_22C_hb_y'; Es = 13; % 'MGa1x_LacZ_b'; Es = 12; %  'MP10_22C_sna_y_e'; Es = 12; %  'MP05_22C_sna_y_c'; Es =7; %  'MP10_22C_sna_y_d3'; Es = 1;  %'YW_ths_sog'; Es = 12;  % % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
+fname ='MP05_a'; ver = ''; % 'MP10Hz'; ver = '_v4'; % 'MP06Hz'; ver = '_v2'; % 's04_MP08_b'; ver = '_vN';% 's07_MP05Hz_22C'; ver ='_vN4';  %  's04_MP10Hz_b'; ver = '_vN2';% 'ml124B'; %'ml125'; ver = '_v2';Es=1; %  'b308first 2pos'; ver = '_v2'; %'m106a'; %'m105b' % 'm105a2' % 'm105a' %'m116b' %  'm116a' % 'm198d'; Es=3; %  %  's08_MP06Hz' ; ver = '_vN3'; % 'MP10Hz_c'; ver = '_vN'; % % '4xsna_c'; % 's6_MP08_b';% 'snaD_b'; % 's05_MP08_b'; ver = ''; % 's142_sna', ver = '_v2'% 'snaD';% 'MP05_22C_sna_y_c'; ver = '_vN2'; % 'MP12Hz_snaD_22C', ver = '_vN'% 'wt_sna', ver = '_v2'% 's05_MP06Hz'; ver = '_vN2'; % 'MP08_snaD_LacZ647'; ver = '_v3'% 'MP05';%'MP07Hz_snaD_22C'; ver = '_vN' %  'MP08Hz_snaD_22C_b'; % % 'MP10Hz_c'; %'MP07Hz_snaD_22C_b' ; ver = '_v3';%      's04_MP10Hz'; % 's02_MP01_Hz_22C_b'; % 's01_MP09_Hz_22C_c'; %'sna2.8Hz_snaD_22C'; % 's06_MP10_sna18_b'; % 'MP07het_snaD_22C'; %  'MP07Hz_snaD_22C';%'s11_G4B_LacZ';% 's06_MP10_sna18_b'; % 's05_MP06Hz'; %   %'s10_bcd1x';% 's11_bcd6x'; % 's14_comp_cntrl'; Es =1; % 's12_cntrl_2label'; Es = 1; % 'MP09_22C_hb_y_f'; Es = 7; %  'MP02_22C_hb_y'; Es = 9; % 'MP02_22C_hb_y_b'; Es = 10; %  % 'MP01_22C_hb_y_f'; Es = 12; % 'MP01_22C_hb_y_c'; Es = 10; % 'MP01_22C_hb_y'; Es = 13; % 'MGa1x_LacZ_b'; Es = 12; %  'MP10_22C_sna_y_e'; Es = 12; %  'MP05_22C_sna_y_c'; Es =7; %  'MP10_22C_sna_y_d3'; Es = 1;  %'YW_ths_sog'; Es = 12;  % % 'MP09_22C_hb_y_e'; Es = 10; % 'MP09_22C_hb_y_d'; Es=11; % 'MGa2x_LacZ_sna_b'; Es = 10; % 'MP10_22C_sna_y_d';   % 'MGa_LacZ'; %'MGa2x_LacZ_sna'; %'MP10_22C_sna_y_c'; old_lab = 1;  % 'MP05_22C_sna_y'; old_lab = 1; % 
 mRNA_channels = 2;% 2; %  3; %  1; % total mRNA channels
 sname = fname; % 'ml124B308counts';%  'MP07het_snaD_22C_1';% '_1'; % additional label on slide. 
-Zmax = 55; % % Use carefully!
+Zmax = 60; % % Use carefully!
 
  mkdir([folder,slidedate]); 
 % MP10_22C_sna_y_c and MP05_22C all done at 3.5, 4, 0.03, 30, 30
@@ -68,9 +68,9 @@ disp(['Coordinates:  ', num2str(xp1), ' : ', num2str(xp2), ',   ' num2str(yp1), 
     FiltSize = 30;% 
     min_size = 30;% 
     min_int1  = 0.075;    %  5    ;% .05 % not necessary Fix at Zero
-    min_peak1 = 9500;% 7500;% 5000;% 3000; %
-    min_int2  = 0.015;    %  5    ;% .05 % not necessary Fix at Zero
-    min_peak2 = 1200;% 7500;% 5000;% 3000; %
+    min_peak1 = 11000;% 7500;% 5000;% 3000; %
+    min_int2  = .025;% % 0.015;    %  5    ;% .05 % not necessary Fix at Zero
+    min_peak2 = 5000;% 1200;% 7500;% 5000;% 3000; %
     
   % sphere finding parameters
    getpreciseZ = 0;
@@ -333,4 +333,4 @@ end % end loop over embryos
       disp('All slide data saved'); 
       
   addpath('C:\Users\Alistair\Documents\Projects\mRNA_counting\Code');      
-  fxn_anlz_counting_data(folder,rawfolder,slidedate,stackfolder,fname,mRNA_channels,ver);
+  fxn_anlz_counting_data(folder,rawfolder,slidedate,stackfolder,fname,mRNA_channels,ver,'Embryos',Es);
