@@ -9,17 +9,17 @@ These files were used to process the mRNA counting results produced by the code 
 alistair.boettiger@gmail.com
 
 ## Files
-* MeasureSnaGradient.m - orients snail gradients along a common axis and computes spatial averages for later plotting. 
-* MakeFigure1.m - plots the images in Figure 1
-* MakeFigure2.m - plots the data in Figure 2
-* MakeFigure3.m  - plots the data in Figure 3
-* MakeFigure4.m - plots the data in Figure 4
+* `MeasureSnaGradient.m` - orients snail gradients along a common axis and computes spatial averages for later plotting. 
+* `MakeFigure1.m` - plots the images in Figure 1
+* `MakeFigure2.m` - plots the data in Figure 2
+* `MakeFigure3.m`  - plots the data in Figure 3
+* `MakeFigure4.m` - plots the data in Figure 4
 
 ## Functions
-* plotstackdots.m - function required by MakeFigure1.m
-* Functions in the `ImageAnalysis` directory are also called by scripts and functiosn in this directory, so you will want both in you filepath.
+* `plotstackdots.m` - function required by MakeFigure1.m
+* Additional functions in the `ImageAnalysis` directory are also called by scripts and functions in this directory, so you will want both in you filepath.
 
-
+Readme last updated 03/07/13
 
 
 *Note: This readme is written in markdown.  It should be text-readable as well, but will look better if you view it with a markdown compiler.  Github automatically compiles and renders markdown.  
