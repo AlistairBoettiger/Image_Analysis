@@ -11,12 +11,13 @@ as it stood on the date of publication.  For version history, browse the version
 * `Unsupervised_DotFinding.m` - script which proccesses the Tif stack indicated and counts all the mRNA spots detected
 
 ## Functions
-* `fxn_nuc_seg.m` - subroutine of `Im_nuc_seg.fig`, identifies the nuclei in the image
-* `fxn_nuc_reg.m` - subroutine of `Image_nuc_seg.fig`, performs cytoplasmic segmentation 
+* `fxn_nuc_seg.m` - subroutine of `Im_nuc_eg.fig`, identifies the nuclei in the image
+* `fxn_nuc_reg.m` - subroutine of `Im_nucseg.fig`, performs cytoplasmic segmentation 
 * `dotfinder.m` - subroutine of `Unsupervised_DotFiding.m`, localizes spots
 * `CheckDotUpDown.m` - subroutine of `Unsupervised_DotFinding.m`, links dots between Z-stacks
 * `AssignDots.m` - subroutine of `Unsupervised_DotFinding.m`, Assigns dots to nuclei.  
-* `jacquestiffread.m` - subroutine of imviewer_LSM, parses Zeiss LSM headerfiles
+* `jacquestiffread.m` - subroutine of `imviewer_LSM.fig`, parses Zeiss LSM headerfiles
+* `read_planeT.m - subroutine of `imviewer_LSM.fig`
 * `imreadfast.m` - faster version of imread assumes image is a Tif file.  Used in several files
 * `makeuint.m` - covert any data to uint of desired bit size and rescale pixel values to use max dynamic range.
 
